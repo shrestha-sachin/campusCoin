@@ -1,6 +1,24 @@
-const BASE_URL = import.meta.env.VITE_MODAL_URL || 'http://localhost:8000'
+function getBaseUrl() {
+  if (typeof window !== 'undefined' && window.__CAMPUSCOIN_API_URL__) {
+    return window.__CAMPUSCOIN_API_URL__.trim() || null
+  }
+  if (import.meta.env.VITE_MODAL_URL) {
+    return import.meta.env.VITE_MODAL_URL
+  }
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:8000'
+  }
+  return null
+}
+
+const BASE_URL = getBaseUrl()
 
 async function request(path, options = {}) {
+  if (!BASE_URL) {
+    throw new Error(
+      'API URL not configured. For production: add the VITE_MODAL_URL secret in GitHub (Settings → Secrets and variables → Actions) and redeploy.'
+    )
+  }
   const url = `${BASE_URL}${path}`
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...options.headers },

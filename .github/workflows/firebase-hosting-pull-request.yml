@@ -23,6 +23,7 @@ jobs:
           VITE_MODAL_URL: ${{ secrets.VITE_MODAL_URL }}
         run: |
           cd frontend
+          node -e "require('fs').writeFileSync('public/config.js', 'window.__CAMPUSCOIN_API_URL__=' + JSON.stringify(process.env.VITE_MODAL_URL || '') + ';');"
           npm ci
           npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
