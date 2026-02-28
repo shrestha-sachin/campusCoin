@@ -1,9 +1,18 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, User as UserIcon, ArrowRight, Sparkles, Loader2 } from 'lucide-react'
+import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, Shield, Zap, BarChart3, Brain, GraduationCap } from 'lucide-react'
 import Logo from '../components/Logo.jsx'
 import { useApp, clearStorage } from '../store.jsx'
 import { api } from '../api'
+
+function FeatureChip({ icon: Icon, text }) {
+  return (
+    <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 shadow-sm">
+      <Icon size={14} className="text-g-blue flex-shrink-0" />
+      <span className="font-body text-xs text-g-text font-medium">{text}</span>
+    </div>
+  )
+}
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -29,7 +38,6 @@ export default function Auth() {
     try {
       const result = await api.login({ email: email.trim(), password })
 
-      // Login successful — restore session
       login({
         email: result.email,
         name: result.name,
@@ -37,7 +45,6 @@ export default function Auth() {
       })
 
       if (result.profile_data) {
-        // User has completed onboarding before — restore their data
         completeOnboarding({
           profile: result.profile_data.profile,
           incomeStreams: result.profile_data.income_streams ?? [],
@@ -45,13 +52,11 @@ export default function Auth() {
         })
         navigate('/dashboard')
       } else {
-        // User signed up but never completed onboarding
         navigate('/onboarding')
       }
     } catch (err) {
       const msg = err.message || ''
       if (msg.includes('401')) {
-        // Parse the actual error detail from the API
         try {
           const detail = JSON.parse(msg.split(': ').slice(1).join(': '))
           setError(detail.detail || 'Invalid credentials.')
@@ -78,6 +83,10 @@ export default function Auth() {
       setError('Please enter your email address.')
       return
     }
+    if (!email.trim().toLowerCase().endsWith('.edu')) {
+      setError('Please use your university email (.edu) to sign up.')
+      return
+    }
     if (!password || password.length < 4) {
       setError('Please set a password (at least 4 characters).')
       return
@@ -91,7 +100,6 @@ export default function Auth() {
         name: name.trim(),
       })
 
-      // Signup successful — clear any old local data and start fresh
       clearStorage()
       login({
         email: result.email,
@@ -114,67 +122,109 @@ export default function Auth() {
   const isSignIn = mode === 'signin'
 
   return (
-    <div className="min-h-screen onboarding-bg flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
-        {/* Left: hero / marketing */}
-        <div className="hidden lg:block slide-in-left">
-          <div className="card p-7 bg-g-blue-pastel relative overflow-hidden">
-            <div className="absolute -top-10 -right-16 w-56 h-56 rounded-full bg-g-blue-half blur-3xl opacity-40" />
-            <div className="relative">
-              <Logo size="large" />
-              <h1 className="font-display font-bold text-3xl mt-6 tracking-tight text-g-text">
-                Smarter money moves,
-                <br />
-                built for campus life.
-              </h1>
-              <p className="font-body text-sm text-g-text-secondary mt-3 max-w-sm">
-                Create your CampusCoin profile, project your runway, and chat with an AI strategist
-                who understands the student lifecycle.
-              </p>
+    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden">
+      {/* Left Panel — Hero / Branding */}
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #4285f4 0%, #3367d6 50%, #1a53c2 100%)',
+        }}
+      >
+        {/* Decorative shapes */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)' }} />
+          <div className="absolute top-1/3 -left-20 w-72 h-72 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-24 right-1/4 w-80 h-80 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(52,168,83,0.15) 0%, transparent 70%)' }} />
+        </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-                <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
-                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Sparkles size={14} />
-                  </span>
-                  <span className="font-mono tracking-wide">AI strategist chat</span>
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+          {/* Top — Logo */}
+          <div>
+            <div className="flex items-center gap-3">
+              <svg width={44} height={44} viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="18" fill="white" fillOpacity="0.2" />
+                <circle cx="20" cy="20" r="13" fill="white" fillOpacity="0.15" />
+                <text x="20" y="26" textAnchor="middle" fill="white" fontFamily="GoogleSans, sans-serif" fontWeight="700" fontSize="18">$</text>
+              </svg>
+              <span className="font-display font-bold text-2xl text-white tracking-tight">
+                CampusCoin
+              </span>
+            </div>
+          </div>
+
+          {/* Center — Hero text */}
+          <div className="my-auto">
+            <h1 className="font-display font-bold text-4xl xl:text-5xl text-white leading-[1.15] tracking-tight">
+              Financial clarity,
+              <br />
+              built for
+              <br />
+              <span className="text-[#fbbc04]">campus life.</span>
+            </h1>
+            <p className="font-body text-white/70 text-base mt-5 max-w-md leading-relaxed">
+              Project your runway, track real transactions from Capital One,
+              and get AI insights designed for the student lifecycle.
+            </p>
+
+            {/* Feature grid */}
+            <div className="grid grid-cols-2 gap-2.5 mt-8 max-w-sm">
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                  <BarChart3 size={16} className="text-white" />
                 </div>
-                <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
-                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Sparkles size={14} />
-                  </span>
-                  <span className="font-mono tracking-wide">180-day runway</span>
+                <span className="font-body text-white/90 text-xs font-medium">180-day runway</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                  <Brain size={16} className="text-white" />
                 </div>
-                <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
-                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Sparkles size={14} />
-                  </span>
-                  <span className="font-mono tracking-wide">Capital One linked</span>
+                <span className="font-body text-white/90 text-xs font-medium">AI strategist</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                  <Shield size={16} className="text-white" />
                 </div>
-                <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
-                  <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Sparkles size={14} />
-                  </span>
-                  <span className="font-mono tracking-wide">Cloud-synced data</span>
+                <span className="font-body text-white/90 text-xs font-medium">Capital One linked</span>
+              </div>
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                  <Zap size={16} className="text-white" />
                 </div>
+                <span className="font-body text-white/90 text-xs font-medium">Cloud synced</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right: auth card */}
-        <div className="w-full max-w-md mx-auto fade-up-1">
-          <div className="flex items-center justify-center mb-6 lg:mb-4 lg:hidden">
-            <Logo size="default" />
+          {/* Bottom — Trust signals */}
+          <div className="flex items-center gap-3">
+            <GraduationCap size={18} className="text-white/50" />
+            <span className="font-mono text-[11px] text-white/40 tracking-wide">
+              Built for HackIllinois 2025 · Powered by Capital One Nessie API
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel — Auth Form */}
+      <div className="flex-1 flex items-center justify-center px-5 py-10 bg-gradient-to-br from-g-bg via-white to-g-blue-pastel/30">
+        <div className="w-full max-w-[420px]">
+          {/* Mobile logo */}
+          <div className="flex items-center justify-center mb-8 lg:hidden">
+            <Logo size="large" />
           </div>
 
-          <div className="card p-6 sm:p-7 text-g-text">
+          {/* Auth card */}
+          <div className="bg-white rounded-3xl shadow-xl shadow-g-blue/5 border border-g-border/60 p-7 sm:p-8">
             {/* Tabs */}
-            <div className="flex p-1 rounded-full bg-g-bg border border-g-border mb-6">
+            <div className="flex p-1 rounded-2xl bg-g-bg border border-g-border/80 mb-7">
               <button
                 type="button"
                 onClick={() => { setMode('signin'); setError('') }}
-                className={`flex-1 py-2.5 rounded-full text-sm font-body font-medium transition-all ${isSignIn ? 'bg-g-surface text-g-text shadow-sm' : 'text-g-text-secondary'
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-semibold transition-all duration-200 ${isSignIn
+                    ? 'bg-white text-g-text shadow-sm border border-g-border/50'
+                    : 'text-g-text-tertiary hover:text-g-text-secondary'
                   }`}
               >
                 Sign in
@@ -182,40 +232,48 @@ export default function Auth() {
               <button
                 type="button"
                 onClick={() => { setMode('signup'); setError('') }}
-                className={`flex-1 py-2.5 rounded-full text-sm font-body font-medium transition-all ${!isSignIn ? 'bg-g-surface text-g-text shadow-sm' : 'text-g-text-secondary'
+                className={`flex-1 py-2.5 rounded-xl text-sm font-body font-semibold transition-all duration-200 ${!isSignIn
+                    ? 'bg-white text-g-text shadow-sm border border-g-border/50'
+                    : 'text-g-text-tertiary hover:text-g-text-secondary'
                   }`}
               >
                 Sign up
               </button>
             </div>
 
-            <div className="mb-5">
-              <h2 className="font-display font-bold text-xl text-g-text tracking-tight">
-                {isSignIn ? 'Welcome back' : 'Create your account'}
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="font-display font-bold text-2xl text-g-text tracking-tight">
+                {isSignIn ? 'Welcome back' : 'Get started'}
               </h2>
-              <p className="font-body text-xs text-g-text-secondary mt-1.5">
+              <p className="font-body text-sm text-g-text-secondary mt-1.5 leading-relaxed">
                 {isSignIn
-                  ? 'Sign in to access your saved financial data.'
-                  : 'Your data is saved to the cloud and linked to your Capital One account.'}
+                  ? 'Sign in to access your financial dashboard.'
+                  : 'Create an account with your university email to begin.'}
               </p>
             </div>
 
+            {/* Error */}
             {error && (
-              <div className="mb-4 rounded-2xl border border-g-red/30 bg-g-red-pastel/60 px-3 py-2 text-xs font-body text-g-red">
-                {error}
+              <div className="mb-5 flex items-start gap-2.5 rounded-2xl border border-g-red/20 bg-g-red-pastel/50 px-4 py-3">
+                <div className="w-5 h-5 rounded-full bg-g-red/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-g-red text-xs font-bold">!</span>
+                </div>
+                <p className="text-xs font-body text-g-red leading-relaxed">{error}</p>
               </div>
             )}
 
+            {/* Form */}
             <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="space-y-4">
               {!isSignIn && (
                 <div>
-                  <label className="label">Full Name</label>
-                  <div className="relative">
-                    <UserIcon size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-g-text-tertiary" />
+                  <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">Full Name</label>
+                  <div className="relative group">
+                    <UserIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
                     <input
                       type="text"
-                      className="input-field !pl-10"
-                      placeholder="Alex Chen"
+                      className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
+                      placeholder="Your full name"
                       value={name}
                       onChange={e => setName(e.target.value)}
                     />
@@ -224,28 +282,35 @@ export default function Auth() {
               )}
 
               <div>
-                <label className="label">Email</label>
-                <div className="relative">
-                  <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-g-text-tertiary" />
+                <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">
+                  {isSignIn ? 'Email' : 'University Email'}
+                </label>
+                <div className="relative group">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
                   <input
                     type="email"
-                    className="input-field !pl-10"
-                    placeholder="you@university.edu"
+                    className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
+                    placeholder={isSignIn ? 'you@university.edu' : 'name@university.edu'}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     autoFocus
                   />
                 </div>
+                {!isSignIn && (
+                  <p className="font-mono text-[10px] text-g-text-tertiary mt-1.5 ml-1">
+                    Only .edu emails are accepted
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="label">Password</label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-g-text-tertiary" />
+                <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">Password</label>
+                <div className="relative group">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
                   <input
                     type="password"
-                    className="input-field !pl-10"
-                    placeholder={isSignIn ? 'Enter your password' : 'Set a password (min. 4 chars)'}
+                    className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
+                    placeholder={isSignIn ? 'Enter your password' : 'Min. 4 characters'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                   />
@@ -255,7 +320,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 w-full flex items-center justify-center gap-2.5 py-3 rounded-full bg-g-blue text-white font-body text-sm font-semibold hover:bg-[#3367d6] hover:shadow-md transition-all hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed"
+                className="!mt-6 w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-g-blue text-white font-body text-sm font-semibold shadow-lg shadow-g-blue/25 hover:shadow-xl hover:shadow-g-blue/30 hover:bg-[#3367d6] transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {loading ? (
                   <><Loader2 size={18} className="animate-spin" /> {isSignIn ? 'Signing in…' : 'Creating account…'}</>
@@ -264,7 +329,35 @@ export default function Auth() {
                 )}
               </button>
             </form>
+
+            {/* Footer */}
+            <p className="text-center font-body text-xs text-g-text-tertiary mt-6">
+              {isSignIn ? (
+                <>Don't have an account?{' '}
+                  <button type="button" onClick={() => { setMode('signup'); setError('') }} className="text-g-blue font-medium hover:underline">
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>Already have an account?{' '}
+                  <button type="button" onClick={() => { setMode('signin'); setError('') }} className="text-g-blue font-medium hover:underline">
+                    Sign in
+                  </button>
+                </>
+              )}
+            </p>
           </div>
+
+          {/* Mobile — Feature chips */}
+          <div className="flex flex-wrap justify-center gap-2 mt-6 lg:hidden">
+            <FeatureChip icon={BarChart3} text="180-day runway" />
+            <FeatureChip icon={Brain} text="AI strategist" />
+            <FeatureChip icon={Shield} text="Capital One" />
+          </div>
+
+          <p className="text-center font-mono text-[10px] text-g-text-tertiary mt-6 lg:mt-8">
+            Built for HackIllinois 2025 · Powered by Capital One Nessie API
+          </p>
         </div>
       </div>
     </div>

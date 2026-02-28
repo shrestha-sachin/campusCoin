@@ -29,13 +29,13 @@ const FREQ_LABELS = { monthly: 'Monthly', weekly: 'Weekly', semesterly: 'Semeste
 
 export default function Onboarding() {
     const navigate = useNavigate()
-    const { completeOnboarding } = useApp()
+    const { auth, completeOnboarding } = useApp()
     const [step, setStep] = useState(0)
     const [direction, setDirection] = useState('right') // track animation direction
     const [animKey, setAnimKey] = useState(0) // force re-mount for animation
 
     // Form state
-    const [name, setName] = useState('')
+    const [name, setName] = useState(auth.name || '')
     const [university, setUniversity] = useState('')
     const [major, setMajor] = useState('')
     const [gradDate, setGradDate] = useState('')
@@ -111,7 +111,7 @@ export default function Onboarding() {
         setSubmitting(true)
         setSubmitError('')
 
-        const userId = uuidv4()
+        const userId = auth.user_id || uuidv4()
         const balanceNum = Number(balance)
         let nessieAccountId = null
         let nessieCustomerId = null
@@ -134,21 +134,39 @@ export default function Onboarding() {
             console.warn('Nessie account creation failed (continuing without it):', err)
         }
 
-        completeOnboarding({
-            profile: {
-                user_id: userId,
-                name: name.trim(),
-                university: university.trim(),
-                major: major.trim(),
-                graduation_date: gradDate,
-                financial_goals: goals,
-                current_balance: balanceNum,
-                nessie_account_id: nessieAccountId,
-                nessie_customer_id: nessieCustomerId,
-            },
+        const profileData = {
+            user_id: userId,
+            name: name.trim(),
+            university: university.trim(),
+            major: major.trim(),
+            graduation_date: gradDate,
+            financial_goals: goals,
+            current_balance: balanceNum,
+            nessie_account_id: nessieAccountId,
+            nessie_customer_id: nessieCustomerId,
+        }
+
+        const onboardingData = {
+            profile: profileData,
             incomeStreams: incomes,
             expenses: expenseList,
-        })
+        }
+
+        // 1. Update local state
+        completeOnboarding(onboardingData)
+
+        // 2. Save to backend immediately (don't rely on debounce)
+        try {
+            await api.saveProfile(userId, {
+                profile: profileData,
+                income_streams: incomes,
+                expenses: expenseList,
+            })
+            console.log('[CampusCoin] Profile saved to backend on onboarding complete')
+        } catch (err) {
+            console.warn('Backend save failed (data safe in localStorage):', err)
+        }
+
         setSubmitting(false)
         navigate('/dashboard')
     }

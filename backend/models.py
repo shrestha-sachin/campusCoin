@@ -13,6 +13,7 @@ class Profile(BaseModel):
     financial_goals: List[str] = []
     current_balance: float = 0.0
     nessie_account_id: Optional[str] = None
+    nessie_customer_id: Optional[str] = None
 
 
 class IncomeStream(BaseModel):

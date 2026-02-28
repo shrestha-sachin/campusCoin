@@ -44,6 +44,10 @@ async def signup(req: SignupRequest):
     if not req.name.strip():
         raise HTTPException(status_code=400, detail="Name is required")
 
+    # Validate .edu email
+    if not email.endswith(".edu"):
+        raise HTTPException(status_code=400, detail="Please use a valid university email (.edu)")
+
     # Check if email already exists
     try:
         existing = auth_dict[email]
@@ -108,4 +112,39 @@ async def login(req: LoginRequest):
         "name": auth_entry["name"],
         "email": email,
         "profile_data": profile_data,  # null if not onboarded yet
+    }
+
+
+class DeleteRequest(BaseModel):
+    email: str
+
+
+@router.post("/delete-account")
+async def delete_account(req: DeleteRequest):
+    """Delete a user's auth entry and profile data."""
+    email = req.email.strip().lower()
+    user_id = hashlib.md5(email.encode()).hexdigest()
+
+    deleted_auth = False
+    deleted_profile = False
+
+    try:
+        del auth_dict[email]
+        deleted_auth = True
+    except KeyError:
+        pass
+
+    from services.profile import profiles_dict
+    try:
+        del profiles_dict[user_id]
+        deleted_profile = True
+    except KeyError:
+        pass
+
+    return {
+        "success": True,
+        "email": email,
+        "user_id": user_id,
+        "deleted_auth": deleted_auth,
+        "deleted_profile": deleted_profile,
     }
