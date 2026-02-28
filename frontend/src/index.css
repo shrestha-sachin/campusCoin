@@ -167,6 +167,9 @@
   --color-g-green-pastel: #e6f4ea;
   --color-g-yellow-pastel: #fef7e0;
   --color-g-red-pastel: #fce8e6;
+  --color-g-purple: #a142f4;
+  --color-g-purple-half: #c58af9;
+  --color-g-purple-pastel: #f3e8fe;
 
   --color-g-surface: #ffffff;
   --color-g-bg: #f8f9fa;
@@ -502,10 +505,12 @@ body {
     transform: translate3d(0, 0, 0) scale(1);
     opacity: 0.9;
   }
+
   50% {
     transform: translate3d(-4%, -2%, 0) scale(1.03);
     opacity: 0.7;
   }
+
   100% {
     transform: translate3d(4%, 3%, 0) scale(1.06);
     opacity: 0.85;

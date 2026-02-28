@@ -14,7 +14,7 @@ import PartnerLogos from './PartnerLogos.jsx'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/manage', icon: SlidersHorizontal, label: 'Manage' },
-  { to: '/strategist', icon: Bot, label: 'Strategist' },
+  { to: '/strategist', icon: Bot, label: 'Navigator' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
