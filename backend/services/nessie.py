@@ -21,22 +21,41 @@ def _key():
 
 @router.get("/balance/{account_id}")
 async def get_balance(account_id: str):
-    """Get the live balance for a Nessie account."""
+    """Get the live balance for a Nessie account (dynamically calculated)."""
+    key = _key()
     async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{NESSIE_BASE}/accounts/{account_id}",
-            params={"key": _key()}
+        # Fetch account, deposits, and purchases concurrently
+        acct_resp, dep_resp, pur_resp = await asyncio_gather(
+            client.get(f"{NESSIE_BASE}/accounts/{account_id}", params={"key": key}),
+            client.get(f"{NESSIE_BASE}/accounts/{account_id}/deposits", params={"key": key}),
+            client.get(f"{NESSIE_BASE}/accounts/{account_id}/purchases", params={"key": key}),
         )
-        if resp.status_code != 200:
-            raise HTTPException(status_code=resp.status_code, detail="Nessie API error")
-        data = resp.json()
+
+        if acct_resp.status_code != 200:
+            raise HTTPException(status_code=acct_resp.status_code, detail="Nessie account not found")
+        
+        acct_data = acct_resp.json()
+        base_balance = acct_data.get("balance", 0.0)
+
+        # Calculate live balance from transactions
+        live_balance = base_balance
+
+        if dep_resp.status_code == 200:
+            for dep in dep_resp.json():
+                # In sandbox, all transactions are treated as completed
+                live_balance += dep.get("amount", 0.0)
+                
+        if pur_resp.status_code == 200:
+            for pur in pur_resp.json():
+                live_balance -= pur.get("amount", 0.0)
+
         return {
-            "balance": data.get("balance", 0.0),
-            "account_id": data.get("_id", account_id),
-            "nickname": data.get("nickname", "My Account"),
-            "type": data.get("type", "Checking"),
-            "rewards": data.get("rewards", 0),
-            "customer_id": data.get("customer_id"),
+            "balance": round(live_balance, 2),
+            "account_id": acct_data.get("_id", account_id),
+            "nickname": acct_data.get("nickname", "My Account"),
+            "type": acct_data.get("type", "Checking"),
+            "rewards": acct_data.get("rewards", 0),
+            "customer_id": acct_data.get("customer_id"),
         }
 
 
@@ -99,7 +118,7 @@ async def get_all_transactions(account_id: str):
                 "amount": d.get("amount", 0),
                 "date": d.get("transaction_date"),
                 "description": d.get("description", "Deposit"),
-                "status": d.get("status", "completed"),
+                "status": "completed",
                 "medium": d.get("medium", "balance"),
             })
 
@@ -111,7 +130,7 @@ async def get_all_transactions(account_id: str):
                 "amount": p.get("amount", 0),
                 "date": p.get("purchase_date"),
                 "description": p.get("description", "Purchase"),
-                "status": p.get("status", "completed"),
+                "status": "completed",
                 "medium": p.get("medium", "balance"),
                 "merchant_id": p.get("merchant_id"),
             })

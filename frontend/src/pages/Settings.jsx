@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProfileForm from '../components/ProfileForm.jsx'
 import { useApp, clearStorage } from '../store.jsx'
-import { LogOut, RotateCcw, UserCircle2, Lock, KeyRound, Loader2, Check } from 'lucide-react'
+import { LogOut, RotateCcw, UserCircle2, Lock, KeyRound, Loader2, Check, Trash2, Bell, Moon, Download, Settings2, ExternalLink } from 'lucide-react'
 import { api } from '../api'
 
 function PasswordChange() {
@@ -120,10 +120,27 @@ export default function Settings() {
   const displayName = auth.name || profile.name || 'Student'
   const displayEmail = auth.email || 'Signed in on this device'
 
+  const [isDeleting, setIsDeleting] = useState(false)
+
   function handleReset() {
     if (window.confirm('This will clear all your data and restart onboarding. Continue?')) {
       clearStorage()
       window.location.href = '/onboarding'
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (window.confirm('WARNING: This will permanently delete your account, profile data, and remove you from the system. This cannot be undone. Are you absolutely sure?')) {
+      setIsDeleting(true)
+      try {
+        await api.deleteAccount({ email: auth.email })
+        clearStorage()
+        window.location.href = '/auth'
+      } catch (err) {
+        console.error(err)
+        alert('Failed to delete account. Please try again.')
+        setIsDeleting(false)
+      }
     }
   }
 
@@ -133,8 +150,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-2xl mx-auto pb-24">
-      <div className="fade-up-1 mb-5 sm:mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-24">
+      <div className="fade-up-1 mb-2 sm:mb-4">
         <h1 className="font-display font-bold text-2xl sm:text-[28px] text-g-text tracking-tight">Settings</h1>
         <p className="font-body text-g-text-secondary text-sm mt-1">
           Manage your account and update your preferences.
@@ -142,11 +159,15 @@ export default function Settings() {
       </div>
 
       {/* Account overview */}
-      <div className="fade-up-1 mb-6 card p-5 flex items-center justify-between gap-4">
+      <div className="fade-up-1 card p-5 flex items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-g-blue-pastel flex items-center justify-center">
-              <UserCircle2 size={24} className="text-g-blue" />
+            <div className="w-11 h-11 rounded-2xl bg-g-blue-pastel flex items-center justify-center overflow-hidden">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle2 size={24} className="text-g-blue" />
+              )}
             </div>
             <div>
               <p className="font-display font-semibold text-g-text text-sm">{displayName}</p>
@@ -164,31 +185,61 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="fade-up-2">
-        <ProfileForm />
-      </div>
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-start">
 
-      <div className="fade-up-2">
-        <PasswordChange />
-      </div>
-
-      {/* Danger zone */}
-      <div className="fade-up-3 card p-5 border border-g-red/15">
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
-            <RotateCcw size={16} className="text-g-red" />
-          </div>
-          <h3 className="font-display font-semibold text-g-text text-sm">Reset Device Data</h3>
+        {/* Left Column (Main) */}
+        <div className="lg:col-span-3 space-y-5 sm:space-y-6 fade-up-2">
+          <ProfileForm />
         </div>
-        <p className="font-body text-g-text-secondary text-xs mb-4 leading-relaxed max-w-md">
-          Clear local storage cache. Your data remains safe on the cloud.
-        </p>
-        <button
-          onClick={handleReset}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-red-pastel text-g-red font-body text-xs font-medium border border-g-red/20 hover:bg-g-red/10 transition-colors"
-        >
-          <RotateCcw size={13} /> Clear Cache & Log Out
-        </button>
+
+        {/* Right Column (Sidebar) */}
+        <div className="lg:col-span-2 space-y-5 sm:space-y-6 fade-up-3">
+          <PasswordChange />
+
+          {/* Danger zone */}
+          <div className="card border border-g-red/15 overflow-hidden">
+            {/* Reset internal cache */}
+            <div className="p-5 border-b border-g-border/50 bg-g-surface/50">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
+                  <RotateCcw size={16} className="text-g-red" />
+                </div>
+                <h3 className="font-display font-semibold text-g-text text-sm">Reset Device Data</h3>
+              </div>
+              <p className="font-body text-g-text-secondary text-xs mb-4 leading-relaxed max-w-md">
+                Clear local storage cache. Your data remains safe on the cloud.
+              </p>
+              <button
+                onClick={handleReset}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-bg text-g-red font-body text-xs font-medium border border-g-border hover:bg-g-red-pastel transition-colors"
+              >
+                <RotateCcw size={13} /> Clear Cache
+              </button>
+            </div>
+
+            {/* Delete permanent account */}
+            <div className="p-5 bg-white">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-g-red flex items-center justify-center">
+                  <Trash2 size={16} className="text-white" />
+                </div>
+                <h3 className="font-display font-semibold text-g-red text-sm">Delete Account</h3>
+              </div>
+              <p className="font-body text-g-text-secondary text-xs mb-4 leading-relaxed max-w-md">
+                Permanently delete your account, data, and unlink your Student ID. Cannot be undone.
+              </p>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-red text-white font-body text-xs font-medium shadow-sm hover:bg-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {isDeleting ? 'Deleting...' : 'Delete Profile'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

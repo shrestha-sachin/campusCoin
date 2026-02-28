@@ -3,8 +3,61 @@ import { Send, Bot, User } from 'lucide-react'
 import { useApp } from '../store.jsx'
 import { api } from '../api'
 
+/** Converts a subset of markdown to safe HTML for chat bubbles */
+function renderMarkdown(text) {
+  const lines = text.split('\n')
+  const html = []
+  let inList = false
+  let listTag = ''
+
+  const closeList = () => {
+    if (inList) {
+      html.push(`</${listTag}>`)
+      inList = false
+      listTag = ''
+    }
+  }
+
+  const inline = (str) =>
+    str
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code class="font-mono text-g-blue bg-g-blue-pastel px-1 py-0.5 rounded text-[13px]">$1</code>')
+
+  for (const raw of lines) {
+    const line = raw.trimEnd()
+
+    // numbered list
+    const numMatch = line.match(/^(\d+)\.\s+(.*)/)
+    if (numMatch) {
+      if (!inList || listTag !== 'ol') { closeList(); html.push('<ol class="list-decimal list-inside space-y-1 mb-2">'); inList = true; listTag = 'ol' }
+      html.push(`<li class="pl-1">${inline(numMatch[2])}</li>`)
+      continue
+    }
+
+    // bullet list
+    const bulletMatch = line.match(/^[\*\-]\s+(.*)/)
+    if (bulletMatch) {
+      if (!inList || listTag !== 'ul') { closeList(); html.push('<ul class="list-disc list-inside space-y-1 mb-2">'); inList = true; listTag = 'ul' }
+      html.push(`<li class="pl-1">${inline(bulletMatch[1])}</li>`)
+      continue
+    }
+
+    closeList()
+
+    if (line === '') {
+      html.push('<br />')
+    } else {
+      html.push(`<p class="leading-relaxed">${inline(line)}</p>`)
+    }
+  }
+
+  closeList()
+  return html.join('')
+}
+
 export default function ChatInterface() {
-  const { profile, incomeStreams, expenses, runway, aiInsight } = useApp()
+  const { auth, profile, incomeStreams, expenses, runway, aiInsight } = useApp()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,7 +81,7 @@ export default function ChatInterface() {
       // Backend ChatRequest expects:
       // { profile, income_streams, expenses, user_query, conversation_history }
       const res = await api.chat({
-        profile,
+        profile: { ...profile, email: auth?.email },
         income_streams: incomeStreams,
         expenses,
         user_query: text,
@@ -70,10 +123,17 @@ export default function ChatInterface() {
               </div>
             )}
             <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 ${msg.role === 'user'
-                ? 'bg-g-blue text-white rounded-br-lg'
-                : 'bg-g-bg border border-g-border text-g-text rounded-bl-lg'
+              ? 'bg-g-blue text-white rounded-br-lg'
+              : 'bg-g-bg border border-g-border text-g-text rounded-bl-lg'
               }`}>
-              <p className="font-body text-[15px] leading-relaxed whitespace-pre-line">{msg.content}</p>
+              {msg.role === 'user' ? (
+                <p className="font-body text-[15px] leading-relaxed whitespace-pre-line">{msg.content}</p>
+              ) : (
+                <div
+                  className="font-body text-[15px] leading-relaxed prose-sm space-y-1"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                />
+              )}
             </div>
             {msg.role === 'user' && (
               <div className="w-8 h-8 rounded-xl bg-g-text flex items-center justify-center flex-shrink-0 mt-1">

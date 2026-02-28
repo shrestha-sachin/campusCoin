@@ -57,6 +57,7 @@ export function AppProvider({ children }) {
   const [incomeStreams, setIncomeStreams] = useState(stored?.incomeStreams ?? [])
   const [expenses, setExpenses] = useState(stored?.expenses ?? [])
   const [auth, setAuth] = useState(stored?.auth ?? EMPTY_AUTH)
+  const [goals, setGoals] = useState(stored?.goals ?? [])
   const [runway, setRunway] = useState([])
   const [aiInsight, setAiInsight] = useState(null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
@@ -82,6 +83,7 @@ export function AppProvider({ children }) {
         profile,
         income_streams: incomeStreams,
         expenses,
+        goals,
       }).then(() => {
         console.log('[CampusCoin] Profile saved to backend')
       }).catch(err => {
@@ -92,7 +94,7 @@ export function AppProvider({ children }) {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
-  }, [onboarded, profile, incomeStreams, expenses])
+  }, [onboarded, profile, incomeStreams, expenses, goals])
 
   function login({ email, name, user_id, student_id }) {
     setAuth({
@@ -112,6 +114,7 @@ export function AppProvider({ children }) {
         setProfile(data.profile)
         setIncomeStreams(data.income_streams ?? [])
         setExpenses(data.expenses ?? [])
+        setGoals(data.goals ?? [])
         setOnboarded(true)
         console.log('[CampusCoin] Profile restored from backend')
         return true
@@ -128,6 +131,7 @@ export function AppProvider({ children }) {
     setProfile(EMPTY_PROFILE)
     setIncomeStreams([])
     setExpenses([])
+    setGoals([])
     setNessieTransactions([])
     clearStorage()
   }
@@ -136,6 +140,7 @@ export function AppProvider({ children }) {
     setProfile(data.profile)
     setIncomeStreams(data.incomeStreams)
     setExpenses(data.expenses)
+    setGoals(data.goals || [])
     setOnboarded(true)
   }
 
@@ -181,8 +186,7 @@ export function AppProvider({ children }) {
 
     if (hasNew) {
       console.log('[CampusCoin] New Nessie transaction detected — running AI analysis')
-      const rw = await refreshRunway()
-      await refreshAI(rw)
+      await refreshAI() // Runway updates automatically due to our new useEffect watching balance
     }
   }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
 
@@ -241,6 +245,15 @@ export function AppProvider({ children }) {
 
   // ── Runway & AI ─────────────────────────────────────
 
+  // Auto-refresh runway whenever inputs or balance change (debounced)
+  useEffect(() => {
+    if (!onboarded) return
+    const timer = setTimeout(() => {
+      refreshRunway()
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [onboarded, incomeStreams, expenses, profile.current_balance])
+
   const refreshRunway = useCallback(async (overrideIncome, overrideExpenses) => {
     const inc = overrideIncome ?? incomeStreams
     const exp = overrideExpenses ?? expenses
@@ -267,7 +280,7 @@ export function AppProvider({ children }) {
     setLoading(prev => ({ ...prev, ai: true }))
     try {
       const data = await api.analyzeFinances({
-        profile,
+        profile: { ...profile, email: auth.email },
         income_streams: incomeStreams,
         expenses,
         runway: runwayData ?? runway,
@@ -292,6 +305,7 @@ export function AppProvider({ children }) {
       profile, setProfile,
       incomeStreams, setIncomeStreams,
       expenses, setExpenses,
+      goals, setGoals,
       runway, setRunway,
       aiInsight, setAiInsight,
       loading,

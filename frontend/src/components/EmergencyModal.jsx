@@ -1,13 +1,32 @@
 import React, { useState } from 'react'
 import { X, Phone, CreditCard, HeartHandshake, AlertTriangle, ExternalLink } from 'lucide-react'
 
-const RESOURCES = [
-  { icon: Phone, label: '211 Helpline', desc: 'Free financial counseling', link: 'tel:211', color: 'from-g-blue to-g-blue-half' },
+const FALLBACK_RESOURCES = [
+  { icon: Phone, label: '211 Helpline', desc: 'Free financial counseling', link: 'https://www.211.org/', color: 'from-g-blue to-g-blue-half' },
   { icon: CreditCard, label: 'Emergency Aid', desc: 'University emergency funds', link: '#', color: 'from-g-green to-g-green-half' },
   { icon: HeartHandshake, label: 'Food Pantry', desc: 'Campus food assistance', link: '#', color: 'from-g-yellow to-g-yellow-half' },
 ]
 
-export default function EmergencyModal({ onClose }) {
+export default function EmergencyModal({ onClose, resources = [] }) {
+  const displayResources = resources.length > 0 ? resources.map((r, i) => {
+    let color = 'from-g-blue to-g-blue-half'
+    let icon = Phone
+    if (i % 3 === 1) { color = 'from-g-green to-g-green-half'; icon = CreditCard }
+    if (i % 3 === 2) { color = 'from-g-yellow to-g-yellow-half'; icon = HeartHandshake }
+
+    let finalLink = r.link || '#'
+    if (finalLink !== '#' && !finalLink.startsWith('http')) {
+      finalLink = `https://${finalLink}`
+    }
+
+    return {
+      icon,
+      label: r.label,
+      desc: r.description,
+      link: finalLink,
+      color
+    }
+  }) : FALLBACK_RESOURCES
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-md p-4">
       <div className="bg-g-surface rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl scale-in" onClick={e => e.stopPropagation()}>
@@ -31,9 +50,9 @@ export default function EmergencyModal({ onClose }) {
         </p>
 
         <div className="space-y-3 mb-7">
-          {RESOURCES.map(({ icon: Icon, label, desc, link, color }) => (
+          {displayResources.map(({ icon: Icon, label, desc, link, color }, idx) => (
             <a
-              key={label}
+              key={`${label}-${idx}`}
               href={link}
               target="_blank"
               rel="noopener"

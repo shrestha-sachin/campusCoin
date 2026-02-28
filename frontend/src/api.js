@@ -63,6 +63,8 @@ export const api = {
     request('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   changePassword: (payload) =>
     request('/api/auth/change-password', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteAccount: (payload) =>
+    request('/api/auth/delete-account', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Health
   health: () =>

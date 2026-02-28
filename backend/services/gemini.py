@@ -71,6 +71,7 @@ async def analyze_finances(req: AnalyzeRequest):
 
 STUDENT PROFILE:
 Name: {req.profile.name}
+Email: {req.profile.email}
 University: {req.profile.university}
 Major: {req.profile.major}
 Graduation: {req.profile.graduation_date}
@@ -101,13 +102,19 @@ Rules:
 - Set status to "critical" if balance hits $0 or can't cover rent/food within 30 days
 - Set status to "caution" if projected balance drops below $300 within 60 days
 - Set emergency_mode to true if balance hits $0 or can't cover rent/food within 30 days
-- When emergency_mode is true, populate emergency_resources with objects like {{"type": "food_pantry|emergency_grant|work_study", "label": "...", "description": "..."}}
+- When emergency_mode is true, populate emergency_resources with objects like {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "...", "description": "...", "link": "..."}}
+- CRITICAL: For the "link" field in emergency_resources, you MUST ACT AS A RESEARCHER. Use the student's listed university and email domain ({req.profile.email}) to search your knowledge base for the exact, real-world URL for that specific service at their university or nearby geographic location (e.g. if university="UT Austin", provide the real link to UT Austin's Student Emergency Fund). Do not use placeholders.
 - shortfall_date should be the ISO date string when balance first goes negative, or null
 - shortfall_amount should be the magnitude of the shortfall at that date"""
 
     try:
         # Let Gemini respond normally and then robustly extract JSON.
-        response = model.generate_content(prompt)
+        try:
+            response = model.generate_content(prompt, tools="google_search_retrieval")
+        except Exception:
+            # Fallback if the SDK/Model version doesn't support the tools parameter format
+            response = model.generate_content(prompt)
+
         data = _extract_json(getattr(response, "text", "") or str(response))
         return AIInsight(**data)
     except json.JSONDecodeError as e:
@@ -136,8 +143,12 @@ async def chat(req: ChatRequest):
     ])
 
     prompt = f"""You are CampusCoin AI, a financial advisor for college students. Answer directly and mathematically using the student's real numbers. Keep responses under 180 words. Be practical and student-friendly.
+STUDENT: {req.profile.name}
+EMAIL: {req.profile.email}
+UNIVERSITY: {req.profile.university}
+BALANCE: ${req.profile.current_balance:.2f}
 
-STUDENT: {req.profile.name} @ {req.profile.university}, Balance: ${req.profile.current_balance:.2f}
+CRITICAL INSTRUCTION: If the student asks for resources, funding, or help, act as a researcher. Use their email domain and university name to search your knowledge base for accurate, real-world URLs from their specific university's webpage or nearby location websites to help them fund their education and plan ahead.
 
 ACTIVE INCOME:
 {income_summary}
@@ -154,7 +165,11 @@ If this is a financial emergency (balance nearly $0, can't cover rent/food in 30
 Assistant:"""
 
     try:
-        response = model.generate_content(prompt)
+        try:
+            response = model.generate_content(prompt, tools="google_search_retrieval")
+        except Exception:
+            response = model.generate_content(prompt)
+            
         text = response.text.strip()
         emergency = "[[EMERGENCY_MODE]]" in text
         text = text.replace("[[EMERGENCY_MODE]]", "").strip()

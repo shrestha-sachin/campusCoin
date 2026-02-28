@@ -2,6 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useApp } from '../store.jsx'
 import BalanceCard from '../components/BalanceCard.jsx'
 import RunwayChart from '../components/RunwayChart.jsx'
+import IncomeExpenseChart from '../components/IncomeExpenseChart.jsx'
+import SavingsGoalsCard from '../components/SavingsGoalsCard.jsx'
+import UpcomingBillsCard from '../components/UpcomingBillsCard.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import NextActionCard from '../components/NextActionCard.jsx'
 import EmergencyModal from '../components/EmergencyModal.jsx'
@@ -110,7 +113,7 @@ export default function Dashboard() {
 
   return (
     <>
-      {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} />}
+      {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} resources={aiInsight?.emergency_resources || []} />}
 
       <div className="p-4 sm:p-6 pt-8 lg:p-8 space-y-5 sm:space-y-6 max-w-6xl mx-auto">
         {/* Header */}
@@ -158,6 +161,12 @@ export default function Dashboard() {
         <div className="fade-up-2 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           <div className="lg:col-span-1"><BalanceCard /></div>
           <div className="lg:col-span-2"><NextActionCard /></div>
+        </div>
+
+        {/* Savings Goals & Upcoming Bills */}
+        <div className="fade-up-3 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          <div><SavingsGoalsCard /></div>
+          <div><UpcomingBillsCard /></div>
         </div>
 
         {/* Capital One Transaction History */}
@@ -280,6 +289,9 @@ export default function Dashboard() {
 
         {/* Runway Chart */}
         <div className="fade-up-3"><RunwayChart /></div>
+
+        {/* Income vs Expenses Chart */}
+        <div className="fade-up-3"><IncomeExpenseChart /></div>
 
         {/* AI Analysis */}
         <div className="fade-up-4 card p-5 sm:p-6">

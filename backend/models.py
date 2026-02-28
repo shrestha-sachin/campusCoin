@@ -7,12 +7,14 @@ from datetime import date
 class Profile(BaseModel):
     user_id: str
     name: str
+    email: Optional[str] = None
     university: str
     major: str
     graduation_date: str  # YYYY-MM-DD
     financial_goals: List[str] = []
     current_balance: float = 0.0
     student_id: Optional[str] = None
+    avatar_url: Optional[str] = None
     nessie_account_id: Optional[str] = None
     nessie_customer_id: Optional[str] = None
 
@@ -40,10 +42,18 @@ class Expense(BaseModel):
     is_active: bool = True
 
 
+class Goal(BaseModel):
+    id: str
+    name: str
+    target: float
+    current: float = 0.0
+
+
 class FinancialData(BaseModel):
     profile: Profile
     income_streams: List[IncomeStream] = []
     expenses: List[Expense] = []
+    goals: List[Goal] = []
 
 
 class RunwayRequest(BaseModel):
@@ -69,6 +79,7 @@ class EmergencyResource(BaseModel):
     type: str
     label: str
     description: str
+    link: str
 
 
 class AIInsight(BaseModel):

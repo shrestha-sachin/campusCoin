@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../store.jsx'
+import { useApp, clearStorage } from '../store.jsx'
 import { api } from '../api'
 import { v4 as uuidv4 } from 'uuid'
 import { format, addMonths } from 'date-fns'
@@ -235,6 +235,17 @@ export default function Onboarding() {
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-surface border border-g-border mt-2">
                                 <Clock size={14} className="text-g-text-tertiary" />
                                 <span className="font-body text-xs text-g-text-tertiary">Takes about 2 minutes</span>
+                            </div>
+
+                            {/* Sign in fallback */}
+                            <div className="mt-8 pt-6 border-t border-g-border/50">
+                                <p className="font-body text-g-text-tertiary text-xs mb-2">Already have an account?</p>
+                                <button
+                                    onClick={() => { clearStorage(); window.location.href = '/auth'; }}
+                                    className="font-body text-g-blue text-sm font-semibold hover:underline"
+                                >
+                                    Log out and Sign in
+                                </button>
                             </div>
                         </div>
                     )}
