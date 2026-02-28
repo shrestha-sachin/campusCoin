@@ -30,15 +30,25 @@ export const api = {
   chat: (payload) =>
     request('/api/ai/chat', { method: 'POST', body: JSON.stringify(payload) }),
 
-  // Nessie
+  // Nessie — Read
   getNessieBalance: (accountId) =>
     request(`/api/nessie/balance/${accountId}`),
+  getNessieDeposits: (accountId) =>
+    request(`/api/nessie/deposits/${accountId}`),
+  getNessiePurchases: (accountId) =>
+    request(`/api/nessie/purchases/${accountId}`),
   getNessieTransactions: (accountId) =>
     request(`/api/nessie/transactions/${accountId}`),
   listNessieAccounts: () =>
     request('/api/nessie/accounts'),
+
+  // Nessie — Write
   createNessieAccount: (payload) =>
     request('/api/nessie/create-account', { method: 'POST', body: JSON.stringify(payload) }),
+  createNessieDeposit: (payload) =>
+    request('/api/nessie/deposit', { method: 'POST', body: JSON.stringify(payload) }),
+  createNessiePurchase: (payload) =>
+    request('/api/nessie/purchase', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Supermemory
   storeMemory: (profile) =>

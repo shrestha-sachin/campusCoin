@@ -16,17 +16,23 @@ const TODAY = format(new Date(), 'yyyy-MM-dd')
 const BLANK = { type: 'fixed', label: '', amount: '', frequency: 'monthly', due_date: TODAY, is_active: true }
 
 export default function ExpenseForm() {
-  const { expenses, setExpenses, refreshRunway, refreshAI } = useApp()
+  const { expenses, setExpenses, refreshRunway, refreshAI, createNessiePurchase } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(BLANK)
 
   async function trigger(exp) { const rw = await refreshRunway(undefined, exp); await refreshAI(rw) }
   function toggle(id) { const u = expenses.map(e => e.id === id ? { ...e, is_active: !e.is_active } : e); setExpenses(u); trigger(u) }
   function remove(id) { const u = expenses.filter(e => e.id !== id); setExpenses(u); trigger(u) }
-  function save() {
+  async function save() {
     if (!form.label.trim() || !form.amount) return
-    const u = [...expenses, { ...form, id: uuidv4(), amount: Number(form.amount) }]
+    const amt = Number(form.amount)
+    const u = [...expenses, { ...form, id: uuidv4(), amount: amt }]
     setExpenses(u); setShowAdd(false); setForm(BLANK); trigger(u)
+
+    // Create a Nessie purchase for this expense
+    if (amt > 0) {
+      createNessiePurchase(amt, `${form.label} (${form.frequency})`)
+    }
   }
 
   return (

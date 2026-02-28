@@ -13,6 +13,7 @@ const EMPTY_PROFILE = {
   financial_goals: [],
   current_balance: 0,
   nessie_account_id: null,
+  nessie_customer_id: null,
 }
 
 const EMPTY_AUTH = {
@@ -56,6 +57,7 @@ export function AppProvider({ children }) {
   const [runway, setRunway] = useState([])
   const [aiInsight, setAiInsight] = useState(null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
+  const [nessieTransactions, setNessieTransactions] = useState([])
 
   // Persist to localStorage on change
   useEffect(() => {
@@ -76,6 +78,7 @@ export function AppProvider({ children }) {
     setProfile(EMPTY_PROFILE)
     setIncomeStreams([])
     setExpenses([])
+    setNessieTransactions([])
     clearStorage()
   }
 
@@ -85,6 +88,72 @@ export function AppProvider({ children }) {
     setExpenses(data.expenses)
     setOnboarded(true)
   }
+
+  // ── Nessie Integration ──────────────────────────────
+
+  /** Sync balance from Nessie (live bank balance) */
+  const syncNessie = useCallback(async () => {
+    if (!profile.nessie_account_id) return
+    try {
+      const data = await api.getNessieBalance(profile.nessie_account_id)
+      setProfile(prev => ({ ...prev, current_balance: data.balance }))
+    } catch (err) {
+      console.error('Nessie balance sync failed:', err)
+    }
+  }, [profile.nessie_account_id])
+
+  /** Fetch Nessie transaction history (deposits + purchases) */
+  const fetchNessieTransactions = useCallback(async () => {
+    if (!profile.nessie_account_id) return []
+    try {
+      const txns = await api.getNessieTransactions(profile.nessie_account_id)
+      setNessieTransactions(txns)
+      return txns
+    } catch (err) {
+      console.error('Nessie transactions fetch failed:', err)
+      return []
+    }
+  }, [profile.nessie_account_id])
+
+  /** Create a Nessie deposit (income). Updates balance on Nessie's side. */
+  const createNessieDeposit = useCallback(async (amount, description) => {
+    if (!profile.nessie_account_id) return null
+    try {
+      const result = await api.createNessieDeposit({
+        account_id: profile.nessie_account_id,
+        amount,
+        description,
+      })
+      // Refresh balance + transactions after a deposit
+      await syncNessie()
+      await fetchNessieTransactions()
+      return result
+    } catch (err) {
+      console.error('Nessie deposit failed:', err)
+      return null
+    }
+  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+
+  /** Create a Nessie purchase (expense). Updates balance on Nessie's side. */
+  const createNessiePurchase = useCallback(async (amount, description) => {
+    if (!profile.nessie_account_id) return null
+    try {
+      const result = await api.createNessiePurchase({
+        account_id: profile.nessie_account_id,
+        amount,
+        description,
+      })
+      // Refresh balance + transactions after a purchase
+      await syncNessie()
+      await fetchNessieTransactions()
+      return result
+    } catch (err) {
+      console.error('Nessie purchase failed:', err)
+      return null
+    }
+  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+
+  // ── Runway & AI ─────────────────────────────────────
 
   const refreshRunway = useCallback(async (overrideIncome, overrideExpenses) => {
     const inc = overrideIncome ?? incomeStreams
@@ -127,16 +196,6 @@ export function AppProvider({ children }) {
     }
   }, [profile, incomeStreams, expenses, runway])
 
-  const syncNessie = useCallback(async () => {
-    if (!profile.nessie_account_id) return
-    try {
-      const data = await api.getNessieBalance(profile.nessie_account_id)
-      setProfile(prev => ({ ...prev, current_balance: data.balance }))
-    } catch (err) {
-      console.error('Nessie sync failed:', err)
-    }
-  }, [profile.nessie_account_id])
-
   return (
     <AppContext.Provider value={{
       auth,
@@ -151,7 +210,12 @@ export function AppProvider({ children }) {
       loading,
       refreshRunway,
       refreshAI,
+      // Nessie
       syncNessie,
+      nessieTransactions,
+      fetchNessieTransactions,
+      createNessieDeposit,
+      createNessiePurchase,
     }}>
       {children}
     </AppContext.Provider>

@@ -18,17 +18,26 @@ const IN_4MO = format(addMonths(new Date(), 4), 'yyyy-MM-dd')
 const BLANK = { type: 'campus_job', label: '', hourly_rate: '', weekly_hours: '', start_date: TODAY, end_date: IN_4MO, is_lump_sum: false, lump_sum_amount: '', is_active: true }
 
 export default function IncomeStreamForm() {
-  const { incomeStreams, setIncomeStreams, refreshRunway, refreshAI } = useApp()
+  const { incomeStreams, setIncomeStreams, refreshRunway, refreshAI, createNessieDeposit } = useApp()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(BLANK)
 
   async function trigger(streams) { const rw = await refreshRunway(streams); await refreshAI(rw) }
   function toggle(id) { const u = incomeStreams.map(s => s.id === id ? { ...s, is_active: !s.is_active } : s); setIncomeStreams(u); trigger(u) }
   function remove(id) { const u = incomeStreams.filter(s => s.id !== id); setIncomeStreams(u); trigger(u) }
-  function save() {
+  async function save() {
     if (!form.label.trim()) return
-    const u = [...incomeStreams, { ...form, id: uuidv4(), hourly_rate: Number(form.hourly_rate) || 0, weekly_hours: Number(form.weekly_hours) || 0, lump_sum_amount: form.is_lump_sum ? Number(form.lump_sum_amount) || 0 : null }]
+    const newStream = { ...form, id: uuidv4(), hourly_rate: Number(form.hourly_rate) || 0, weekly_hours: Number(form.weekly_hours) || 0, lump_sum_amount: form.is_lump_sum ? Number(form.lump_sum_amount) || 0 : null }
+    const u = [...incomeStreams, newStream]
     setIncomeStreams(u); setShowAdd(false); setForm(BLANK); trigger(u)
+
+    // Create a Nessie deposit for this income
+    const monthlyAmt = newStream.is_lump_sum
+      ? (newStream.lump_sum_amount || 0)
+      : (newStream.hourly_rate * newStream.weekly_hours * 4.33)
+    if (monthlyAmt > 0) {
+      createNessieDeposit(Math.round(monthlyAmt * 100) / 100, `${newStream.label} (${newStream.type})`)
+    }
   }
 
   return (

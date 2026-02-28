@@ -8,6 +8,7 @@ import EmergencyModal from '../components/EmergencyModal.jsx'
 import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
+  ArrowUp, ArrowDown, History, CreditCard,
 } from 'lucide-react'
 
 function QuickStat({ icon: Icon, label, value, color, bgColor }) {
@@ -27,15 +28,23 @@ function QuickStat({ icon: Icon, label, value, color, bgColor }) {
 function fmt(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
+function fmtFull(n) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
+}
 
 export default function Dashboard() {
-  const { profile, incomeStreams, expenses, aiInsight, loading, syncNessie, refreshRunway, refreshAI } = useApp()
+  const {
+    profile, incomeStreams, expenses, aiInsight, loading,
+    syncNessie, refreshRunway, refreshAI,
+    nessieTransactions, fetchNessieTransactions,
+  } = useApp()
   const [showEmergency, setShowEmergency] = useState(false)
   const firstName = profile.name.split(' ')[0]
 
   useEffect(() => {
     async function init() {
       await syncNessie()
+      await fetchNessieTransactions()
       const rw = await refreshRunway()
       await refreshAI(rw)
     }
@@ -123,6 +132,71 @@ export default function Dashboard() {
           <div className="lg:col-span-1"><BalanceCard /></div>
           <div className="lg:col-span-2"><NextActionCard /></div>
         </div>
+
+        {/* Nessie Transaction History */}
+        {profile.nessie_account_id && (
+          <div className="fade-up-3 card p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
+                  <CreditCard size={18} className="text-white" />
+                </div>
+                <div>
+                  <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase block">
+                    Nessie Transactions
+                  </span>
+                  <span className="font-mono text-[10px] text-g-text-tertiary">
+                    Live from Capital One
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-g-green pulse-dot" />
+                <span className="font-mono text-[10px] text-g-text-tertiary">Live</span>
+              </div>
+            </div>
+
+            {nessieTransactions.length === 0 ? (
+              <div className="text-center py-8 border-2 border-dashed border-g-border rounded-2xl bg-g-bg/50">
+                <History size={28} className="text-g-text-tertiary mx-auto mb-2.5" />
+                <p className="font-body text-g-text-secondary text-sm">No transactions yet</p>
+                <p className="font-body text-g-text-tertiary text-xs mt-1">Deposits and purchases will show up here</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
+                {nessieTransactions.map((tx, i) => {
+                  const isDeposit = tx.type === 'deposit'
+                  return (
+                    <div
+                      key={tx.id || i}
+                      className="stagger-item flex items-center gap-3 px-4 py-3 rounded-2xl bg-g-bg border border-g-border hover:border-g-blue/20 transition-colors"
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isDeposit ? 'bg-g-green-pastel' : 'bg-g-red-pastel'
+                        }`}>
+                        {isDeposit
+                          ? <ArrowDown size={16} className="text-g-green" />
+                          : <ArrowUp size={16} className="text-g-red" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-g-text text-sm font-medium truncate">
+                          {tx.description}
+                        </p>
+                        <p className="font-mono text-[10px] text-g-text-tertiary">
+                          {tx.date || '—'} · {isDeposit ? 'Deposit' : 'Purchase'} · {tx.status}
+                        </p>
+                      </div>
+                      <p className={`font-mono text-sm font-semibold flex-shrink-0 ${isDeposit ? 'text-g-green' : 'text-g-red'
+                        }`}>
+                        {isDeposit ? '+' : '−'}{fmtFull(tx.amount)}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Spending Breakdown */}
         {expenses.filter(e => e.is_active).length > 0 && (
