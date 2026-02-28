@@ -122,7 +122,7 @@ export default function Onboarding() {
         const lastName = parts.slice(1).join(' ') || 'User'
 
         try {
-            // 1. Create Nessie customer + checking account
+            // Create Nessie customer + checking account with starting balance
             const nessie = await api.createNessieAccount({
                 first_name: firstName,
                 last_name: lastName,
@@ -130,33 +130,8 @@ export default function Onboarding() {
             })
             nessieAccountId = nessie.account_id
             nessieCustomerId = nessie.customer_id
-
-            // 2. Seed deposits for each income source
-            for (const inc of incomes) {
-                const monthlyAmount = inc.is_lump_sum
-                    ? (inc.lump_sum_amount || 0)
-                    : (inc.hourly_rate || 0) * (inc.weekly_hours || 0) * 4.33 // monthly estimate
-                if (monthlyAmount > 0) {
-                    await api.createNessieDeposit({
-                        account_id: nessieAccountId,
-                        amount: Math.round(monthlyAmount * 100) / 100,
-                        description: `${inc.label} (${inc.type})`,
-                    }).catch(() => { }) // non-blocking
-                }
-            }
-
-            // 3. Seed purchases for each expense
-            for (const exp of expenseList) {
-                if (exp.amount > 0) {
-                    await api.createNessiePurchase({
-                        account_id: nessieAccountId,
-                        amount: exp.amount,
-                        description: `${exp.label} (${exp.frequency})`,
-                    }).catch(() => { }) // non-blocking
-                }
-            }
         } catch (err) {
-            console.warn('Nessie setup failed (continuing without it):', err)
+            console.warn('Nessie account creation failed (continuing without it):', err)
         }
 
         completeOnboarding({

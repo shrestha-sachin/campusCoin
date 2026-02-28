@@ -218,24 +218,6 @@ export function AppProvider({ children }) {
     }
   }, [profile.nessie_account_id, pollNessie])
 
-  /** Simulate a paycheck deposit (for hackathon demo) */
-  const simulatePaycheck = useCallback(async () => {
-    if (!profile.nessie_account_id) return null
-
-    // Calculate monthly income from active streams
-    const monthlyIncome = incomeStreams
-      .filter(s => s.is_active && !s.is_lump_sum)
-      .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
-
-    const biweeklyPay = monthlyIncome / 2
-    if (biweeklyPay <= 0) return null
-
-    const topIncome = incomeStreams.find(s => s.is_active) || { label: 'Paycheck' }
-    return createNessieDeposit(
-      Math.round(biweeklyPay * 100) / 100,
-      `Bi-weekly paycheck — ${topIncome.label}`
-    )
-  }, [profile.nessie_account_id, incomeStreams, createNessieDeposit])
 
   // ── Automatic Polling ───────────────────────────────
 
@@ -318,7 +300,6 @@ export function AppProvider({ children }) {
       createNessieDeposit,
       createNessiePurchase,
       pollNessie,
-      simulatePaycheck,
       lastPoll,
     }}>
       {children}

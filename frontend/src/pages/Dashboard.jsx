@@ -9,7 +9,7 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, DollarSign, Loader2,
+  RefreshCw, Loader2,
 } from 'lucide-react'
 
 function QuickStat({ icon: Icon, label, value, color, bgColor }) {
@@ -19,7 +19,7 @@ function QuickStat({ icon: Icon, label, value, color, bgColor }) {
         <Icon size={18} className={color} />
       </div>
       <div className="min-w-0">
-        <p className="font-body text-[10px] text-g-text-tertiary tracking-wider uppercase">{label}</p>
+        <p className="font-mono text-[10px] text-g-text-tertiary tracking-wider uppercase">{label}</p>
         <p className="font-display font-bold text-g-text text-lg leading-tight truncate">{value}</p>
       </div>
     </div>
@@ -46,10 +46,9 @@ export default function Dashboard() {
   const {
     profile, incomeStreams, expenses, aiInsight, loading,
     refreshRunway,
-    nessieTransactions, pollNessie, simulatePaycheck, lastPoll,
+    nessieTransactions, pollNessie, lastPoll,
   } = useApp()
   const [showEmergency, setShowEmergency] = useState(false)
-  const [simulating, setSimulating] = useState(false)
   const [polling, setPolling] = useState(false)
   const firstName = profile.name.split(' ')[0]
 
@@ -68,16 +67,15 @@ export default function Dashboard() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  // Compute quick stats
+  // Compute quick stats from real Nessie data
   const stats = useMemo(() => {
-    // Use Nessie transactions for actual income/expense totals if available
     const nessieDeposits = nessieTransactions.filter(t => t.type === 'deposit')
     const nessiePurchases = nessieTransactions.filter(t => t.type === 'purchase')
 
     const totalDeposits = nessieDeposits.reduce((s, t) => s + (t.amount || 0), 0)
     const totalPurchases = nessiePurchases.reduce((s, t) => s + (t.amount || 0), 0)
 
-    // Fall back to estimated monthly if no Nessie transactions
+    // Use Nessie totals if available, otherwise fall back to estimated
     const monthlyIncome = totalDeposits > 0 ? totalDeposits : incomeStreams
       .filter(s => s.is_active && !s.is_lump_sum)
       .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
@@ -104,12 +102,6 @@ export default function Dashboard() {
     }
   }, [incomeStreams, expenses, profile.graduation_date, nessieTransactions])
 
-  async function handleSimulatePaycheck() {
-    setSimulating(true)
-    await simulatePaycheck()
-    setSimulating(false)
-  }
-
   async function handleManualPoll() {
     setPolling(true)
     await pollNessie()
@@ -133,9 +125,7 @@ export default function Dashboard() {
               {profile.graduation_date && ` · Class of ${profile.graduation_date.slice(0, 4)}`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={aiInsight?.status ?? 'on_track'} />
-          </div>
+          <StatusBadge status={aiInsight?.status ?? 'on_track'} />
         </div>
 
         {/* Quick Stats */}
@@ -170,7 +160,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2"><NextActionCard /></div>
         </div>
 
-        {/* Nessie Transaction History — Live Feed */}
+        {/* Capital One Transaction History */}
         {profile.nessie_account_id && (
           <div className="fade-up-3 card p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -182,47 +172,30 @@ export default function Dashboard() {
                   <span className="font-display font-bold text-base text-g-text block">
                     Capital One Transactions
                   </span>
-                  <span className="font-body text-[10px] text-g-text-tertiary flex items-center gap-1.5">
+                  <span className="font-mono text-[10px] text-g-text-tertiary flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-g-green pulse-dot inline-block" />
-                    Auto-syncing every 30s · Last: {timeAgo(lastPoll)}
+                    Auto-syncing · Updated {timeAgo(lastPoll)}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSimulatePaycheck}
-                  disabled={simulating}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-green-pastel text-g-green font-body text-[11px] font-medium border border-g-green/20 hover:bg-g-green hover:text-white transition-all disabled:opacity-50"
-                >
-                  {simulating ? <Loader2 size={12} className="animate-spin" /> : <DollarSign size={12} />}
-                  Simulate Paycheck
-                </button>
-                <button
-                  onClick={handleManualPoll}
-                  disabled={polling}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-bg text-g-text-tertiary font-body text-[11px] font-medium border border-g-border hover:text-g-blue hover:border-g-blue/30 transition-all disabled:opacity-50"
-                >
-                  <RefreshCw size={12} className={polling ? 'animate-spin' : ''} />
-                  Refresh
-                </button>
-              </div>
+              <button
+                onClick={handleManualPoll}
+                disabled={polling}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-bg text-g-text-tertiary font-mono text-[11px] font-medium border border-g-border hover:text-g-blue hover:border-g-blue/30 transition-all disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={polling ? 'animate-spin' : ''} />
+                Sync
+              </button>
             </div>
 
             {nessieTransactions.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-g-border rounded-2xl bg-g-bg/50">
                 <History size={28} className="text-g-text-tertiary mx-auto mb-2.5" />
-                <p className="font-body text-g-text-secondary text-sm font-medium">Waiting for transactions…</p>
-                <p className="font-body text-g-text-tertiary text-xs mt-1">
-                  Deposits and purchases from Capital One will appear here automatically
+                <p className="font-body text-g-text-secondary text-sm font-medium">No transactions yet</p>
+                <p className="font-body text-g-text-tertiary text-xs mt-1 max-w-sm mx-auto">
+                  Transactions from your Capital One account will appear here automatically.
+                  Add income or expenses in the Manage section to create them.
                 </p>
-                <button
-                  onClick={handleSimulatePaycheck}
-                  disabled={simulating}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm disabled:opacity-50"
-                >
-                  {simulating ? <Loader2 size={14} className="animate-spin" /> : <DollarSign size={14} />}
-                  Simulate First Paycheck
-                </button>
               </div>
             ) : (
               <div className="space-y-1.5 max-h-[340px] overflow-y-auto">
@@ -244,11 +217,11 @@ export default function Dashboard() {
                         <p className="font-body text-g-text text-sm font-medium truncate">
                           {tx.description}
                         </p>
-                        <p className="font-body text-[10px] text-g-text-tertiary">
+                        <p className="font-mono text-[10px] text-g-text-tertiary">
                           {tx.date || '—'} · {isDeposit ? 'Deposit' : 'Purchase'} · {tx.status}
                         </p>
                       </div>
-                      <p className={`font-body text-sm font-semibold flex-shrink-0 ${isDeposit ? 'text-g-green' : 'text-g-red'
+                      <p className={`font-mono text-sm font-semibold flex-shrink-0 ${isDeposit ? 'text-g-green' : 'text-g-red'
                         }`}>
                         {isDeposit ? '+' : '−'}{fmtFull(tx.amount)}
                       </p>
@@ -258,15 +231,12 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Transaction summary footer */}
             {nessieTransactions.length > 0 && (
               <div className="mt-4 pt-4 border-t border-g-border flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="font-body text-[11px] text-g-text-tertiary">
-                    {stats.depositCount} deposit{stats.depositCount !== 1 ? 's' : ''} · {stats.purchaseCount} purchase{stats.purchaseCount !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <span className="font-body text-[11px] text-g-text-tertiary">
+                <span className="font-mono text-[11px] text-g-text-tertiary">
+                  {stats.depositCount} deposit{stats.depositCount !== 1 ? 's' : ''} · {stats.purchaseCount} purchase{stats.purchaseCount !== 1 ? 's' : ''}
+                </span>
+                <span className="font-mono text-[11px] text-g-text-tertiary">
                   AI analyzes on new transactions only
                 </span>
               </div>
@@ -281,7 +251,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
                 <Banknote size={16} className="text-g-red" />
               </div>
-              <span className="font-body text-[11px] text-g-text-secondary tracking-widest uppercase">
+              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
                 Spending Breakdown
               </span>
             </div>
@@ -298,7 +268,7 @@ export default function Dashboard() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="font-body text-xs text-g-text-secondary w-16 text-right flex-shrink-0">
+                    <p className="font-mono text-xs text-g-text-secondary w-16 text-right flex-shrink-0">
                       {fmt(exp.amount)}
                     </p>
                   </div>
@@ -311,17 +281,17 @@ export default function Dashboard() {
         {/* Runway Chart */}
         <div className="fade-up-3"><RunwayChart /></div>
 
-        {/* Full Analysis */}
+        {/* AI Analysis */}
         <div className="fade-up-4 card p-5 sm:p-6">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-8 h-8 rounded-xl bg-g-blue-pastel flex items-center justify-center">
               <FileText size={16} className="text-g-blue" />
             </div>
             <div>
-              <span className="font-body text-[11px] text-g-text-secondary tracking-widest uppercase block">
+              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase block">
                 AI Analysis
               </span>
-              <span className="font-body text-[10px] text-g-text-tertiary">
+              <span className="font-mono text-[10px] text-g-text-tertiary">
                 Triggered by new transactions
               </span>
             </div>
@@ -344,8 +314,8 @@ export default function Dashboard() {
               <p className="font-body text-g-text-tertiary text-sm">
                 Waiting for transactions to analyze…
               </p>
-              <p className="font-body text-[11px] text-g-text-tertiary mt-1">
-                AI will automatically run when a new deposit or purchase is detected
+              <p className="font-mono text-[11px] text-g-text-tertiary mt-1">
+                AI will automatically run when a new deposit or purchase is detected from Capital One
               </p>
             </div>
           )}
