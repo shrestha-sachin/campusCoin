@@ -163,15 +163,15 @@
   --color-g-yellow-half: #ffd427;
   --color-g-red-half: #ff7daf;
 
-  --color-g-blue-pastel: #dbeafe;
-  --color-g-green-pastel: #d9f5d6;
-  --color-g-yellow-pastel: #fef3c7;
-  --color-g-red-pastel: #fee2e2;
+  --color-g-blue-pastel: #e8f0fe;
+  --color-g-green-pastel: #e6f4ea;
+  --color-g-yellow-pastel: #fef7e0;
+  --color-g-red-pastel: #fce8e6;
 
   --color-g-surface: #ffffff;
   --color-g-bg: #f8f9fa;
-  --color-g-border: #e0e0e0;
-  --color-g-text: #1f1f1f;
+  --color-g-border: #dadce0;
+  --color-g-text: #202124;
   --color-g-text-secondary: #5f6368;
   --color-g-text-tertiary: #9aa0a6;
 }
@@ -193,6 +193,8 @@ body {
   background-color: var(--color-g-bg);
   color: var(--color-g-text);
   font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -216,17 +218,22 @@ body {
   background: rgba(0, 0, 0, 0.22);
 }
 
-/* ── Card ── */
+/* ── Card — modern glass-like surface ── */
 .card {
   background: var(--color-g-surface);
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--color-g-border);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
 }
 
 /* ── Button ── */
@@ -236,12 +243,13 @@ body {
   color: #ffffff;
   font-family: var(--font-body);
   font-weight: 500;
-  transition: box-shadow 0.2s, background-color 0.2s, transform 0.1s;
+  font-size: 15px;
+  transition: box-shadow 0.2s, background-color 0.2s, transform 0.15s;
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: #3367d6;
-  box-shadow: 0 1px 6px rgba(66, 133, 244, 0.35);
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.4);
   transform: translateY(-1px);
 }
 
@@ -249,27 +257,31 @@ body {
   transform: translateY(0);
 }
 
-/* ── Animations ── */
+/* ── Fade-up animations (staggered) ── */
 .fade-up-1 {
-  animation: fadeUp 0.4s ease 0.05s both;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
 }
 
 .fade-up-2 {
-  animation: fadeUp 0.4s ease 0.12s both;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
 .fade-up-3 {
-  animation: fadeUp 0.4s ease 0.2s both;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
 }
 
 .fade-up-4 {
-  animation: fadeUp 0.4s ease 0.28s both;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+}
+
+.fade-up-5 {
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.36s both;
 }
 
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(20px);
   }
 
   to {
@@ -278,6 +290,74 @@ body {
   }
 }
 
+/* ── Slide transitions for onboarding ── */
+.slide-in {
+  animation: slideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ── Scale-in for icons/badges ── */
+.scale-in {
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Float animation for welcome icon ── */
+.float-anim {
+  animation: floatUpDown 3s ease-in-out infinite;
+}
+
+@keyframes floatUpDown {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ── Pulse animations ── */
 @keyframes pulseDot {
 
   0%,
@@ -296,6 +376,24 @@ body {
   animation: pulseDot 2s ease-in-out infinite;
 }
 
+/* ── Glow pulse for progress bar ── */
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(66, 133, 244, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 12px rgba(66, 133, 244, 0.5);
+  }
+}
+
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* ── Typing indicator ── */
 @keyframes typingBounce {
 
   0%,
@@ -304,7 +402,7 @@ body {
   }
 
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
   }
 }
 
@@ -320,7 +418,7 @@ body {
   animation: typingBounce 1s ease infinite 300ms;
 }
 
-/* ── Skeleton ── */
+/* ── Skeleton shimmer ── */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -335,21 +433,21 @@ body {
   background: linear-gradient(90deg, #f1f3f4 25%, #e8eaed 50%, #f1f3f4 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
-/* ── Shared Input ── */
+/* ── Shared Input — larger and more touch-friendly ── */
 .input-field {
   width: 100%;
   background: var(--color-g-bg);
-  border: 1px solid var(--color-g-border);
-  border-radius: 12px;
-  padding: 10px 14px;
+  border: 1.5px solid var(--color-g-border);
+  border-radius: 14px;
+  padding: 13px 16px;
   color: var(--color-g-text);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .input-field::placeholder {
@@ -357,18 +455,71 @@ body {
 }
 
 .input-field:focus {
+  background: var(--color-g-surface);
   border-color: var(--color-g-blue);
-  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.12);
+  box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.1);
 }
 
-/* ── Label ── */
+/* ── Label — slightly larger ── */
 .label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-g-text-secondary);
+}
+
+/* ── Gradient background for onboarding ── */
+.onboarding-bg {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(66, 133, 244, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(52, 168, 83, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(249, 171, 0, 0.04) 0%, transparent 50%),
+    var(--color-g-bg);
+}
+
+/* ── Progress bar step connector ── */
+.progress-step {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Staggered list items ── */
+.stagger-item {
+  animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.stagger-item:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger-item:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+/* ── Modern select appearance ── */
+select.input-field {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 5L6 8L9 5' stroke='%239aa0a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
 }

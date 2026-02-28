@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store.jsx'
 import { v4 as uuidv4 } from 'uuid'
@@ -7,7 +7,7 @@ import Logo from '../components/Logo.jsx'
 import {
     User, GraduationCap, Wallet, Briefcase, Receipt,
     Target, ChevronRight, ChevronLeft, Sparkles,
-    Plus, X, ArrowRight,
+    Plus, X, ArrowRight, DollarSign, Clock,
 } from 'lucide-react'
 
 const today = new Date()
@@ -30,6 +30,8 @@ export default function Onboarding() {
     const navigate = useNavigate()
     const { completeOnboarding } = useApp()
     const [step, setStep] = useState(0)
+    const [direction, setDirection] = useState('right') // track animation direction
+    const [animKey, setAnimKey] = useState(0) // force re-mount for animation
 
     // Form state
     const [name, setName] = useState('')
@@ -54,6 +56,19 @@ export default function Onboarding() {
         if (step === 1) return name.trim() && university.trim() && major.trim() && gradDate
         if (step === 2) return balance !== '' && Number(balance) >= 0
         return true
+    }
+
+    function goNext() {
+        if (!canNext()) return
+        setDirection('right')
+        setAnimKey(k => k + 1)
+        setStep(s => s + 1)
+    }
+
+    function goBack() {
+        setDirection('left')
+        setAnimKey(k => k + 1)
+        setStep(s => s - 1)
     }
 
     function addIncome() {
@@ -106,77 +121,90 @@ export default function Onboarding() {
     }
 
     const isLast = step === STEPS.length - 1
+    const animClass = direction === 'right' ? 'slide-in' : 'slide-in-left'
+    const pct = ((step + 1) / STEPS.length) * 100
 
     return (
-        <div className="min-h-screen bg-g-bg flex flex-col">
+        <div className="min-h-screen onboarding-bg flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-5 flex items-center justify-center">
-                <Logo size="default" />
+            <div className="px-6 py-5 sm:py-6 flex items-center justify-center fade-up-1">
+                <Logo size="large" />
             </div>
 
-            {/* Progress bar */}
-            <div className="max-w-2xl mx-auto w-full px-6 mb-2">
-                <div className="flex items-center gap-1">
-                    {STEPS.map((s, i) => (
-                        <div key={s.id} className="flex-1 flex items-center gap-1">
-                            <div className={`h-1 rounded-full flex-1 transition-all duration-300 ${i <= step ? 'bg-g-blue' : 'bg-g-border'
-                                }`} />
-                        </div>
-                    ))}
+            {/* Unified progress bar */}
+            <div className="max-w-2xl mx-auto w-full px-6 mb-4">
+                <div className="h-1.5 rounded-full bg-g-border/50 overflow-hidden">
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-g-blue to-g-blue-half transition-all duration-500 ease-out glow-pulse"
+                        style={{ width: `${pct}%` }}
+                    />
                 </div>
-                <div className="flex justify-between mt-2">
+                <div className="flex justify-between mt-3">
                     {STEPS.map((s, i) => {
                         const Icon = s.icon
+                        const isActive = i === step
+                        const isDone = i < step
                         return (
-                            <div key={s.id} className={`flex items-center gap-1 transition-colors ${i === step ? 'text-g-blue' : i < step ? 'text-g-green' : 'text-g-text-tertiary'
-                                }`}>
-                                <Icon size={12} />
-                                <span className="font-mono text-[9px] tracking-wide hidden sm:inline">{s.label}</span>
+                            <div
+                                key={s.id}
+                                className={`flex items-center gap-1.5 transition-all duration-300 ${isActive ? 'text-g-blue scale-105' : isDone ? 'text-g-green' : 'text-g-text-tertiary'
+                                    }`}
+                            >
+                                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all duration-300 ${isActive ? 'bg-g-blue text-white shadow-md' : isDone ? 'bg-g-green-pastel' : 'bg-g-bg'
+                                    }`}>
+                                    <Icon size={12} />
+                                </div>
+                                <span className="font-mono text-[10px] sm:text-[11px] tracking-wide hidden sm:inline font-medium">
+                                    {s.label}
+                                </span>
                             </div>
                         )
                     })}
                 </div>
             </div>
 
-            {/* Card area */}
-            <div className="flex-1 flex items-start justify-center px-4 sm:px-6 pt-4 pb-8">
-                <div className="w-full max-w-2xl">
+            {/* Step content area */}
+            <div className="flex-1 flex items-start justify-center px-4 sm:px-6 pt-2 pb-8">
+                <div className="w-full max-w-2xl" key={animKey}>
 
                     {/* Step 0: Welcome */}
                     {step === 0 && (
-                        <div className="text-center py-8 sm:py-12 fade-up-1">
-                            <div className="w-16 h-16 mx-auto rounded-2xl bg-g-blue-pastel flex items-center justify-center mb-6">
-                                <Sparkles size={28} className="text-g-blue" />
+                        <div className={`text-center py-10 sm:py-16 ${animClass}`}>
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center mb-7 scale-in float-anim shadow-lg">
+                                <Sparkles size={36} className="text-white sm:w-10 sm:h-10" />
                             </div>
-                            <h1 className="font-display font-bold text-2xl sm:text-3xl text-g-text tracking-tight mb-3">
-                                Welcome to CampusCoin
+                            <h1 className="font-display font-bold text-3xl sm:text-4xl text-g-text tracking-tight mb-4">
+                                Welcome to <span className="text-g-blue">CampusCoin</span>
                             </h1>
-                            <p className="font-body text-g-text-secondary text-sm sm:text-base max-w-md mx-auto leading-relaxed mb-2">
+                            <p className="font-body text-g-text-secondary text-base sm:text-lg max-w-md mx-auto leading-relaxed mb-3">
                                 Your AI-powered financial companion built for the student lifecycle.
-                                Let's get to know you so we can personalize your experience.
+                                Let's personalize your experience.
                             </p>
-                            <p className="font-mono text-[11px] text-g-text-tertiary">Takes about 2 minutes</p>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-surface border border-g-border mt-2">
+                                <Clock size={14} className="text-g-text-tertiary" />
+                                <span className="font-mono text-xs text-g-text-tertiary">Takes about 2 minutes</span>
+                            </div>
                         </div>
                     )}
 
                     {/* Step 1: Personal */}
                     {step === 1 && (
-                        <div className="card p-5 sm:p-7 fade-up-1">
-                            <div className="flex items-center gap-2.5 mb-5">
-                                <div className="w-9 h-9 rounded-xl bg-g-blue-pastel flex items-center justify-center">
-                                    <GraduationCap size={18} className="text-g-blue" />
+                        <div className={`card p-6 sm:p-8 ${animClass}`}>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center scale-in shadow-sm">
+                                    <GraduationCap size={22} className="text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="font-display font-bold text-g-text text-lg">About You</h2>
-                                    <p className="font-body text-g-text-secondary text-xs">Tell us about yourself</p>
+                                    <h2 className="font-display font-bold text-g-text text-xl sm:text-2xl">About You</h2>
+                                    <p className="font-body text-g-text-secondary text-sm">Tell us about yourself</p>
                                 </div>
                             </div>
-                            <div className="space-y-3.5">
+                            <div className="space-y-4">
                                 <div>
                                     <label className="label">Full Name</label>
                                     <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Alex Chen" className="input-field" autoFocus />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="label">University</label>
                                         <input type="text" value={university} onChange={e => setUniversity(e.target.value)} placeholder="UIUC" className="input-field" />
@@ -196,27 +224,30 @@ export default function Onboarding() {
 
                     {/* Step 2: Balance */}
                     {step === 2 && (
-                        <div className="card p-5 sm:p-7 fade-up-1">
-                            <div className="flex items-center gap-2.5 mb-5">
-                                <div className="w-9 h-9 rounded-xl bg-g-green-pastel flex items-center justify-center">
-                                    <Wallet size={18} className="text-g-green" />
+                        <div className={`card p-6 sm:p-8 ${animClass}`}>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center scale-in shadow-sm">
+                                    <Wallet size={22} className="text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="font-display font-bold text-g-text text-lg">Current Balance</h2>
-                                    <p className="font-body text-g-text-secondary text-xs">How much do you have right now?</p>
+                                    <h2 className="font-display font-bold text-g-text text-xl sm:text-2xl">Current Balance</h2>
+                                    <p className="font-body text-g-text-secondary text-sm">How much do you have right now?</p>
                                 </div>
                             </div>
                             <div>
                                 <label className="label">Balance ($)</label>
-                                <input
-                                    type="number" step="0.01" value={balance}
-                                    onChange={e => setBalance(e.target.value)}
-                                    placeholder="1240.50"
-                                    className="input-field text-2xl font-display font-bold !py-4"
-                                    autoFocus
-                                />
-                                <p className="font-body text-g-text-tertiary text-xs mt-2">
-                                    This is your checking/savings total. You can connect Capital One later.
+                                <div className="relative">
+                                    <DollarSign size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary" />
+                                    <input
+                                        type="number" step="0.01" value={balance}
+                                        onChange={e => setBalance(e.target.value)}
+                                        placeholder="1,240.50"
+                                        className="input-field !pl-11 text-2xl sm:text-3xl font-display font-bold !py-5"
+                                        autoFocus
+                                    />
+                                </div>
+                                <p className="font-body text-g-text-tertiary text-sm mt-3">
+                                    This is your checking/savings total. You can connect Capital One later in Settings.
                                 </p>
                             </div>
                         </div>
@@ -224,45 +255,48 @@ export default function Onboarding() {
 
                     {/* Step 3: Income */}
                     {step === 3 && (
-                        <div className="card p-5 sm:p-7 fade-up-1">
-                            <div className="flex items-center justify-between mb-5">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-9 h-9 rounded-xl bg-g-green-pastel flex items-center justify-center">
-                                        <Briefcase size={18} className="text-g-green" />
+                        <div className={`card p-6 sm:p-8 ${animClass}`}>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center scale-in shadow-sm">
+                                        <Briefcase size={22} className="text-white" />
                                     </div>
                                     <div>
-                                        <h2 className="font-display font-bold text-g-text text-lg">Income Sources</h2>
-                                        <p className="font-body text-g-text-secondary text-xs">Add your income streams</p>
+                                        <h2 className="font-display font-bold text-g-text text-xl sm:text-2xl">Income Sources</h2>
+                                        <p className="font-body text-g-text-secondary text-sm">Add your income streams</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowIncForm(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-blue text-white font-body text-xs font-medium hover:bg-[#3367d6] transition-all shadow-sm">
-                                    <Plus size={14} /> Add
+                                <button onClick={() => setShowIncForm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm hover:shadow-md">
+                                    <Plus size={16} /> Add
                                 </button>
                             </div>
 
                             {incomes.length === 0 && !showIncForm && (
-                                <div className="text-center py-8 border border-dashed border-g-border rounded-xl">
-                                    <Briefcase size={24} className="text-g-text-tertiary mx-auto mb-2" />
-                                    <p className="font-body text-g-text-secondary text-sm">No income yet</p>
-                                    <p className="font-body text-g-text-tertiary text-xs mt-0.5">Add campus jobs, internships, etc.</p>
+                                <div className="text-center py-10 border-2 border-dashed border-g-border rounded-2xl bg-g-bg/50">
+                                    <Briefcase size={32} className="text-g-text-tertiary mx-auto mb-3" />
+                                    <p className="font-body text-g-text-secondary text-base font-medium">No income yet</p>
+                                    <p className="font-body text-g-text-tertiary text-sm mt-1">Add campus jobs, internships, stipends</p>
                                 </div>
                             )}
 
-                            <div className="space-y-2">
+                            <div className="space-y-2.5">
                                 {incomes.map((inc, i) => (
-                                    <div key={inc.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-g-bg border border-g-border">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-body text-g-text text-sm truncate">{inc.label}</p>
-                                            <p className="font-mono text-[10px] text-g-text-tertiary">{TYPE_LABELS[inc.type]} · {inc.is_lump_sum ? `$${inc.lump_sum_amount?.toLocaleString()}` : `$${inc.hourly_rate}/hr`}</p>
+                                    <div key={inc.id} className="stagger-item flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-g-bg border border-g-border hover:border-g-blue/30 transition-colors">
+                                        <div className="w-9 h-9 rounded-xl bg-g-green-pastel flex items-center justify-center flex-shrink-0">
+                                            <Briefcase size={16} className="text-g-green" />
                                         </div>
-                                        <button onClick={() => setIncomes(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1"><X size={14} /></button>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-body text-g-text text-[15px] font-medium truncate">{inc.label}</p>
+                                            <p className="font-mono text-xs text-g-text-tertiary">{TYPE_LABELS[inc.type]} · {inc.is_lump_sum ? `$${inc.lump_sum_amount?.toLocaleString()}` : `$${inc.hourly_rate}/hr`}</p>
+                                        </div>
+                                        <button onClick={() => setIncomes(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-lg hover:bg-g-red-pastel transition-colors"><X size={16} /></button>
                                     </div>
                                 ))}
                             </div>
 
                             {showIncForm && (
-                                <div className="mt-3 border border-g-border rounded-xl p-4 space-y-3 bg-g-bg/60">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="mt-4 border border-g-border rounded-2xl p-5 space-y-4 bg-g-bg/60 slide-in">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="label">Type</label>
                                             <select value={incForm.type} onChange={e => setIncForm(f => ({ ...f, type: e.target.value }))} className="input-field">
@@ -271,24 +305,24 @@ export default function Onboarding() {
                                         </div>
                                         <div>
                                             <label className="label">Label</label>
-                                            <input type="text" value={incForm.label} onChange={e => setIncForm(f => ({ ...f, label: e.target.value }))} placeholder="Library Job" className="input-field" />
+                                            <input type="text" value={incForm.label} onChange={e => setIncForm(f => ({ ...f, label: e.target.value }))} placeholder="Library Job" className="input-field" autoFocus />
                                         </div>
                                     </div>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={incForm.is_lump_sum} onChange={e => setIncForm(f => ({ ...f, is_lump_sum: e.target.checked }))} className="w-4 h-4 rounded accent-g-blue" />
-                                        <span className="font-body text-sm text-g-text-secondary">Lump sum</span>
+                                    <label className="flex items-center gap-2.5 cursor-pointer">
+                                        <input type="checkbox" checked={incForm.is_lump_sum} onChange={e => setIncForm(f => ({ ...f, is_lump_sum: e.target.checked }))} className="w-5 h-5 rounded accent-g-blue" />
+                                        <span className="font-body text-[15px] text-g-text-secondary">Lump sum payment</span>
                                     </label>
                                     {incForm.is_lump_sum ? (
                                         <div><label className="label">Amount ($)</label><input type="number" value={incForm.lump_sum_amount} onChange={e => setIncForm(f => ({ ...f, lump_sum_amount: e.target.value }))} placeholder="12000" className="input-field" /></div>
                                     ) : (
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div><label className="label">$/hr</label><input type="number" value={incForm.hourly_rate} onChange={e => setIncForm(f => ({ ...f, hourly_rate: e.target.value }))} placeholder="14" className="input-field" /></div>
-                                            <div><label className="label">hrs/wk</label><input type="number" value={incForm.weekly_hours} onChange={e => setIncForm(f => ({ ...f, weekly_hours: e.target.value }))} placeholder="12" className="input-field" /></div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div><label className="label">Hourly Rate ($)</label><input type="number" value={incForm.hourly_rate} onChange={e => setIncForm(f => ({ ...f, hourly_rate: e.target.value }))} placeholder="14" className="input-field" /></div>
+                                            <div><label className="label">Hours / Week</label><input type="number" value={incForm.weekly_hours} onChange={e => setIncForm(f => ({ ...f, weekly_hours: e.target.value }))} placeholder="12" className="input-field" /></div>
                                         </div>
                                     )}
-                                    <div className="flex gap-2">
-                                        <button onClick={addIncome} className="flex-1 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium shadow-sm">Save</button>
-                                        <button onClick={() => setShowIncForm(false)} className="flex-1 py-2.5 rounded-full bg-g-bg text-g-text-secondary font-body text-sm border border-g-border">Cancel</button>
+                                    <div className="flex gap-3 pt-1">
+                                        <button onClick={addIncome} className="flex-1 py-3 rounded-full bg-g-blue text-white font-body text-[15px] font-medium shadow-sm hover:shadow-md transition-all">Save</button>
+                                        <button onClick={() => setShowIncForm(false)} className="flex-1 py-3 rounded-full bg-g-surface text-g-text-secondary font-body text-[15px] font-medium border border-g-border hover:bg-g-bg transition-colors">Cancel</button>
                                     </div>
                                 </div>
                             )}
@@ -297,55 +331,58 @@ export default function Onboarding() {
 
                     {/* Step 4: Expenses */}
                     {step === 4 && (
-                        <div className="card p-5 sm:p-7 fade-up-1">
-                            <div className="flex items-center justify-between mb-5">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-9 h-9 rounded-xl bg-g-red-pastel flex items-center justify-center">
-                                        <Receipt size={18} className="text-g-red" />
+                        <div className={`card p-6 sm:p-8 ${animClass}`}>
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-red to-g-red-half flex items-center justify-center scale-in shadow-sm">
+                                        <Receipt size={22} className="text-white" />
                                     </div>
                                     <div>
-                                        <h2 className="font-display font-bold text-g-text text-lg">Monthly Expenses</h2>
-                                        <p className="font-body text-g-text-secondary text-xs">Add your recurring costs</p>
+                                        <h2 className="font-display font-bold text-g-text text-xl sm:text-2xl">Monthly Expenses</h2>
+                                        <p className="font-body text-g-text-secondary text-sm">Add your recurring costs</p>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowExpForm(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-red text-white font-body text-xs font-medium hover:bg-[#c5221f] transition-all shadow-sm">
-                                    <Plus size={14} /> Add
+                                <button onClick={() => setShowExpForm(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-red text-white font-body text-sm font-medium hover:bg-[#c5221f] transition-all shadow-sm hover:shadow-md">
+                                    <Plus size={16} /> Add
                                 </button>
                             </div>
 
                             {expenseList.length === 0 && !showExpForm && (
-                                <div className="text-center py-8 border border-dashed border-g-border rounded-xl">
-                                    <Receipt size={24} className="text-g-text-tertiary mx-auto mb-2" />
-                                    <p className="font-body text-g-text-secondary text-sm">No expenses yet</p>
-                                    <p className="font-body text-g-text-tertiary text-xs mt-0.5">Add rent, tuition, groceries, etc.</p>
+                                <div className="text-center py-10 border-2 border-dashed border-g-border rounded-2xl bg-g-bg/50">
+                                    <Receipt size={32} className="text-g-text-tertiary mx-auto mb-3" />
+                                    <p className="font-body text-g-text-secondary text-base font-medium">No expenses yet</p>
+                                    <p className="font-body text-g-text-tertiary text-sm mt-1">Add rent, tuition, groceries, etc.</p>
                                 </div>
                             )}
 
-                            <div className="space-y-2">
+                            <div className="space-y-2.5">
                                 {expenseList.map((exp, i) => (
-                                    <div key={exp.id} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-g-bg border border-g-border">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-body text-g-text text-sm truncate">{exp.label}</p>
-                                            <p className="font-mono text-[10px] text-g-text-tertiary">${exp.amount.toLocaleString()} · {FREQ_LABELS[exp.frequency]}</p>
+                                    <div key={exp.id} className="stagger-item flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-g-bg border border-g-border hover:border-g-red/30 transition-colors">
+                                        <div className="w-9 h-9 rounded-xl bg-g-red-pastel flex items-center justify-center flex-shrink-0">
+                                            <Receipt size={16} className="text-g-red" />
                                         </div>
-                                        <button onClick={() => setExpenseList(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1"><X size={14} /></button>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-body text-g-text text-[15px] font-medium truncate">{exp.label}</p>
+                                            <p className="font-mono text-xs text-g-text-tertiary">${exp.amount.toLocaleString()} · {FREQ_LABELS[exp.frequency]}</p>
+                                        </div>
+                                        <button onClick={() => setExpenseList(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-lg hover:bg-g-red-pastel transition-colors"><X size={16} /></button>
                                     </div>
                                 ))}
                             </div>
 
                             {showExpForm && (
-                                <div className="mt-3 border border-g-border rounded-xl p-4 space-y-3 bg-g-bg/60">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div><label className="label">Label</label><input type="text" value={expForm.label} onChange={e => setExpForm(f => ({ ...f, label: e.target.value }))} placeholder="Rent" className="input-field" /></div>
+                                <div className="mt-4 border border-g-border rounded-2xl p-5 space-y-4 bg-g-bg/60 slide-in">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label className="label">Label</label><input type="text" value={expForm.label} onChange={e => setExpForm(f => ({ ...f, label: e.target.value }))} placeholder="Rent" className="input-field" autoFocus /></div>
                                         <div><label className="label">Amount ($)</label><input type="number" value={expForm.amount} onChange={e => setExpForm(f => ({ ...f, amount: e.target.value }))} placeholder="750" className="input-field" /></div>
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div><label className="label">Type</label><select value={expForm.type} onChange={e => setExpForm(f => ({ ...f, type: e.target.value }))} className="input-field"><option value="fixed">Fixed</option><option value="variable">Variable</option></select></div>
                                         <div><label className="label">Frequency</label><select value={expForm.frequency} onChange={e => setExpForm(f => ({ ...f, frequency: e.target.value }))} className="input-field">{Object.entries(FREQ_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={addExpense} className="flex-1 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium shadow-sm">Save</button>
-                                        <button onClick={() => setShowExpForm(false)} className="flex-1 py-2.5 rounded-full bg-g-bg text-g-text-secondary font-body text-sm border border-g-border">Cancel</button>
+                                    <div className="flex gap-3 pt-1">
+                                        <button onClick={addExpense} className="flex-1 py-3 rounded-full bg-g-blue text-white font-body text-[15px] font-medium shadow-sm hover:shadow-md transition-all">Save</button>
+                                        <button onClick={() => setShowExpForm(false)} className="flex-1 py-3 rounded-full bg-g-surface text-g-text-secondary font-body text-[15px] font-medium border border-g-border hover:bg-g-bg transition-colors">Cancel</button>
                                     </div>
                                 </div>
                             )}
@@ -354,79 +391,84 @@ export default function Onboarding() {
 
                     {/* Step 5: Goals */}
                     {step === 5 && (
-                        <div className="card p-5 sm:p-7 fade-up-1">
-                            <div className="flex items-center gap-2.5 mb-5">
-                                <div className="w-9 h-9 rounded-xl bg-g-green-pastel flex items-center justify-center">
-                                    <Target size={18} className="text-g-green" />
+                        <div className={`card p-6 sm:p-8 ${animClass}`}>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center scale-in shadow-sm">
+                                    <Target size={22} className="text-white" />
                                 </div>
                                 <div>
-                                    <h2 className="font-display font-bold text-g-text text-lg">Financial Goals</h2>
-                                    <p className="font-body text-g-text-secondary text-xs">What are you saving for?</p>
+                                    <h2 className="font-display font-bold text-g-text text-xl sm:text-2xl">Financial Goals</h2>
+                                    <p className="font-body text-g-text-secondary text-sm">What are you saving for?</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-2 mb-3">
+                            <div className="space-y-2.5 mb-4">
                                 {goals.map((g, i) => (
-                                    <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-g-bg border border-g-border">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-g-green flex-shrink-0" />
-                                        <p className="flex-1 font-body text-g-text text-sm truncate">{g}</p>
-                                        <button onClick={() => setGoals(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1"><X size={14} /></button>
+                                    <div key={i} className="stagger-item flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-g-bg border border-g-border hover:border-g-green/30 transition-colors">
+                                        <div className="w-7 h-7 rounded-full bg-g-green flex items-center justify-center flex-shrink-0">
+                                            <span className="text-white text-xs font-bold">{i + 1}</span>
+                                        </div>
+                                        <p className="flex-1 font-body text-g-text text-[15px] font-medium truncate">{g}</p>
+                                        <button onClick={() => setGoals(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-lg hover:bg-g-red-pastel transition-colors"><X size={16} /></button>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                                 <input
                                     type="text" value={newGoal} onChange={e => setNewGoal(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && addGoal()}
                                     placeholder="e.g. Graduate debt-free"
                                     className="input-field" autoFocus
                                 />
-                                <button onClick={addGoal} className="px-4 py-2.5 rounded-xl bg-g-blue text-white font-body text-sm font-medium shadow-sm flex-shrink-0">
-                                    <Plus size={16} />
+                                <button onClick={addGoal} className="px-5 py-3 rounded-2xl bg-g-blue text-white font-body text-[15px] font-medium shadow-sm hover:shadow-md transition-all flex-shrink-0">
+                                    <Plus size={18} />
                                 </button>
                             </div>
 
                             {goals.length === 0 && (
-                                <div className="mt-4 space-y-1.5">
-                                    <p className="font-mono text-[10px] text-g-text-tertiary tracking-wide uppercase">Suggestions</p>
-                                    {['Graduate debt-free', 'Save $2,000 emergency fund', 'Build credit score', 'Save for study abroad'].map(s => (
-                                        <button key={s} onClick={() => setGoals(prev => [...prev, s])} className="block w-full text-left px-3 py-2 rounded-lg text-sm font-body text-g-text-secondary hover:bg-g-bg hover:text-g-blue transition-colors border border-transparent hover:border-g-border">
-                                            + {s}
-                                        </button>
-                                    ))}
+                                <div className="mt-5 space-y-1.5">
+                                    <p className="font-mono text-xs text-g-text-tertiary tracking-wider uppercase mb-2">Quick Add</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {['Graduate debt-free', 'Save $2,000 emergency fund', 'Build credit score', 'Save for study abroad'].map(s => (
+                                            <button key={s} onClick={() => setGoals(prev => [...prev, s])}
+                                                className="text-left px-4 py-3 rounded-xl text-[15px] font-body text-g-text-secondary bg-g-bg border border-g-border hover:bg-g-blue-pastel hover:text-g-blue hover:border-g-blue/30 transition-all">
+                                                + {s}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {/* Navigation */}
-                    <div className="flex items-center justify-between mt-5">
+                    <div className="flex items-center justify-between mt-6 sm:mt-8">
                         <button
-                            onClick={() => setStep(s => s - 1)}
+                            onClick={goBack}
                             disabled={step === 0}
-                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full font-body text-sm font-medium transition-all ${step === 0
+                            className={`flex items-center gap-2 px-5 py-3 rounded-full font-body text-[15px] font-medium transition-all ${step === 0
                                     ? 'opacity-0 pointer-events-none'
-                                    : 'text-g-text-secondary hover:text-g-text hover:bg-g-surface border border-g-border'
+                                    : 'text-g-text-secondary hover:text-g-text bg-g-surface border border-g-border hover:shadow-sm'
                                 }`}
                         >
-                            <ChevronLeft size={16} /> Back
+                            <ChevronLeft size={18} /> Back
                         </button>
 
                         {isLast ? (
                             <button
                                 onClick={finish}
-                                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm"
+                                className="flex items-center gap-2.5 px-7 py-3 rounded-full bg-gradient-to-r from-g-blue to-g-blue-half text-white font-body text-[15px] font-semibold hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                             >
-                                Launch Dashboard <ArrowRight size={16} />
+                                Launch Dashboard <ArrowRight size={18} />
                             </button>
                         ) : (
                             <button
-                                onClick={() => setStep(s => s + 1)}
+                                onClick={goNext}
                                 disabled={!canNext()}
-                                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-6 py-3 rounded-full bg-g-blue text-white font-body text-[15px] font-medium hover:bg-[#3367d6] transition-all shadow-sm hover:shadow-md disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.01]"
                             >
-                                Next <ChevronRight size={16} />
+                                Next <ChevronRight size={18} />
                             </button>
                         )}
                     </div>

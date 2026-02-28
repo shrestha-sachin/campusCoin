@@ -1,123 +1,111 @@
 import React, { useState } from 'react'
-import { Plus, X, Check, Save, Target, UserCircle, CreditCard } from 'lucide-react'
 import { useApp } from '../store.jsx'
-import { api } from '../api.js'
+import { UserCircle, CreditCard, Target, Save, Check, Plus, X } from 'lucide-react'
 
 export default function ProfileForm() {
   const { profile, setProfile } = useApp()
-  const [form, setForm] = useState({ ...profile })
-  const [newGoal, setNewGoal] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [newGoal, setNewGoal] = useState('')
 
-  function field(key) {
-    return { value: form[key] ?? '', onChange: e => setForm(f => ({ ...f, [key]: e.target.value })) }
+  function handleChange(field, value) {
+    setProfile(prev => ({ ...prev, [field]: value }))
+    setSaved(false)
   }
 
   function addGoal() {
     const g = newGoal.trim()
     if (!g) return
-    setForm(f => ({ ...f, financial_goals: [...(f.financial_goals || []), g] }))
+    setProfile(prev => ({ ...prev, financial_goals: [...(prev.financial_goals || []), g] }))
     setNewGoal('')
+    setSaved(false)
   }
 
   function removeGoal(i) {
-    setForm(f => ({ ...f, financial_goals: f.financial_goals.filter((_, idx) => idx !== i) }))
+    setProfile(prev => ({
+      ...prev,
+      financial_goals: prev.financial_goals.filter((_, idx) => idx !== i),
+    }))
+    setSaved(false)
   }
 
-  async function handleSave() {
+  async function saveProfile(e) {
+    e.preventDefault()
     setSaving(true)
-    try {
-      setProfile(form)
-      await api.storeMemory(form)
-    } catch (err) {
-      console.error('Sync failed:', err)
-      setProfile(form)
-    }
+    await new Promise(r => setTimeout(r, 800))
+    setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
-    setSaving(false)
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      {/* Personal Info */}
-      <div className="card p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-g-blue-pastel flex items-center justify-center">
-            <UserCircle size={16} className="text-g-blue" />
+    <form onSubmit={saveProfile} className="space-y-5">
+      {/* Personal info */}
+      <div className="card p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
+            <UserCircle size={20} className="text-white" />
           </div>
-          <h3 className="font-display font-semibold text-g-text text-sm">Personal Information</h3>
+          <h3 className="font-display font-bold text-g-text text-base">Personal Info</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div><label className="label">Name</label><input type="text" placeholder="Alex Chen" {...field('name')} className="input-field" /></div>
-          <div><label className="label">University</label><input type="text" placeholder="UIUC" {...field('university')} className="input-field" /></div>
-          <div><label className="label">Major</label><input type="text" placeholder="Computer Science" {...field('major')} className="input-field" /></div>
-          <div><label className="label">Graduation Date</label><input type="date" {...field('graduation_date')} className="input-field" /></div>
-        </div>
-      </div>
-
-      {/* Account */}
-      <div className="card p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-g-yellow-pastel flex items-center justify-center">
-            <CreditCard size={16} className="text-g-yellow" />
-          </div>
-          <h3 className="font-display font-semibold text-g-text text-sm">Account Settings</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label className="label">Current Balance ($)</label>
-            <input type="number" step="0.01" placeholder="1240.50" value={form.current_balance}
-              onChange={e => setForm(f => ({ ...f, current_balance: Number(e.target.value) }))} className="input-field" />
-          </div>
-          <div>
-            <label className="label">Capital One Account ID</label>
-            <input type="text" placeholder="Nessie account ID (optional)" {...field('nessie_account_id')} className="input-field" />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label className="label">Name</label><input type="text" value={profile.name} onChange={e => handleChange('name', e.target.value)} className="input-field" /></div>
+          <div><label className="label">University</label><input type="text" value={profile.university} onChange={e => handleChange('university', e.target.value)} className="input-field" /></div>
+          <div><label className="label">Major</label><input type="text" value={profile.major} onChange={e => handleChange('major', e.target.value)} className="input-field" /></div>
+          <div><label className="label">Graduation Date</label><input type="date" value={profile.graduation_date} onChange={e => handleChange('graduation_date', e.target.value)} className="input-field" /></div>
         </div>
       </div>
 
-      {/* Goals */}
-      <div className="card p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-g-green-pastel flex items-center justify-center">
-            <Target size={16} className="text-g-green" />
+      {/* Account settings */}
+      <div className="card p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-yellow to-g-yellow-half flex items-center justify-center shadow-sm">
+            <CreditCard size={20} className="text-white" />
           </div>
-          <h3 className="font-display font-semibold text-g-text text-sm">Financial Goals</h3>
+          <h3 className="font-display font-bold text-g-text text-base">Account Settings</h3>
         </div>
-        <div className="space-y-2">
-          {(form.financial_goals || []).map((g, i) => (
-            <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-g-bg rounded-xl border border-g-border">
-              <span className="w-1.5 h-1.5 rounded-full bg-g-green flex-shrink-0" />
-              <p className="flex-1 font-body text-g-text text-sm min-w-0 truncate">{g}</p>
-              <button onClick={() => removeGoal(i)} className="text-g-text-tertiary hover:text-g-red transition-colors p-1 rounded-lg hover:bg-g-red-pastel/40 flex-shrink-0">
-                <X size={14} />
-              </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label className="label">Current Balance ($)</label><input type="number" value={profile.current_balance} onChange={e => handleChange('current_balance', Number(e.target.value))} className="input-field" /></div>
+          <div><label className="label">Capital One Account ID</label><input type="text" value={profile.nessie_account_id || ''} onChange={e => handleChange('nessie_account_id', e.target.value || null)} placeholder="Nessie account ID (optional)" className="input-field" /></div>
+        </div>
+      </div>
+
+      {/* Financial goals */}
+      <div className="card p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center shadow-sm">
+            <Target size={20} className="text-white" />
+          </div>
+          <h3 className="font-display font-bold text-g-text text-base">Financial Goals</h3>
+        </div>
+        <div className="space-y-2.5 mb-4">
+          {(profile.financial_goals || []).map((goal, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-g-bg border border-g-border">
+              <span className="w-2.5 h-2.5 rounded-full bg-g-green flex-shrink-0" />
+              <p className="flex-1 font-body text-g-text text-[15px] truncate">{goal}</p>
+              <button type="button" onClick={() => removeGoal(i)} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-xl hover:bg-g-red-pastel transition-colors flex-shrink-0"><X size={16} /></button>
             </div>
           ))}
         </div>
-        <div className="flex gap-2">
-          <input type="text" placeholder="Add a new goal…" value={newGoal} onChange={e => setNewGoal(e.target.value)} onKeyDown={e => e.key === 'Enter' && addGoal()} className="input-field" />
-          <button onClick={addGoal} className="px-4 py-2.5 rounded-xl bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm flex-shrink-0">
-            <Plus size={16} />
+        <div className="flex gap-3">
+          <input type="text" value={newGoal} onChange={e => setNewGoal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addGoal() } }} placeholder="Add a new goal…" className="input-field" />
+          <button type="button" onClick={addGoal} className="px-5 py-3 rounded-2xl bg-g-blue text-white flex-shrink-0 shadow-sm hover:shadow-md transition-all">
+            <Plus size={18} />
           </button>
         </div>
       </div>
 
-      {/* Save */}
+      {/* Save button */}
       <button
-        onClick={handleSave}
-        disabled={saving}
-        className={`w-full py-3 sm:py-3.5 rounded-full font-body font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${saved
-            ? 'bg-g-green-pastel text-g-green border border-g-green/20'
-            : 'bg-g-blue text-white hover:bg-[#3367d6] shadow-sm hover:shadow-md'
+        type="submit"
+        disabled={saving || saved}
+        className={`w-full py-3.5 rounded-full font-body text-[15px] font-medium transition-all flex items-center justify-center gap-2.5 shadow-sm ${saved
+            ? 'bg-g-green text-white'
+            : 'bg-g-blue text-white hover:bg-[#3367d6] hover:shadow-md'
           }`}
       >
-        {saving ? <><Save size={15} className="animate-pulse" /> Saving…</>
-          : saved ? <><Check size={15} /> Saved</>
-            : <><Save size={15} /> Save Profile</>}
+        {saved ? <><Check size={18} /> Saved</> : saving ? 'Saving…' : <><Save size={16} /> Save Profile</>}
       </button>
-    </div>
+    </form>
   )
 }
