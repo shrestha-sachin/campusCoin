@@ -16,13 +16,33 @@ def _get_client():
     if not api_key:
         raise HTTPException(status_code=500, detail="GEMINI_KEY not configured")
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel("gemini-2.0-flash-exp")
+    return genai.GenerativeModel("gemini-3-flash-preview")
 
 
 def _strip_fences(text: str) -> str:
     text = re.sub(r"```(?:json)?\s*", "", text)
     text = re.sub(r"```", "", text)
     return text.strip()
+
+
+def _extract_json(text: str) -> dict:
+    """
+    Try to robustly extract a JSON object from model output.
+    Prefers the first {...} block if extra prose sneaks in.
+    """
+    cleaned = _strip_fences(text or "")
+    # If it's already valid JSON, use it directly
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Fallback: grab the first {...} block
+    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if not match:
+        raise json.JSONDecodeError("No JSON object found in model response", cleaned, 0)
+    snippet = match.group(0)
+    return json.loads(snippet)
 
 
 @router.post("/analyze", response_model=AIInsight)
@@ -86,9 +106,9 @@ Rules:
 - shortfall_amount should be the magnitude of the shortfall at that date"""
 
     try:
+        # Let Gemini respond normally and then robustly extract JSON.
         response = model.generate_content(prompt)
-        raw = _strip_fences(response.text)
-        data = json.loads(raw)
+        data = _extract_json(getattr(response, "text", "") or str(response))
         return AIInsight(**data)
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Gemini returned invalid JSON: {e}")

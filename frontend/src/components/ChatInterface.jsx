@@ -25,12 +25,18 @@ export default function ChatInterface() {
     setLoading(true)
 
     try {
+      // Backend ChatRequest expects:
+      // { profile, income_streams, expenses, user_query, conversation_history }
       const res = await api.chat({
-        user_message: text,
-        history: messages,
-        context: { profile, income_streams: incomeStreams, expenses, runway, ai_insight: aiInsight },
+        profile,
+        income_streams: incomeStreams,
+        expenses,
+        user_query: text,
+        conversation_history: [...messages, userMsg],
       })
-      setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
+
+      const replyText = res.response ?? res.reply ?? 'Sorry, something went wrong with the AI response.'
+      setMessages(prev => [...prev, { role: 'assistant', content: replyText }])
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
     } finally {

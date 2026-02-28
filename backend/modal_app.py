@@ -1,8 +1,11 @@
+import os
 import modal
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = modal.App("campuscoin")
+
+backend_dir = os.path.dirname(os.path.abspath(__file__))
 
 image = (
     modal.Image.debian_slim()
@@ -14,6 +17,7 @@ image = (
         "pydantic>=2.0",
         "python-multipart",
     )
+    .add_local_dir(backend_dir, remote_path="/root")
 )
 
 

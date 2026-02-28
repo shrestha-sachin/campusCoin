@@ -15,6 +15,12 @@ const EMPTY_PROFILE = {
   nessie_account_id: null,
 }
 
+const EMPTY_AUTH = {
+  isAuthenticated: false,
+  email: '',
+  name: '',
+}
+
 const STORAGE_KEY = 'campuscoin_data'
 
 function loadFromStorage() {
@@ -46,14 +52,32 @@ export function AppProvider({ children }) {
   const [profile, setProfile] = useState(stored?.profile ?? EMPTY_PROFILE)
   const [incomeStreams, setIncomeStreams] = useState(stored?.incomeStreams ?? [])
   const [expenses, setExpenses] = useState(stored?.expenses ?? [])
+  const [auth, setAuth] = useState(stored?.auth ?? EMPTY_AUTH)
   const [runway, setRunway] = useState([])
   const [aiInsight, setAiInsight] = useState(null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
 
   // Persist to localStorage on change
   useEffect(() => {
-    saveToStorage({ onboarded, profile, incomeStreams, expenses })
-  }, [onboarded, profile, incomeStreams, expenses])
+    saveToStorage({ auth, onboarded, profile, incomeStreams, expenses })
+  }, [auth, onboarded, profile, incomeStreams, expenses])
+
+  function login({ email, name }) {
+    setAuth({
+      isAuthenticated: true,
+      email: email?.trim() ?? '',
+      name: name?.trim() ?? '',
+    })
+  }
+
+  function logout() {
+    setAuth(EMPTY_AUTH)
+    setOnboarded(false)
+    setProfile(EMPTY_PROFILE)
+    setIncomeStreams([])
+    setExpenses([])
+    clearStorage()
+  }
 
   function completeOnboarding(data) {
     setProfile(data.profile)
@@ -115,6 +139,9 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
+      auth,
+      login,
+      logout,
       onboarded, setOnboarded, completeOnboarding,
       profile, setProfile,
       incomeStreams, setIncomeStreams,

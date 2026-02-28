@@ -7,23 +7,48 @@ import Manage from './pages/Manage.jsx'
 import Strategist from './pages/Strategist.jsx'
 import Settings from './pages/Settings.jsx'
 import Onboarding from './pages/Onboarding.jsx'
+import Auth from './pages/Auth.jsx'
 
 function RequireOnboarding({ children }) {
-  const { onboarded } = useApp()
+  const { auth, onboarded } = useApp()
+  if (!auth.isAuthenticated) return <Navigate to="/auth" replace />
   if (!onboarded) return <Navigate to="/onboarding" replace />
   return children
 }
 
 function RedirectIfOnboarded({ children }) {
-  const { onboarded } = useApp()
+  const { auth, onboarded } = useApp()
+  if (!auth.isAuthenticated) return children
   if (onboarded) return <Navigate to="/dashboard" replace />
   return children
+}
+
+function RedirectIfAuthenticated({ children }) {
+  const { auth, onboarded } = useApp()
+  if (!auth.isAuthenticated) return children
+  if (onboarded) return <Navigate to="/dashboard" replace />
+  return <Navigate to="/onboarding" replace />
 }
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/onboarding" element={<RedirectIfOnboarded><Onboarding /></RedirectIfOnboarded>} />
+      <Route
+        path="/auth"
+        element={(
+          <RedirectIfAuthenticated>
+            <Auth />
+          </RedirectIfAuthenticated>
+        )}
+      />
+      <Route
+        path="/onboarding"
+        element={(
+          <RedirectIfOnboarded>
+            <Onboarding />
+          </RedirectIfOnboarded>
+        )}
+      />
       <Route path="/" element={<RequireOnboarding><Layout /></RequireOnboarding>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
