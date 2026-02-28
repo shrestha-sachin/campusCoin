@@ -1,42 +1,22 @@
 import React from 'react'
+import logoSrc from '../assets/icons/campuscoin-logo.svg'
 
 export default function Logo({ size = 'default', className = '' }) {
-    const sizes = {
-        small: { icon: 28, text: 'text-lg' },
-        default: { icon: 34, text: 'text-xl' },
-        large: { icon: 42, text: 'text-2xl' },
-    }
-    const s = sizes[size] || sizes.default
+  const sizes = {
+    small: 28,
+    default: 34,
+    large: 42,
+  }
+  const height = sizes[size] ?? sizes.default
 
-    return (
-        <div className={`flex items-center gap-2.5 ${className}`}>
-            <svg
-                width={s.icon}
-                height={s.icon}
-                viewBox="0 0 40 40"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="flex-shrink-0"
-            >
-                <circle cx="20" cy="20" r="18" fill="#4285f4" />
-                <circle cx="20" cy="20" r="13" fill="white" fillOpacity="0.2" />
-                <text
-                    x="20" y="26"
-                    textAnchor="middle"
-                    fill="white"
-                    fontFamily="GoogleSans, sans-serif"
-                    fontWeight="700"
-                    fontSize="18"
-                >$</text>
-                <circle cx="8" cy="10" r="3" fill="#ea4335" opacity="0.9" />
-                <circle cx="32" cy="10" r="3" fill="#f9ab00" opacity="0.9" />
-                <circle cx="32" cy="30" r="3" fill="#34a853" opacity="0.9" />
-            </svg>
-
-            <span className={`font-display font-bold tracking-tight ${s.text}`}>
-                <span className="text-g-blue">Campus</span>
-                <span className="text-g-text">Coin</span>
-            </span>
-        </div>
-    )
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <img
+        src={logoSrc}
+        alt="CampusCoin"
+        className="flex-shrink-0 h-auto w-auto object-contain"
+        style={{ height }}
+      />
+    </div>
+  )
 }

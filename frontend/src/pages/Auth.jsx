@@ -155,17 +155,11 @@ export default function Auth() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
           {/* Top — Logo */}
-          <div>
-            <div className="flex items-center gap-3">
-              <svg width={44} height={44} viewBox="0 0 40 40" fill="none">
-                <circle cx="20" cy="20" r="18" fill="white" fillOpacity="0.2" />
-                <circle cx="20" cy="20" r="13" fill="white" fillOpacity="0.15" />
-                <text x="20" y="26" textAnchor="middle" fill="white" fontFamily="GoogleSans, sans-serif" fontWeight="700" fontSize="18">$</text>
-              </svg>
-              <span className="font-display font-bold text-2xl text-white tracking-tight">
-                CampusCoin
-              </span>
-            </div>
+          <div className="inline-flex scale-110 origin-left drop-shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+            <Logo
+              size="large"
+              className="[filter:brightness(0)_invert(1)] opacity-95"
+            />
           </div>
 
           {/* Center — Hero text */}

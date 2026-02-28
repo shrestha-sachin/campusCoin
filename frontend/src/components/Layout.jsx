@@ -61,7 +61,9 @@ export default function Layout() {
       >
         {/* Logo + close */}
         <div className="pb-6 mb-3 border-b border-g-border flex items-center justify-between">
-          <Logo size="default" />
+          <NavLink to="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center">
+            <Logo size="default" />
+          </NavLink>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-xl text-g-text-tertiary hover:text-g-text hover:bg-g-bg transition-colors"
@@ -115,7 +117,9 @@ export default function Layout() {
           >
             <Menu size={22} />
           </button>
-          <Logo size="small" />
+          <NavLink to="/dashboard" className="flex items-center">
+            <Logo size="small" />
+          </NavLink>
           <div className="w-11" />
         </header>
 
