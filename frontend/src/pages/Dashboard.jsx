@@ -112,7 +112,7 @@ export default function Dashboard() {
     <>
       {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} />}
 
-      <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-6xl mx-auto">
+      <div className="p-4 sm:p-6 pt-8 lg:p-8 space-y-5 sm:space-y-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="fade-up-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -7,9 +7,9 @@ import {
   Settings,
   Menu,
   X,
-  Zap,
 } from 'lucide-react'
 import Logo from './Logo.jsx'
+import PartnerLogos from './PartnerLogos.jsx'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,8 +18,26 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
+const SCROLL_THRESHOLD = 10
+
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  const handleMainScroll = useCallback((e) => {
+    const el = e.target
+    if (!el || el.tagName !== 'MAIN') return
+    const scrollTop = el.scrollTop
+    if (scrollTop <= 0) {
+      setMobileHeaderVisible(true)
+    } else if (scrollTop > lastScrollY.current && scrollTop > SCROLL_THRESHOLD) {
+      setMobileHeaderVisible(false)
+    } else if (scrollTop < lastScrollY.current) {
+      setMobileHeaderVisible(true)
+    }
+    lastScrollY.current = scrollTop
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-g-bg">
@@ -72,21 +90,25 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* Footer badge */}
+        {/* Partner logos */}
         <div className="pt-5 mt-3 border-t border-g-border">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-g-green pulse-dot flex-shrink-0" />
-            <span className="font-body text-xs text-g-text-tertiary flex items-center gap-1.5">
-              Powered by Modal <Zap size={12} />
-            </span>
-          </div>
+          <PartnerLogos />
         </div>
       </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile top bar */}
-        <header className="lg:hidden flex items-center justify-between px-5 py-3.5 bg-g-surface border-b border-g-border flex-shrink-0">
+        {/* Mobile top bar — fixed, hides on scroll down, shows on scroll up */}
+        <header
+          className={`
+            fixed left-0 right-0 top-0 z-30 flex
+            items-center justify-between px-5 py-3.5
+            bg-g-surface border-b border-g-border
+            transition-transform duration-300 ease-out
+            lg:hidden
+            ${mobileHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
+          `}
+        >
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2.5 rounded-xl text-g-text-secondary hover:text-g-text hover:bg-g-bg transition-colors"
@@ -97,7 +119,10 @@ export default function Layout() {
           <div className="w-11" />
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-g-bg">
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-g-bg pt-14 lg:pt-0"
+          onScroll={handleMainScroll}
+        >
           <Outlet />
         </main>
       </div>
