@@ -52,7 +52,7 @@ const LOGO_MAP = {
   'Capital One': CapitalOneLogo,
 }
 
-const LOGO_WIDTH = { Modal: 32, Gemini: 14, Supermemory: 18, 'Capital One': 14 }
+// const LOGO_WIDTH = { Modal: 32, Gemini: 14, Supermemory: 18, 'Capital One': 14 }
 
 export default function PartnerLogos({ className = '' }) {
   return (
@@ -66,7 +66,7 @@ export default function PartnerLogos({ className = '' }) {
       <div className="mt-3 flex flex-wrap items-center justify-start gap-4">
         {PARTNERS.map(({ name, href, title }) => {
           const LogoComponent = LOGO_MAP[name]
-          const w = LOGO_WIDTH[name]
+          // const w = LOGO_WIDTH[name]
           return (
             <a
               key={name}
@@ -74,9 +74,9 @@ export default function PartnerLogos({ className = '' }) {
               target="_blank"
               rel="noopener noreferrer"
               title={title}
-              className="group flex h-5 shrink-0 items-center justify-center text-g-text-tertiary/70 transition-colors hover:text-g-text-tertiary"
+              className="group flex h-4 shrink-0 items-center justify-center text-g-text-tertiary/70 transition-colors hover:text-g-text-tertiary"
             >
-              <span className="flex h-full items-center justify-center" style={{ width: w }}>
+              <span className="flex h-full items-center justify-center" >
                 <LogoComponent className="h-full w-full object-contain" />
               </span>
             </a>
