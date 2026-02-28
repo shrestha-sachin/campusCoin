@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { addDays, addMonths, addWeeks, format } from 'date-fns'
 import { api } from './api'
 
@@ -23,6 +23,7 @@ const EMPTY_AUTH = {
 }
 
 const STORAGE_KEY = 'campuscoin_data'
+const POLL_INTERVAL = 30_000 // 30 seconds
 
 function loadFromStorage() {
   try {
@@ -58,6 +59,10 @@ export function AppProvider({ children }) {
   const [aiInsight, setAiInsight] = useState(null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
   const [nessieTransactions, setNessieTransactions] = useState([])
+  const [lastPoll, setLastPoll] = useState(null) // timestamp of last poll
+
+  // Track the last known transaction count so we only trigger AI on changes
+  const lastTxnCountRef = useRef(0)
 
   // Persist to localStorage on change
   useEffect(() => {
@@ -102,20 +107,41 @@ export function AppProvider({ children }) {
     }
   }, [profile.nessie_account_id])
 
-  /** Fetch Nessie transaction history (deposits + purchases) */
+  /** Fetch Nessie transactions and detect new ones. Returns true if new txns found. */
   const fetchNessieTransactions = useCallback(async () => {
-    if (!profile.nessie_account_id) return []
+    if (!profile.nessie_account_id) return false
     try {
       const txns = await api.getNessieTransactions(profile.nessie_account_id)
+      const prevCount = lastTxnCountRef.current
+      const newCount = txns.length
+
       setNessieTransactions(txns)
-      return txns
+      setLastPoll(new Date())
+      lastTxnCountRef.current = newCount
+
+      // Return true if we detected new transactions
+      return newCount > prevCount
     } catch (err) {
       console.error('Nessie transactions fetch failed:', err)
-      return []
+      return false
     }
   }, [profile.nessie_account_id])
 
-  /** Create a Nessie deposit (income). Updates balance on Nessie's side. */
+  /** Full poll cycle: sync balance → fetch txns → trigger AI only if new txns */
+  const pollNessie = useCallback(async () => {
+    if (!profile.nessie_account_id) return
+
+    await syncNessie()
+    const hasNew = await fetchNessieTransactions()
+
+    if (hasNew) {
+      console.log('[CampusCoin] New Nessie transaction detected — running AI analysis')
+      const rw = await refreshRunway()
+      await refreshAI(rw)
+    }
+  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+
+  /** Create a Nessie deposit (income). */
   const createNessieDeposit = useCallback(async (amount, description) => {
     if (!profile.nessie_account_id) return null
     try {
@@ -124,17 +150,16 @@ export function AppProvider({ children }) {
         amount,
         description,
       })
-      // Refresh balance + transactions after a deposit
-      await syncNessie()
-      await fetchNessieTransactions()
+      // Immediately poll to pick up the new transaction
+      await pollNessie()
       return result
     } catch (err) {
       console.error('Nessie deposit failed:', err)
       return null
     }
-  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+  }, [profile.nessie_account_id, pollNessie])
 
-  /** Create a Nessie purchase (expense). Updates balance on Nessie's side. */
+  /** Create a Nessie purchase (expense). */
   const createNessiePurchase = useCallback(async (amount, description) => {
     if (!profile.nessie_account_id) return null
     try {
@@ -143,15 +168,49 @@ export function AppProvider({ children }) {
         amount,
         description,
       })
-      // Refresh balance + transactions after a purchase
-      await syncNessie()
-      await fetchNessieTransactions()
+      // Immediately poll to pick up the new transaction
+      await pollNessie()
       return result
     } catch (err) {
       console.error('Nessie purchase failed:', err)
       return null
     }
-  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+  }, [profile.nessie_account_id, pollNessie])
+
+  /** Simulate a paycheck deposit (for hackathon demo) */
+  const simulatePaycheck = useCallback(async () => {
+    if (!profile.nessie_account_id) return null
+
+    // Calculate monthly income from active streams
+    const monthlyIncome = incomeStreams
+      .filter(s => s.is_active && !s.is_lump_sum)
+      .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
+
+    const biweeklyPay = monthlyIncome / 2
+    if (biweeklyPay <= 0) return null
+
+    const topIncome = incomeStreams.find(s => s.is_active) || { label: 'Paycheck' }
+    return createNessieDeposit(
+      Math.round(biweeklyPay * 100) / 100,
+      `Bi-weekly paycheck — ${topIncome.label}`
+    )
+  }, [profile.nessie_account_id, incomeStreams, createNessieDeposit])
+
+  // ── Automatic Polling ───────────────────────────────
+
+  useEffect(() => {
+    if (!onboarded || !profile.nessie_account_id) return
+
+    // Initial poll on mount
+    pollNessie()
+
+    // Set up interval for auto-polling
+    const interval = setInterval(() => {
+      pollNessie()
+    }, POLL_INTERVAL)
+
+    return () => clearInterval(interval)
+  }, [onboarded, profile.nessie_account_id])
 
   // ── Runway & AI ─────────────────────────────────────
 
@@ -216,6 +275,9 @@ export function AppProvider({ children }) {
       fetchNessieTransactions,
       createNessieDeposit,
       createNessiePurchase,
+      pollNessie,
+      simulatePaycheck,
+      lastPoll,
     }}>
       {children}
     </AppContext.Provider>

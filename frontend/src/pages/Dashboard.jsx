@@ -9,6 +9,7 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
+  RefreshCw, DollarSign, Loader2,
 } from 'lucide-react'
 
 function QuickStat({ icon: Icon, label, value, color, bgColor }) {
@@ -32,21 +33,30 @@ function fmtFull(n) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
 }
 
+function timeAgo(date) {
+  if (!date) return 'never'
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (diff < 5) return 'just now'
+  if (diff < 60) return `${diff}s ago`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  return `${Math.floor(diff / 3600)}h ago`
+}
+
 export default function Dashboard() {
   const {
     profile, incomeStreams, expenses, aiInsight, loading,
-    syncNessie, refreshRunway, refreshAI,
-    nessieTransactions, fetchNessieTransactions,
+    refreshRunway,
+    nessieTransactions, pollNessie, simulatePaycheck, lastPoll,
   } = useApp()
   const [showEmergency, setShowEmergency] = useState(false)
+  const [simulating, setSimulating] = useState(false)
+  const [polling, setPolling] = useState(false)
   const firstName = profile.name.split(' ')[0]
 
+  // Only compute runway on first load (AI is triggered by transaction detection)
   useEffect(() => {
     async function init() {
-      await syncNessie()
-      await fetchNessieTransactions()
-      const rw = await refreshRunway()
-      await refreshAI(rw)
+      await refreshRunway()
     }
     init()
   }, [])
@@ -60,11 +70,19 @@ export default function Dashboard() {
 
   // Compute quick stats
   const stats = useMemo(() => {
-    const monthlyIncome = incomeStreams
+    // Use Nessie transactions for actual income/expense totals if available
+    const nessieDeposits = nessieTransactions.filter(t => t.type === 'deposit')
+    const nessiePurchases = nessieTransactions.filter(t => t.type === 'purchase')
+
+    const totalDeposits = nessieDeposits.reduce((s, t) => s + (t.amount || 0), 0)
+    const totalPurchases = nessiePurchases.reduce((s, t) => s + (t.amount || 0), 0)
+
+    // Fall back to estimated monthly if no Nessie transactions
+    const monthlyIncome = totalDeposits > 0 ? totalDeposits : incomeStreams
       .filter(s => s.is_active && !s.is_lump_sum)
       .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
 
-    const monthlyExpenses = expenses
+    const monthlyExpenses = totalPurchases > 0 ? totalPurchases : expenses
       .filter(e => e.is_active)
       .reduce((sum, e) => {
         if (e.frequency === 'monthly') return sum + e.amount
@@ -78,8 +96,25 @@ export default function Dashboard() {
       ? Math.max(0, Math.ceil((new Date(profile.graduation_date) - new Date()) / (1000 * 60 * 60 * 24)))
       : null
 
-    return { monthlyIncome, monthlyExpenses, netMonthly, daysUntilGrad }
-  }, [incomeStreams, expenses, profile.graduation_date])
+    return {
+      monthlyIncome, monthlyExpenses, netMonthly, daysUntilGrad,
+      txnCount: nessieTransactions.length,
+      depositCount: nessieDeposits.length,
+      purchaseCount: nessiePurchases.length,
+    }
+  }, [incomeStreams, expenses, profile.graduation_date, nessieTransactions])
+
+  async function handleSimulatePaycheck() {
+    setSimulating(true)
+    await simulatePaycheck()
+    setSimulating(false)
+  }
+
+  async function handleManualPoll() {
+    setPolling(true)
+    await pollNessie()
+    setPolling(false)
+  }
 
   return (
     <>
@@ -98,24 +133,26 @@ export default function Dashboard() {
               {profile.graduation_date && ` · Class of ${profile.graduation_date.slice(0, 4)}`}
             </p>
           </div>
-          <StatusBadge status={aiInsight?.status ?? 'on_track'} />
+          <div className="flex items-center gap-3">
+            <StatusBadge status={aiInsight?.status ?? 'on_track'} />
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="fade-up-2 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <QuickStat
-            icon={TrendingUp} label="Monthly In"
+            icon={TrendingUp} label="Total Deposits"
             value={fmt(stats.monthlyIncome)}
             color="text-g-green" bgColor="bg-g-green-pastel"
           />
           <QuickStat
-            icon={TrendingDown} label="Monthly Out"
+            icon={TrendingDown} label="Total Purchases"
             value={fmt(stats.monthlyExpenses)}
             color="text-g-red" bgColor="bg-g-red-pastel"
           />
           <QuickStat
             icon={stats.netMonthly >= 0 ? ArrowUpRight : ArrowDownRight}
-            label="Net/Month"
+            label="Net Flow"
             value={fmt(stats.netMonthly)}
             color={stats.netMonthly >= 0 ? 'text-g-green' : 'text-g-red'}
             bgColor={stats.netMonthly >= 0 ? 'bg-g-green-pastel' : 'bg-g-red-pastel'}
@@ -133,7 +170,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2"><NextActionCard /></div>
         </div>
 
-        {/* Nessie Transaction History */}
+        {/* Nessie Transaction History — Live Feed */}
         {profile.nessie_account_id && (
           <div className="fade-up-3 card p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -142,28 +179,53 @@ export default function Dashboard() {
                   <CreditCard size={18} className="text-white" />
                 </div>
                 <div>
-                  <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase block">
-                    Nessie Transactions
+                  <span className="font-display font-bold text-base text-g-text block">
+                    Capital One Transactions
                   </span>
-                  <span className="font-mono text-[10px] text-g-text-tertiary">
-                    Live from Capital One
+                  <span className="font-mono text-[10px] text-g-text-tertiary flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-g-green pulse-dot inline-block" />
+                    Auto-syncing every 30s · Last: {timeAgo(lastPoll)}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-g-green pulse-dot" />
-                <span className="font-mono text-[10px] text-g-text-tertiary">Live</span>
+                <button
+                  onClick={handleSimulatePaycheck}
+                  disabled={simulating}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-green-pastel text-g-green font-mono text-[11px] font-medium border border-g-green/20 hover:bg-g-green hover:text-white transition-all disabled:opacity-50"
+                >
+                  {simulating ? <Loader2 size={12} className="animate-spin" /> : <DollarSign size={12} />}
+                  Simulate Paycheck
+                </button>
+                <button
+                  onClick={handleManualPoll}
+                  disabled={polling}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-bg text-g-text-tertiary font-mono text-[11px] font-medium border border-g-border hover:text-g-blue hover:border-g-blue/30 transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={12} className={polling ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
               </div>
             </div>
 
             {nessieTransactions.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-g-border rounded-2xl bg-g-bg/50">
                 <History size={28} className="text-g-text-tertiary mx-auto mb-2.5" />
-                <p className="font-body text-g-text-secondary text-sm">No transactions yet</p>
-                <p className="font-body text-g-text-tertiary text-xs mt-1">Deposits and purchases will show up here</p>
+                <p className="font-body text-g-text-secondary text-sm font-medium">Waiting for transactions…</p>
+                <p className="font-body text-g-text-tertiary text-xs mt-1">
+                  Deposits and purchases from Capital One will appear here automatically
+                </p>
+                <button
+                  onClick={handleSimulatePaycheck}
+                  disabled={simulating}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm disabled:opacity-50"
+                >
+                  {simulating ? <Loader2 size={14} className="animate-spin" /> : <DollarSign size={14} />}
+                  Simulate First Paycheck
+                </button>
               </div>
             ) : (
-              <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[340px] overflow-y-auto">
                 {nessieTransactions.map((tx, i) => {
                   const isDeposit = tx.type === 'deposit'
                   return (
@@ -193,6 +255,20 @@ export default function Dashboard() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Transaction summary footer */}
+            {nessieTransactions.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-g-border flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="font-mono text-[11px] text-g-text-tertiary">
+                    {stats.depositCount} deposit{stats.depositCount !== 1 ? 's' : ''} · {stats.purchaseCount} purchase{stats.purchaseCount !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <span className="font-mono text-[11px] text-g-text-tertiary">
+                  AI analyzes on new transactions only
+                </span>
               </div>
             )}
           </div>
@@ -241,20 +317,37 @@ export default function Dashboard() {
             <div className="w-8 h-8 rounded-xl bg-g-blue-pastel flex items-center justify-center">
               <FileText size={16} className="text-g-blue" />
             </div>
-            <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
-              AI Analysis
-            </span>
+            <div>
+              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase block">
+                AI Analysis
+              </span>
+              <span className="font-mono text-[10px] text-g-text-tertiary">
+                Triggered by new transactions
+              </span>
+            </div>
           </div>
           {loading.ai ? (
             <div className="space-y-2.5">
+              <div className="flex items-center gap-2 mb-3">
+                <Loader2 size={14} className="animate-spin text-g-blue" />
+                <span className="font-body text-g-text-secondary text-sm">New transaction detected — analyzing…</span>
+              </div>
               <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-5/6" />
               <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-4/5" />
-              <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-3/4" />
             </div>
-          ) : (
+          ) : aiInsight ? (
             <p className="font-body text-g-text-secondary text-sm leading-relaxed whitespace-pre-line">
-              {aiInsight?.full_analysis ?? 'Analyzing your financial data — please wait…'}
+              {aiInsight.full_analysis}
             </p>
+          ) : (
+            <div className="text-center py-6">
+              <p className="font-body text-g-text-tertiary text-sm">
+                Waiting for transactions to analyze…
+              </p>
+              <p className="font-mono text-[11px] text-g-text-tertiary mt-1">
+                AI will automatically run when a new deposit or purchase is detected
+              </p>
+            </div>
           )}
         </div>
       </div>
