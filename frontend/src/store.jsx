@@ -1,86 +1,66 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { addDays, addMonths, addWeeks, format } from 'date-fns'
 import { api } from './api'
 
 const today = new Date()
 
-const DEMO_PROFILE = {
-  user_id: 'alex-chen-demo',
-  name: 'Alex Chen',
-  university: 'UIUC',
-  major: 'Computer Science',
-  graduation_date: '2026-05-15',
-  financial_goals: ['Graduate debt-free', 'Save $2,000 emergency fund'],
-  current_balance: 1240.50,
+const EMPTY_PROFILE = {
+  user_id: '',
+  name: '',
+  university: '',
+  major: '',
+  graduation_date: '',
+  financial_goals: [],
+  current_balance: 0,
   nessie_account_id: null,
 }
 
-const DEMO_INCOME = [
-  {
-    id: 'inc-1',
-    type: 'campus_job',
-    label: 'Library Assistant',
-    hourly_rate: 14,
-    weekly_hours: 12,
-    start_date: format(today, 'yyyy-MM-dd'),
-    end_date: format(addMonths(today, 4), 'yyyy-MM-dd'),
-    is_lump_sum: false,
-    lump_sum_amount: null,
-    is_active: true,
-  },
-  {
-    id: 'inc-2',
-    type: 'internship',
-    label: 'Summer SWE Internship',
-    hourly_rate: 0,
-    weekly_hours: 0,
-    start_date: format(addMonths(today, 3), 'yyyy-MM-dd'),
-    end_date: format(addMonths(today, 5.5), 'yyyy-MM-dd'),
-    is_lump_sum: true,
-    lump_sum_amount: 12000,
-    is_active: true,
-  },
-]
+const STORAGE_KEY = 'campuscoin_data'
 
-const DEMO_EXPENSES = [
-  {
-    id: 'exp-1',
-    type: 'fixed',
-    label: 'Rent',
-    amount: 750,
-    frequency: 'monthly',
-    due_date: format(new Date(today.getFullYear(), today.getMonth(), 1), 'yyyy-MM-dd'),
-    is_active: true,
-  },
-  {
-    id: 'exp-2',
-    type: 'fixed',
-    label: 'Tuition',
-    amount: 6800,
-    frequency: 'one-time',
-    due_date: format(addDays(today, 14), 'yyyy-MM-dd'),
-    is_active: true,
-  },
-  {
-    id: 'exp-3',
-    type: 'variable',
-    label: 'Groceries',
-    amount: 60,
-    frequency: 'weekly',
-    due_date: format(today, 'yyyy-MM-dd'),
-    is_active: true,
-  },
-]
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch { return null }
+}
+
+function saveToStorage(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e)
+  }
+}
+
+export function clearStorage() {
+  localStorage.removeItem(STORAGE_KEY)
+}
 
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  const [profile, setProfile] = useState(DEMO_PROFILE)
-  const [incomeStreams, setIncomeStreams] = useState(DEMO_INCOME)
-  const [expenses, setExpenses] = useState(DEMO_EXPENSES)
+  const stored = loadFromStorage()
+
+  const [onboarded, setOnboarded] = useState(!!stored?.onboarded)
+  const [profile, setProfile] = useState(stored?.profile ?? EMPTY_PROFILE)
+  const [incomeStreams, setIncomeStreams] = useState(stored?.incomeStreams ?? [])
+  const [expenses, setExpenses] = useState(stored?.expenses ?? [])
   const [runway, setRunway] = useState([])
   const [aiInsight, setAiInsight] = useState(null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
+
+  // Persist to localStorage on change
+  useEffect(() => {
+    saveToStorage({ onboarded, profile, incomeStreams, expenses })
+  }, [onboarded, profile, incomeStreams, expenses])
+
+  function completeOnboarding(data) {
+    setProfile(data.profile)
+    setIncomeStreams(data.incomeStreams)
+    setExpenses(data.expenses)
+    setOnboarded(true)
+  }
 
   const refreshRunway = useCallback(async (overrideIncome, overrideExpenses) => {
     const inc = overrideIncome ?? incomeStreams
@@ -135,6 +115,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
+      onboarded, setOnboarded, completeOnboarding,
       profile, setProfile,
       incomeStreams, setIncomeStreams,
       expenses, setExpenses,

@@ -1,14 +1,35 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useApp } from '../store.jsx'
 import BalanceCard from '../components/BalanceCard.jsx'
 import RunwayChart from '../components/RunwayChart.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import NextActionCard from '../components/NextActionCard.jsx'
 import EmergencyModal from '../components/EmergencyModal.jsx'
-import { FileText } from 'lucide-react'
+import {
+  FileText, TrendingUp, TrendingDown,
+  ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
+} from 'lucide-react'
+
+function QuickStat({ icon: Icon, label, value, color, bgColor }) {
+  return (
+    <div className="card p-4 sm:p-5 flex items-center gap-3.5">
+      <div className={`w-10 h-10 rounded-xl ${bgColor} flex items-center justify-center flex-shrink-0`}>
+        <Icon size={18} className={color} />
+      </div>
+      <div className="min-w-0">
+        <p className="font-mono text-[10px] text-g-text-tertiary tracking-wider uppercase">{label}</p>
+        <p className="font-display font-bold text-g-text text-lg leading-tight truncate">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+}
 
 export default function Dashboard() {
-  const { profile, aiInsight, loading, syncNessie, refreshRunway, refreshAI } = useApp()
+  const { profile, incomeStreams, expenses, aiInsight, loading, syncNessie, refreshRunway, refreshAI } = useApp()
   const [showEmergency, setShowEmergency] = useState(false)
   const firstName = profile.name.split(' ')[0]
 
@@ -28,6 +49,29 @@ export default function Dashboard() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
+  // Compute quick stats
+  const stats = useMemo(() => {
+    const monthlyIncome = incomeStreams
+      .filter(s => s.is_active && !s.is_lump_sum)
+      .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
+
+    const monthlyExpenses = expenses
+      .filter(e => e.is_active)
+      .reduce((sum, e) => {
+        if (e.frequency === 'monthly') return sum + e.amount
+        if (e.frequency === 'weekly') return sum + e.amount * 4.33
+        if (e.frequency === 'semesterly') return sum + e.amount / 4
+        return sum
+      }, 0)
+
+    const netMonthly = monthlyIncome - monthlyExpenses
+    const daysUntilGrad = profile.graduation_date
+      ? Math.max(0, Math.ceil((new Date(profile.graduation_date) - new Date()) / (1000 * 60 * 60 * 24)))
+      : null
+
+    return { monthlyIncome, monthlyExpenses, netMonthly, daysUntilGrad }
+  }, [incomeStreams, expenses, profile.graduation_date])
+
   return (
     <>
       {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} />}
@@ -41,19 +85,80 @@ export default function Dashboard() {
               <span className="text-g-blue">{firstName}</span>
             </h1>
             <p className="font-body text-g-text-secondary text-sm mt-1">
-              {profile.university} · {profile.major} · Graduating {profile.graduation_date}
+              {profile.university} · {profile.major}
+              {profile.graduation_date && ` · Class of ${profile.graduation_date.slice(0, 4)}`}
             </p>
           </div>
           <StatusBadge status={aiInsight?.status ?? 'on_track'} />
         </div>
 
-        {/* Cards */}
+        {/* Quick Stats */}
+        <div className="fade-up-2 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <QuickStat
+            icon={TrendingUp} label="Monthly In"
+            value={fmt(stats.monthlyIncome)}
+            color="text-g-green" bgColor="bg-g-green-pastel"
+          />
+          <QuickStat
+            icon={TrendingDown} label="Monthly Out"
+            value={fmt(stats.monthlyExpenses)}
+            color="text-g-red" bgColor="bg-g-red-pastel"
+          />
+          <QuickStat
+            icon={stats.netMonthly >= 0 ? ArrowUpRight : ArrowDownRight}
+            label="Net/Month"
+            value={fmt(stats.netMonthly)}
+            color={stats.netMonthly >= 0 ? 'text-g-green' : 'text-g-red'}
+            bgColor={stats.netMonthly >= 0 ? 'bg-g-green-pastel' : 'bg-g-red-pastel'}
+          />
+          <QuickStat
+            icon={CalendarDays} label="Until Grad"
+            value={stats.daysUntilGrad !== null ? `${stats.daysUntilGrad}d` : '—'}
+            color="text-g-blue" bgColor="bg-g-blue-pastel"
+          />
+        </div>
+
+        {/* Balance + Next Action */}
         <div className="fade-up-2 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
           <div className="lg:col-span-1"><BalanceCard /></div>
           <div className="lg:col-span-2"><NextActionCard /></div>
         </div>
 
-        {/* Runway */}
+        {/* Spending Breakdown */}
+        {expenses.filter(e => e.is_active).length > 0 && (
+          <div className="fade-up-3 card p-5 sm:p-6">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
+                <Banknote size={16} className="text-g-red" />
+              </div>
+              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
+                Spending Breakdown
+              </span>
+            </div>
+            <div className="space-y-2.5">
+              {expenses.filter(e => e.is_active).sort((a, b) => b.amount - a.amount).map(exp => {
+                const maxAmt = Math.max(...expenses.filter(e => e.is_active).map(e => e.amount))
+                const pct = maxAmt > 0 ? (exp.amount / maxAmt) * 100 : 0
+                return (
+                  <div key={exp.id} className="flex items-center gap-3">
+                    <p className="font-body text-g-text text-sm w-28 sm:w-36 truncate flex-shrink-0">{exp.label}</p>
+                    <div className="flex-1 h-6 bg-g-bg rounded-lg overflow-hidden border border-g-border relative">
+                      <div
+                        className="h-full bg-gradient-to-r from-g-red-pastel to-g-red/30 rounded-lg transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="font-mono text-xs text-g-text-secondary w-16 text-right flex-shrink-0">
+                      {fmt(exp.amount)}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Runway Chart */}
         <div className="fade-up-3"><RunwayChart /></div>
 
         {/* Full Analysis */}
@@ -63,17 +168,14 @@ export default function Dashboard() {
               <FileText size={16} className="text-g-blue" />
             </div>
             <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
-              Full Analysis
+              AI Analysis
             </span>
           </div>
           {loading.ai ? (
             <div className="space-y-2.5">
-              <div className="skeleton h-4 w-full" />
-              <div className="skeleton h-4 w-5/6" />
-              <div className="skeleton h-4 w-full" />
-              <div className="skeleton h-4 w-4/5" />
-              <div className="skeleton h-4 w-full" />
-              <div className="skeleton h-4 w-3/4" />
+              <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-5/6" />
+              <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-4/5" />
+              <div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-3/4" />
             </div>
           ) : (
             <p className="font-body text-g-text-secondary text-sm leading-relaxed whitespace-pre-line">
