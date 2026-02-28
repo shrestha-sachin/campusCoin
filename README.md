@@ -63,6 +63,16 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173)
 
+### 4. Deploy Frontend to Firebase (GitHub Actions)
+
+The frontend is deployed to Firebase Hosting on push to `main`. For the **live site to call your Modal backend** (not localhost), set the API URL at build time:
+
+1. In **GitHub** → your repo → **Settings** → **Secrets and variables** → **Actions**
+2. Add a repository secret: **`VITE_MODAL_URL`**
+3. Set its value to your Modal app URL, e.g. `https://YOUR_WORKSPACE--campuscoin-fastapi-app.modal.run` (no trailing slash)
+
+The workflow uses this when running `npm run build`, so login and all API requests from the Firebase-hosted app go to your Modal backend.
+
 ---
 
 ## Project Structure
