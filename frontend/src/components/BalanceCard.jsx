@@ -16,49 +16,50 @@ function formatBalance(num) {
   }).format(num)
 }
 
-export default function BalanceCard() {
+export default function BalanceCard({ onStatusClick }) {
   const { profile, aiInsight, loading } = useApp()
   const status = aiInsight?.status ?? 'on_track'
   const textColor = STATUS_COLORS[status] ?? STATUS_COLORS.on_track
   const isPositive = profile.current_balance >= 0
 
   return (
-    <div className="card p-5 sm:p-7 h-full flex flex-col justify-between">
-      <div>
+    <div className="card p-5 sm:p-6 flex flex-col justify-center border-none shadow-premium bg-gradient-to-br from-g-surface to-g-bg relative overflow-hidden group h-full">
+      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+        <Wallet size={100} />
+      </div>
+
+      <div className="relative z-10 w-full">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-lg">
               <Wallet size={20} className="text-white" />
             </div>
-            <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
-              Balance
-            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display text-[13px] text-g-text-tertiary tracking-wide uppercase font-bold block">
+                  Available Balance
+                </span>
+                <div className="relative flex items-center">
+                  <div className={`w-1.5 h-1.5 rounded-full ${profile.nessie_account_id ? 'bg-g-green' : 'bg-g-text-tertiary'}`} />
+                  {profile.nessie_account_id && <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-g-green animate-ping opacity-75" />}
+                </div>
+              </div>
+            </div>
           </div>
-          <div className={`flex items-center gap-0.5 text-sm font-body ${isPositive ? 'text-g-green' : 'text-g-red'}`}>
-            {isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+          <div className={`px-3 py-1.5 rounded-xl bg-g-bg border border-g-border flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isPositive ? 'text-g-green' : 'text-g-red'}`}>
+            {isPositive ? 'Surplus' : 'Deficit'}
           </div>
         </div>
 
         {loading.runway ? (
-          <div className="skeleton h-12 w-3/4 mb-1" />
+          <div className="skeleton h-10 w-3/4 mb-1" />
         ) : (
-          <p className={`font-display font-bold text-4xl sm:text-[38px] ${textColor} leading-tight tracking-tight`}>
-            {formatBalance(profile.current_balance)}
-          </p>
-        )}
-      </div>
-
-      <div className="mt-6 pt-5 border-t border-g-border">
-        <div className="flex items-center gap-2.5">
-          <span className={`w-2.5 h-2.5 rounded-full ${profile.nessie_account_id ? 'bg-g-green pulse-dot' : 'bg-g-text-tertiary'}`} />
-          <span className="font-body text-xs text-g-text-tertiary tracking-wide">
-            {profile.nessie_account_id ? 'Connected via Capital One Nessie' : 'Local balance (no Nessie link)'}
-          </span>
-        </div>
-        {profile.nessie_account_id && (
-          <p className="font-body text-xs text-g-text-tertiary mt-1.5 truncate">
-            Account: {profile.nessie_account_id}
-          </p>
+          <div className="space-y-0.5">
+            <p className={`font-display font-bold text-3xl sm:text-4xl ${textColor} tracking-tight tabular-nums`}>
+              {formatBalance(profile.current_balance)}
+            </p>
+            <p className="font-body text-[10px] text-g-text-tertiary opacity-60 uppercase font-bold tracking-widest leading-none">Capital One Sync</p>
+          </div>
         )}
       </div>
     </div>

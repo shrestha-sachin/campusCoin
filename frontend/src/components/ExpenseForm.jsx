@@ -20,7 +20,7 @@ export default function ExpenseForm() {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(BLANK)
 
-  async function trigger(exp) { const rw = await refreshRunway(undefined, exp); await refreshAI(rw) }
+  async function trigger(exp) { await refreshRunway(undefined, exp) }
   function toggle(id) { const u = expenses.map(e => e.id === id ? { ...e, is_active: !e.is_active } : e); setExpenses(u); trigger(u) }
   function remove(id) { const u = expenses.filter(e => e.id !== id); setExpenses(u); trigger(u) }
   async function save() {

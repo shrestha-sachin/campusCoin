@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { X, Phone, CreditCard, HeartHandshake, AlertTriangle, ExternalLink } from 'lucide-react'
+import React from 'react'
+import { X, Phone, CreditCard, HeartHandshake, AlertTriangle, ExternalLink, GraduationCap, TrendingUp, ShoppingBag } from 'lucide-react'
 
 const FALLBACK_RESOURCES = [
   { icon: Phone, label: '211 Helpline', desc: 'Free financial counseling', link: 'https://www.211.org/', color: 'from-g-blue to-g-blue-half' },
@@ -7,22 +7,25 @@ const FALLBACK_RESOURCES = [
   { icon: HeartHandshake, label: 'Food Pantry', desc: 'Campus food assistance', link: '#', color: 'from-g-yellow to-g-yellow-half' },
 ]
 
-export default function EmergencyModal({ onClose, resources = [], university = '' }) {
+const PROACTIVE_RESOURCES = [
+  { icon: GraduationCap, label: 'Scholarship Portal', desc: 'Search regional grants & aid', link: 'https://www.scholarships.com/', color: 'from-g-blue to-g-blue-half' },
+  { icon: TrendingUp, label: 'High-Yield Savings', desc: 'Grow your student surplus', link: 'https://www.nerdwallet.com/best/banking/high-yield-savings-accounts', color: 'from-g-green to-g-green-half' },
+  { icon: ShoppingBag, label: 'Universal Discounts', desc: 'Verified 10% - 50% student savings', link: 'https://www.myunidays.com/', color: 'from-g-yellow to-g-yellow-half' },
+]
+
+export default function EmergencyModal({ onClose, resources = [], university = '', status = 'on_track' }) {
+  const isEmergency = status === 'critical' || status === 'caution'
+
   const displayResources = resources.length > 0 ? resources.map((r, i) => {
     let color = 'from-g-blue to-g-blue-half'
     let icon = Phone
     if (i % 3 === 1) { color = 'from-g-green to-g-green-half'; icon = CreditCard }
     if (i % 3 === 2) { color = 'from-g-yellow to-g-yellow-half'; icon = HeartHandshake }
 
-    // ── Robust link validation ──────────────────────────────────────────────
-    // Gemini sometimes returns "#", relative paths, or bare domain-less strings.
-    // We validate and fall back to a targeted Google search so the user always
-    // lands on something useful.
     const rawLink = (r.link || '').trim()
     let finalLink
 
     try {
-      // Test if it parses as a real absolute URL with a recognisable protocol
       const parsed = new URL(rawLink.startsWith('http') ? rawLink : `https://${rawLink}`)
       const hasDomain = parsed.hostname.includes('.') && parsed.hostname.length > 4
       const isInternal = parsed.hostname === 'localhost' ||
@@ -35,11 +38,9 @@ export default function EmergencyModal({ onClose, resources = [], university = '
       }
       finalLink = parsed.href
     } catch {
-      // Fall back: open a Google search so the user finds the real page
       const query = encodeURIComponent(`${r.label} ${university}`)
       finalLink = `https://www.google.com/search?q=${query}`
     }
-    // ────────────────────────────────────────────────────────────────────────
 
     return {
       icon,
@@ -49,18 +50,23 @@ export default function EmergencyModal({ onClose, resources = [], university = '
       isGoogleFallback: finalLink.startsWith('https://www.google.com/search'),
       color
     }
-  }) : FALLBACK_RESOURCES
+  }) : (isEmergency ? FALLBACK_RESOURCES : PROACTIVE_RESOURCES)
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-md p-4">
       <div className="bg-g-surface rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl scale-in" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-g-red to-g-red-half flex items-center justify-center shadow-sm">
-              <AlertTriangle size={24} className="text-white" />
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${isEmergency ? 'from-g-red to-g-red-half' : 'from-g-blue to-g-blue-half'} flex items-center justify-center shadow-lg`}>
+              {isEmergency ? <AlertTriangle size={24} className="text-white" /> : <TrendingUp size={24} className="text-white" />}
             </div>
             <div>
-              <h2 className="font-display font-bold text-g-text text-xl">Financial Alert</h2>
-              <p className="font-body text-g-text-secondary text-sm">You may need immediate help</p>
+              <h2 className="font-display font-bold text-g-text text-xl">
+                {isEmergency ? 'Financial Resources' : 'Financial Opportunity'}
+              </h2>
+              <p className="font-body text-g-text-secondary text-sm">
+                {isEmergency ? 'Immediate Support Services' : 'Growth & Savings Tools'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl text-g-text-tertiary hover:text-g-text hover:bg-g-bg transition-colors">
@@ -69,7 +75,9 @@ export default function EmergencyModal({ onClose, resources = [], university = '
         </div>
 
         <p className="font-body text-g-text-secondary text-[15px] leading-relaxed mb-6">
-          Our analysis indicates a potential financial emergency. Here are resources that can help:
+          {isEmergency
+            ? "Our analysis indicates you may need immediate financial assistance. These tailored resources are here to support you."
+            : "You're in a great financial position! Here are some ways to optimize your surplus and save even more as a student."}
         </p>
 
         <div className="space-y-3 mb-7">
@@ -97,9 +105,9 @@ export default function EmergencyModal({ onClose, resources = [], university = '
 
         <button
           onClick={onClose}
-          className="w-full py-3 rounded-full bg-g-blue text-white font-body text-[15px] font-medium hover:bg-[#3367d6] transition-all shadow-sm"
+          className={`w-full py-3.5 rounded-full ${isEmergency ? 'bg-g-red' : 'bg-g-blue'} text-white font-body text-[15px] font-bold hover:opacity-90 transition-all shadow-sm`}
         >
-          I Understand
+          {isEmergency ? 'I Understand' : 'Got it!'}
         </button>
       </div>
     </div>

@@ -26,7 +26,7 @@ class IncomeStream(BaseModel):
     hourly_rate: float = 0.0
     weekly_hours: float = 0.0
     start_date: str  # YYYY-MM-DD
-    end_date: str    # YYYY-MM-DD
+    end_date: Optional[str] = None    # YYYY-MM-DD
     is_lump_sum: bool = False
     lump_sum_amount: Optional[float] = None
     is_active: bool = True

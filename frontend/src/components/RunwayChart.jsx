@@ -89,7 +89,7 @@ export default function RunwayChart() {
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center shadow-sm">
             <TrendingUp size={20} className="text-white" />
           </div>
-          <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
+          <span className="font-display text-[11px] text-g-text-tertiary tracking-wide uppercase font-bold">
             Runway Projection
           </span>
         </div>

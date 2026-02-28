@@ -79,12 +79,12 @@ export default function UpcomingBillsCard() {
                 <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
                     <CalendarClock size={16} className="text-g-red" />
                 </div>
-                <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase font-medium">
+                <span className="font-display text-[11px] text-g-text-tertiary tracking-wide uppercase font-bold">
                     Upcoming Bills (30d)
                 </span>
             </div>
 
-            <div className="flex-1 space-y-3 overflow-y-auto max-h-[220px] pr-1">
+            <div className="flex-1 min-h-0 space-y-3 overflow-y-auto pr-1">
                 {upcomingBills.length === 0 ? (
                     <div className="h-full min-h-[140px] flex flex-col items-center justify-center text-center opacity-60">
                         <CheckCircle2 size={24} className="text-g-text-tertiary mb-2" />

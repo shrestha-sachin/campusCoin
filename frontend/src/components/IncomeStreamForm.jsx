@@ -22,7 +22,7 @@ export default function IncomeStreamForm() {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(BLANK)
 
-  async function trigger(streams) { const rw = await refreshRunway(streams); await refreshAI(rw) }
+  async function trigger(streams) { await refreshRunway(streams) }
   function toggle(id) { const u = incomeStreams.map(s => s.id === id ? { ...s, is_active: !s.is_active } : s); setIncomeStreams(u); trigger(u) }
   function remove(id) { const u = incomeStreams.filter(s => s.id !== id); setIncomeStreams(u); trigger(u) }
   async function save() {
@@ -91,8 +91,26 @@ export default function IncomeStreamForm() {
           )}
           <div className="grid grid-cols-2 gap-4">
             <div><label className="label">Start Date</label><input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className="input-field" /></div>
-            <div><label className="label">End Date</label><input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className="input-field" /></div>
+            <div>
+              <label className="label">End Date</label>
+              <input
+                type="date"
+                value={form.end_date || ''}
+                disabled={!form.end_date}
+                onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
+                className={`input-field ${!form.end_date ? 'opacity-50 grayscale' : ''}`}
+              />
+            </div>
           </div>
+          <label className="flex items-center gap-2.5 cursor-pointer select-none -mt-2 ml-1">
+            <input
+              type="checkbox"
+              checked={!form.end_date}
+              onChange={e => setForm(f => ({ ...f, end_date: e.target.checked ? null : IN_4MO }))}
+              className="w-4 h-4 rounded accent-g-blue"
+            />
+            <span className="font-body text-[13px] text-g-text-tertiary">Continuing indefinitely (no end date)</span>
+          </label>
           <div className="flex gap-3 pt-1">
             <button onClick={save} className="flex-1 py-3 rounded-full bg-g-blue text-white font-body text-[15px] font-medium shadow-sm">Save</button>
             <button onClick={() => { setShowAdd(false); setForm(BLANK) }} className="flex-1 py-3 rounded-full bg-g-bg text-g-text-secondary font-body text-[15px] font-medium border border-g-border hover:bg-g-surface transition-colors">Cancel</button>

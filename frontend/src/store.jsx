@@ -58,8 +58,8 @@ export function AppProvider({ children }) {
   const [expenses, setExpenses] = useState(stored?.expenses ?? [])
   const [auth, setAuth] = useState(stored?.auth ?? EMPTY_AUTH)
   const [goals, setGoals] = useState(stored?.goals ?? [])
-  const [runway, setRunway] = useState([])
-  const [aiInsight, setAiInsight] = useState(null)
+  const [runway, setRunway] = useState(stored?.runway ?? [])
+  const [aiInsight, setAiInsight] = useState(stored?.aiInsight ?? null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
   const [nessieTransactions, setNessieTransactions] = useState([])
   const [lastPoll, setLastPoll] = useState(null) // timestamp of last poll
@@ -70,8 +70,8 @@ export function AppProvider({ children }) {
 
   // Persist to localStorage on change
   useEffect(() => {
-    saveToStorage({ auth, onboarded, profile, incomeStreams, expenses })
-  }, [auth, onboarded, profile, incomeStreams, expenses])
+    saveToStorage({ auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight })
+  }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight])
 
   // Persist to backend (Modal Dict) — debounced 2s after last change
   useEffect(() => {

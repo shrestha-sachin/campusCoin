@@ -25,15 +25,23 @@ async def calculate_runway(req: RunwayRequest):
                 continue
             try:
                 start = date.fromisoformat(stream.start_date)
-                end = date.fromisoformat(stream.end_date)
+                end = date.fromisoformat(stream.end_date) if stream.end_date else date.max
             except Exception:
                 continue
             if not (start <= current_date <= end):
                 continue
 
             if stream.is_lump_sum and stream.lump_sum_amount:
-                duration_days = max((end - start).days, 1)
-                daily_delta += stream.lump_sum_amount / duration_days
+                if stream.end_date:
+                    duration_days = max((end - start).days, 1)
+                else:
+                    duration_days = 1
+                
+                if current_date == start if not stream.end_date else (start <= current_date <= end):
+                    if not stream.end_date:
+                         daily_delta += stream.lump_sum_amount
+                    else:
+                         daily_delta += stream.lump_sum_amount / duration_days
             else:
                 daily_delta += (stream.hourly_rate * stream.weekly_hours) / 7.0
 
