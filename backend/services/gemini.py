@@ -103,7 +103,9 @@ Rules:
 - Set status to "caution" if projected balance drops below $300 within 60 days
 - Set emergency_mode to true if balance hits $0 or can't cover rent/food within 30 days
 - When emergency_mode is true, populate emergency_resources with objects like {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "...", "description": "...", "link": "..."}}
-- CRITICAL: For the "link" field in emergency_resources, you MUST ACT AS A RESEARCHER. Use the student's listed university and email domain ({req.profile.email}) to search your knowledge base for the exact, real-world URL for that specific service at their university or nearby geographic location (e.g. if university="UT Austin", provide the real link to UT Austin's Student Emergency Fund). Do not use placeholders.
+- When emergency_mode is true, populate emergency_resources with 3 objects in this exact format:
+  {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "Name of the program", "description": "One sentence description", "link": "https://..."}}
+- STRICT LINK RULE: The "link" value MUST be a complete, absolute URL beginning with "https://" that resolves to a real university or government webpage. You MUST research the exact page for that university. NEVER use "#", relative paths, internal routes, or placeholder values. DO NOT provide any links belonging to the domain "campuscoin.tech" or "localhost". If you're unsure of the exact URL for a university page, use the format: "https://www.google.com/search?q=UWGB+emergency+grant" replacing UWGB with the actual institution abbreviation. The student's email is {req.profile.email or 'unknown'} and university is {req.profile.university}.
 - shortfall_date should be the ISO date string when balance first goes negative, or null
 - shortfall_amount should be the magnitude of the shortfall at that date"""
 

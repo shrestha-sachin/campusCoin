@@ -113,7 +113,7 @@ export default function Dashboard() {
 
   return (
     <>
-      {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} resources={aiInsight?.emergency_resources || []} />}
+      {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} resources={aiInsight?.emergency_resources || []} university={profile.university} />}
 
       <div className="p-4 sm:p-6 pt-8 lg:p-8 space-y-5 sm:space-y-6 max-w-6xl mx-auto">
         {/* Header */}
