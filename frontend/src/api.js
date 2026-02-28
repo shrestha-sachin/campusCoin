@@ -56,6 +56,12 @@ export const api = {
   recallMemory: (userId) =>
     request(`/api/memory/recall/${userId}`),
 
+  // Auth
+  signup: (payload) =>
+    request('/api/auth/signup', { method: 'POST', body: JSON.stringify(payload) }),
+  login: (payload) =>
+    request('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+
   // Health
   health: () =>
     request('/api/health'),

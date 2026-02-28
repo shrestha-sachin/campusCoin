@@ -27,6 +27,7 @@ def create_app() -> FastAPI:
     from services.nessie import router as nessie_router
     from services.supermemory import router as supermemory_router
     from services.profile import router as profile_router
+    from services.auth import router as auth_router
 
     fastapi_app = FastAPI(title="CampusCoin API", version="1.0.0")
 
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     fastapi_app.include_router(nessie_router, prefix="/api/nessie")
     fastapi_app.include_router(supermemory_router, prefix="/api/memory")
     fastapi_app.include_router(profile_router, prefix="/api/profile")
+    fastapi_app.include_router(auth_router, prefix="/api/auth")
 
     @fastapi_app.get("/api/health")
     async def health():
