@@ -44,7 +44,7 @@ export default function ExpenseForm() {
           </div>
           <div>
             <h3 className="font-display font-bold text-g-text text-base">Expenses</h3>
-            <p className="font-mono text-[11px] text-g-text-tertiary mt-0.5">Toggle for what-if</p>
+            <p className="font-body text-[11px] text-g-text-tertiary mt-0.5">Toggle for what-if</p>
           </div>
         </div>
         <button onClick={() => setShowAdd(v => !v)} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-red text-white font-body text-sm font-medium hover:bg-[#c5221f] transition-all shadow-sm">
@@ -58,9 +58,9 @@ export default function ExpenseForm() {
             <input type="checkbox" checked={exp.is_active} onChange={() => toggle(exp.id)} className="w-5 h-5 rounded accent-g-blue cursor-pointer flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-body text-g-text text-[15px] font-medium truncate">{exp.label}</p>
-              <p className="font-mono text-xs text-g-text-tertiary mt-0.5">${exp.amount.toLocaleString()} · due {exp.due_date}</p>
+              <p className="font-body text-xs text-g-text-tertiary mt-0.5">${exp.amount.toLocaleString()} · due {exp.due_date}</p>
             </div>
-            <span className={`hidden sm:inline px-2.5 py-1 rounded-full border text-[11px] font-mono ${FREQ_CLASSES[exp.frequency]}`}>{FREQ_LABELS[exp.frequency]}</span>
+            <span className={`hidden sm:inline px-2.5 py-1 rounded-full border text-[11px] font-body ${FREQ_CLASSES[exp.frequency]}`}>{FREQ_LABELS[exp.frequency]}</span>
             <button onClick={() => remove(exp.id)} className="text-g-text-tertiary hover:text-g-red transition-colors p-1.5 rounded-xl hover:bg-g-red-pastel flex-shrink-0"><Trash2 size={16} /></button>
           </div>
         ))}

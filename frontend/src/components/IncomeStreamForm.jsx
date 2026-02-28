@@ -49,7 +49,7 @@ export default function IncomeStreamForm() {
           </div>
           <div>
             <h3 className="font-display font-bold text-g-text text-base">Income</h3>
-            <p className="font-mono text-[11px] text-g-text-tertiary mt-0.5">Toggle for what-if</p>
+            <p className="font-body text-[11px] text-g-text-tertiary mt-0.5">Toggle for what-if</p>
           </div>
         </div>
         <button onClick={() => setShowAdd(v => !v)} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-medium hover:bg-[#3367d6] transition-all shadow-sm">
@@ -63,9 +63,9 @@ export default function IncomeStreamForm() {
             <input type="checkbox" checked={s.is_active} onChange={() => toggle(s.id)} className="w-5 h-5 rounded accent-g-blue cursor-pointer flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-body text-g-text text-[15px] font-medium truncate">{s.label}</p>
-              <p className="font-mono text-xs text-g-text-tertiary mt-0.5">{s.is_lump_sum ? `$${s.lump_sum_amount?.toLocaleString()} lump sum` : `$${s.hourly_rate}/hr × ${s.weekly_hours}h/wk`}</p>
+              <p className="font-body text-xs text-g-text-tertiary mt-0.5">{s.is_lump_sum ? `$${s.lump_sum_amount?.toLocaleString()} lump sum` : `$${s.hourly_rate}/hr × ${s.weekly_hours}h/wk`}</p>
             </div>
-            <span className={`hidden sm:inline px-2.5 py-1 rounded-full border text-[11px] font-mono ${TYPE_CLASSES[s.type]}`}>{TYPE_LABELS[s.type]}</span>
+            <span className={`hidden sm:inline px-2.5 py-1 rounded-full border text-[11px] font-body ${TYPE_CLASSES[s.type]}`}>{TYPE_LABELS[s.type]}</span>
             <button onClick={() => remove(s.id)} className="text-g-text-tertiary hover:text-g-red transition-colors p-1.5 rounded-xl hover:bg-g-red-pastel flex-shrink-0"><Trash2 size={16} /></button>
           </div>
         ))}

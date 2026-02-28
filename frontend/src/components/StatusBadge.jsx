@@ -32,7 +32,7 @@ export default function StatusBadge({ status }) {
   return (
     <div className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-full border ${config.bg} ${config.border}`}>
       <Icon size={16} className={config.text} strokeWidth={2.2} />
-      <span className={`font-mono text-xs font-semibold tracking-wide ${config.text}`}>
+      <span className={`font-body text-xs font-semibold tracking-wide ${config.text}`}>
         {config.label}
       </span>
     </div>

@@ -44,7 +44,7 @@ export default function EmergencyModal({ onClose }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-body text-g-text text-[15px] font-medium">{label}</p>
-                <p className="font-mono text-xs text-g-text-tertiary">{desc}</p>
+                <p className="font-body text-xs text-g-text-tertiary">{desc}</p>
               </div>
               <ExternalLink size={16} className="text-g-text-tertiary group-hover:text-g-blue transition-colors flex-shrink-0" />
             </a>

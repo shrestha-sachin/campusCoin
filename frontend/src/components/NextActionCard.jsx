@@ -17,7 +17,7 @@ export default function NextActionCard() {
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-yellow to-g-yellow-half flex items-center justify-center shadow-sm">
             <Zap size={20} className="text-white" />
           </div>
-          <span className="font-mono text-xs text-g-text-secondary tracking-widest uppercase font-medium">
+          <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
             Next Action
           </span>
         </div>
@@ -41,7 +41,7 @@ export default function NextActionCard() {
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-yellow to-g-yellow-half flex items-center justify-center shadow-sm">
             <Zap size={20} className="text-white" />
           </div>
-          <span className="font-mono text-xs text-g-text-secondary tracking-widest uppercase font-medium">
+          <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
             Next Action
           </span>
         </div>
@@ -53,7 +53,7 @@ export default function NextActionCard() {
       {shortfallDate && (
         <div className="mt-5 flex items-start gap-3 bg-g-red-pastel/60 rounded-2xl px-4 py-3.5 border border-g-red/10">
           <AlertTriangle size={18} className="text-g-red mt-0.5 flex-shrink-0" />
-          <p className="font-mono text-xs text-g-text leading-relaxed">
+          <p className="font-body text-xs text-g-text leading-relaxed">
             Shortfall:{' '}
             <span className="font-semibold">
               {format(parseISO(shortfallDate), 'MMM d, yyyy')}

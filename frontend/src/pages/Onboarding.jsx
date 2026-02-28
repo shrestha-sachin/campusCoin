@@ -212,7 +212,7 @@ export default function Onboarding() {
                                     }`}>
                                     <Icon size={12} />
                                 </div>
-                                <span className="font-mono text-[10px] sm:text-[11px] tracking-wide hidden sm:inline font-medium">
+                                <span className="font-body text-[10px] sm:text-[11px] tracking-wide hidden sm:inline font-medium">
                                     {s.label}
                                 </span>
                             </div>
@@ -240,7 +240,7 @@ export default function Onboarding() {
                             </p>
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-g-surface border border-g-border mt-2">
                                 <Clock size={14} className="text-g-text-tertiary" />
-                                <span className="font-mono text-xs text-g-text-tertiary">Takes about 2 minutes</span>
+                                <span className="font-body text-xs text-g-text-tertiary">Takes about 2 minutes</span>
                             </div>
                         </div>
                     )}
@@ -345,7 +345,7 @@ export default function Onboarding() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-body text-g-text text-[15px] font-medium truncate">{inc.label}</p>
-                                            <p className="font-mono text-xs text-g-text-tertiary">{TYPE_LABELS[inc.type]} · {inc.is_lump_sum ? `$${inc.lump_sum_amount?.toLocaleString()}` : `$${inc.hourly_rate}/hr`}</p>
+                                            <p className="font-body text-xs text-g-text-tertiary">{TYPE_LABELS[inc.type]} · {inc.is_lump_sum ? `$${inc.lump_sum_amount?.toLocaleString()}` : `$${inc.hourly_rate}/hr`}</p>
                                         </div>
                                         <button onClick={() => setIncomes(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-lg hover:bg-g-red-pastel transition-colors"><X size={16} /></button>
                                     </div>
@@ -421,7 +421,7 @@ export default function Onboarding() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-body text-g-text text-[15px] font-medium truncate">{exp.label}</p>
-                                            <p className="font-mono text-xs text-g-text-tertiary">${exp.amount.toLocaleString()} · {FREQ_LABELS[exp.frequency]}</p>
+                                            <p className="font-body text-xs text-g-text-tertiary">${exp.amount.toLocaleString()} · {FREQ_LABELS[exp.frequency]}</p>
                                         </div>
                                         <button onClick={() => setExpenseList(prev => prev.filter((_, idx) => idx !== i))} className="text-g-text-tertiary hover:text-g-red p-1.5 rounded-lg hover:bg-g-red-pastel transition-colors"><X size={16} /></button>
                                     </div>
@@ -486,7 +486,7 @@ export default function Onboarding() {
 
                             {goals.length === 0 && (
                                 <div className="mt-5 space-y-1.5">
-                                    <p className="font-mono text-xs text-g-text-tertiary tracking-wider uppercase mb-2">Quick Add</p>
+                                    <p className="font-body text-xs text-g-text-tertiary tracking-wider uppercase mb-2">Quick Add</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {['Graduate debt-free', 'Save $2,000 emergency fund', 'Build credit score', 'Save for study abroad'].map(s => (
                                             <button key={s} onClick={() => setGoals(prev => [...prev, s])}

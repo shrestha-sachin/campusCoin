@@ -76,7 +76,7 @@ export default function Layout() {
         <div className="pt-5 mt-3 border-t border-g-border">
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-g-green pulse-dot flex-shrink-0" />
-            <span className="font-mono text-xs text-g-text-tertiary flex items-center gap-1.5">
+            <span className="font-body text-xs text-g-text-tertiary flex items-center gap-1.5">
               Powered by Modal <Zap size={12} />
             </span>
           </div>

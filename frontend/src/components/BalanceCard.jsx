@@ -30,11 +30,11 @@ export default function BalanceCard() {
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
               <Wallet size={20} className="text-white" />
             </div>
-            <span className="font-mono text-xs text-g-text-secondary tracking-widest uppercase font-medium">
+            <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
               Balance
             </span>
           </div>
-          <div className={`flex items-center gap-0.5 text-sm font-mono ${isPositive ? 'text-g-green' : 'text-g-red'}`}>
+          <div className={`flex items-center gap-0.5 text-sm font-body ${isPositive ? 'text-g-green' : 'text-g-red'}`}>
             {isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
           </div>
         </div>
@@ -51,12 +51,12 @@ export default function BalanceCard() {
       <div className="mt-6 pt-5 border-t border-g-border">
         <div className="flex items-center gap-2.5">
           <span className={`w-2.5 h-2.5 rounded-full ${profile.nessie_account_id ? 'bg-g-green pulse-dot' : 'bg-g-text-tertiary'}`} />
-          <span className="font-mono text-xs text-g-text-tertiary tracking-wide">
+          <span className="font-body text-xs text-g-text-tertiary tracking-wide">
             {profile.nessie_account_id ? 'Connected via Capital One Nessie' : 'Local balance (no Nessie link)'}
           </span>
         </div>
         {profile.nessie_account_id && (
-          <p className="font-mono text-xs text-g-text-tertiary mt-1.5 truncate">
+          <p className="font-body text-xs text-g-text-tertiary mt-1.5 truncate">
             Account: {profile.nessie_account_id}
           </p>
         )}

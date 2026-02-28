@@ -19,7 +19,7 @@ function QuickStat({ icon: Icon, label, value, color, bgColor }) {
         <Icon size={18} className={color} />
       </div>
       <div className="min-w-0">
-        <p className="font-mono text-[10px] text-g-text-tertiary tracking-wider uppercase">{label}</p>
+        <p className="font-body text-[10px] text-g-text-tertiary tracking-wider uppercase">{label}</p>
         <p className="font-display font-bold text-g-text text-lg leading-tight truncate">{value}</p>
       </div>
     </div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
                   <span className="font-display font-bold text-base text-g-text block">
                     Capital One Transactions
                   </span>
-                  <span className="font-mono text-[10px] text-g-text-tertiary flex items-center gap-1.5">
+                  <span className="font-body text-[10px] text-g-text-tertiary flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-g-green pulse-dot inline-block" />
                     Auto-syncing every 30s · Last: {timeAgo(lastPoll)}
                   </span>
@@ -192,7 +192,7 @@ export default function Dashboard() {
                 <button
                   onClick={handleSimulatePaycheck}
                   disabled={simulating}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-green-pastel text-g-green font-mono text-[11px] font-medium border border-g-green/20 hover:bg-g-green hover:text-white transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-green-pastel text-g-green font-body text-[11px] font-medium border border-g-green/20 hover:bg-g-green hover:text-white transition-all disabled:opacity-50"
                 >
                   {simulating ? <Loader2 size={12} className="animate-spin" /> : <DollarSign size={12} />}
                   Simulate Paycheck
@@ -200,7 +200,7 @@ export default function Dashboard() {
                 <button
                   onClick={handleManualPoll}
                   disabled={polling}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-bg text-g-text-tertiary font-mono text-[11px] font-medium border border-g-border hover:text-g-blue hover:border-g-blue/30 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-g-bg text-g-text-tertiary font-body text-[11px] font-medium border border-g-border hover:text-g-blue hover:border-g-blue/30 transition-all disabled:opacity-50"
                 >
                   <RefreshCw size={12} className={polling ? 'animate-spin' : ''} />
                   Refresh
@@ -244,11 +244,11 @@ export default function Dashboard() {
                         <p className="font-body text-g-text text-sm font-medium truncate">
                           {tx.description}
                         </p>
-                        <p className="font-mono text-[10px] text-g-text-tertiary">
+                        <p className="font-body text-[10px] text-g-text-tertiary">
                           {tx.date || '—'} · {isDeposit ? 'Deposit' : 'Purchase'} · {tx.status}
                         </p>
                       </div>
-                      <p className={`font-mono text-sm font-semibold flex-shrink-0 ${isDeposit ? 'text-g-green' : 'text-g-red'
+                      <p className={`font-body text-sm font-semibold flex-shrink-0 ${isDeposit ? 'text-g-green' : 'text-g-red'
                         }`}>
                         {isDeposit ? '+' : '−'}{fmtFull(tx.amount)}
                       </p>
@@ -262,11 +262,11 @@ export default function Dashboard() {
             {nessieTransactions.length > 0 && (
               <div className="mt-4 pt-4 border-t border-g-border flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-[11px] text-g-text-tertiary">
+                  <span className="font-body text-[11px] text-g-text-tertiary">
                     {stats.depositCount} deposit{stats.depositCount !== 1 ? 's' : ''} · {stats.purchaseCount} purchase{stats.purchaseCount !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <span className="font-mono text-[11px] text-g-text-tertiary">
+                <span className="font-body text-[11px] text-g-text-tertiary">
                   AI analyzes on new transactions only
                 </span>
               </div>
@@ -281,7 +281,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-xl bg-g-red-pastel flex items-center justify-center">
                 <Banknote size={16} className="text-g-red" />
               </div>
-              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
+              <span className="font-body text-[11px] text-g-text-secondary tracking-widest uppercase">
                 Spending Breakdown
               </span>
             </div>
@@ -298,7 +298,7 @@ export default function Dashboard() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="font-mono text-xs text-g-text-secondary w-16 text-right flex-shrink-0">
+                    <p className="font-body text-xs text-g-text-secondary w-16 text-right flex-shrink-0">
                       {fmt(exp.amount)}
                     </p>
                   </div>
@@ -318,10 +318,10 @@ export default function Dashboard() {
               <FileText size={16} className="text-g-blue" />
             </div>
             <div>
-              <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase block">
+              <span className="font-body text-[11px] text-g-text-secondary tracking-widest uppercase block">
                 AI Analysis
               </span>
-              <span className="font-mono text-[10px] text-g-text-tertiary">
+              <span className="font-body text-[10px] text-g-text-tertiary">
                 Triggered by new transactions
               </span>
             </div>
@@ -344,7 +344,7 @@ export default function Dashboard() {
               <p className="font-body text-g-text-tertiary text-sm">
                 Waiting for transactions to analyze…
               </p>
-              <p className="font-mono text-[11px] text-g-text-tertiary mt-1">
+              <p className="font-body text-[11px] text-g-text-tertiary mt-1">
                 AI will automatically run when a new deposit or purchase is detected
               </p>
             </div>

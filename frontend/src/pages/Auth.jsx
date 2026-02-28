@@ -68,25 +68,25 @@ export default function Auth() {
                   <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                     <Sparkles size={14} />
                   </span>
-                  <span className="font-mono tracking-wide">AI strategist chat</span>
+                  <span className="font-body tracking-wide">AI strategist chat</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
                   <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                     <Sparkles size={14} />
                   </span>
-                  <span className="font-mono tracking-wide">180-day runway</span>
+                  <span className="font-body tracking-wide">180-day runway</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
                   <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                     <Sparkles size={14} />
                   </span>
-                  <span className="font-mono tracking-wide">What-if scenarios</span>
+                  <span className="font-body tracking-wide">What-if scenarios</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 rounded-2xl px-3 py-2">
                   <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                     <Sparkles size={14} />
                   </span>
-                  <span className="font-mono tracking-wide">Supermemory profile</span>
+                  <span className="font-body tracking-wide">Supermemory profile</span>
                 </div>
               </div>
             </div>

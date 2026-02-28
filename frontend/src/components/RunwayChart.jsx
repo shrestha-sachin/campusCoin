@@ -18,10 +18,10 @@ function CustomTooltip({ active, payload, label }) {
   const color = val < 0 ? '#ea4335' : '#34a853'
   return (
     <div className="bg-g-surface rounded-2xl px-5 py-3 shadow-lg border border-g-border">
-      <p className="font-mono text-xs text-g-text-tertiary mb-1">
+      <p className="font-body text-xs text-g-text-tertiary mb-1">
         {label ? format(parseISO(label), 'MMM d, yyyy') : ''}
       </p>
-      <p className="font-mono text-base font-bold" style={{ color }}>
+      <p className="font-body text-base font-bold" style={{ color }}>
         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)}
       </p>
     </div>
@@ -49,7 +49,7 @@ export default function RunwayChart() {
   if (!runway.length) {
     return (
       <div className="card p-5 sm:p-7 flex items-center justify-center h-[260px] sm:h-[300px]">
-        <p className="font-mono text-[15px] text-g-text-tertiary">
+        <p className="font-body text-[15px] text-g-text-tertiary">
           No runway data — refreshing…
         </p>
       </div>
@@ -62,7 +62,7 @@ export default function RunwayChart() {
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-green to-g-green-half flex items-center justify-center shadow-sm">
           <TrendingUp size={20} className="text-white" />
         </div>
-        <span className="font-mono text-xs text-g-text-secondary tracking-widest uppercase font-medium">
+        <span className="font-body text-xs text-g-text-secondary tracking-widest uppercase font-medium">
           180-Day Runway
         </span>
       </div>
