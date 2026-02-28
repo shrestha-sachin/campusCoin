@@ -1,0 +1,50 @@
+const BASE_URL = import.meta.env.VITE_MODAL_URL || 'http://localhost:8000'
+
+async function request(path, options = {}) {
+  const url = `${BASE_URL}${path}`
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  })
+  if (!res.ok) {
+    const error = await res.text()
+    throw new Error(`API error ${res.status}: ${error}`)
+  }
+  return res.json()
+}
+
+export const api = {
+  // Profile
+  getProfile: (userId) =>
+    request(`/api/profile/${userId}`),
+  saveProfile: (userId, data) =>
+    request(`/api/profile/${userId}`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Runway
+  calculateRunway: (payload) =>
+    request('/api/runway/calculate', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // AI
+  analyzeFinances: (payload) =>
+    request('/api/ai/analyze', { method: 'POST', body: JSON.stringify(payload) }),
+  chat: (payload) =>
+    request('/api/ai/chat', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // Nessie
+  getNessieBalance: (accountId) =>
+    request(`/api/nessie/balance/${accountId}`),
+  getNessieTransactions: (accountId) =>
+    request(`/api/nessie/transactions/${accountId}`),
+  listNessieAccounts: () =>
+    request('/api/nessie/accounts'),
+
+  // Supermemory
+  storeMemory: (profile) =>
+    request('/api/memory/store', { method: 'POST', body: JSON.stringify({ profile }) }),
+  recallMemory: (userId) =>
+    request(`/api/memory/recall/${userId}`),
+
+  // Health
+  health: () =>
+    request('/api/health'),
+}

@@ -1,0 +1,305 @@
+/* #region Google Fonts */
+
+/* --- GoogleSans --- */
+/* Regular */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Italic */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Medium */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+/* Medium Italic */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Bold */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Bold Italic */
+@font-face {
+  font-family: 'GoogleSans';
+  src: url('../assets/fonts/GoogleSans-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* --- Google Sans Mono --- */
+/* Regular */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Italic */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+/* Medium */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+/* Medium Italic */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* SemiBold */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+/* SemiBold Italic */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+}
+/* Bold */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+/* Bold Italic */
+@font-face {
+  font-family: 'GoogleSansMono';
+  src: url('../assets/fonts/GoogleSansMono-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* --- Google Sans Text --- */
+/* Regular */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Italic */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Medium */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+/* Medium Italic */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Bold */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Bold Italic */
+@font-face {
+  font-family: 'GoogleSansText';
+  src: url('../assets/fonts/GoogleSansText-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
+/* #endregion Google Fonts */
+
+/* #region Google Theme Variables */
+:root {
+  /* MAPPING FONTS */
+  --font-google: "GoogleSans", ui-sans-serif, system-ui, sans-serif;
+  --font-google-mono: "GoogleSansMono", ui-monospace, monospace;
+  --font-google-text: "GoogleSansText", ui-sans-serif, system-ui, sans-serif;
+
+  /* MAPPING COLORS */
+  /* Core Colors */
+  --color-google-blue: #4285f4;
+  --color-google-green: #34a853;
+  --color-google-yellow: #f9ab00;
+  --color-google-red: #ea4335;
+
+  /* Halftones */
+  --color-google-blue-halftone: #57caff;
+  --color-google-green-halftone: #5cdb6d;
+  --color-google-yellow-halftone: #ffd427;
+  --color-google-red-halftone: #ff7daf;
+
+  /* Pastels */
+  --color-google-blue-pastel: #c3ecf6;
+  --color-google-green-pastel: #ccf6c5;
+  --color-google-yellow-pastel: #ffe7a5;
+  --color-google-red-pastel: #f8d8d8;
+
+  /* Grayscale */
+  --color-google-off-white: #f0f0f0;
+  --color-google-black: #1e1e1e;
+
+  /* Material elevation (soft shadows) */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+/* #endregion Google Theme Variables */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-google-off-white);
+  color: var(--color-google-black);
+  font-family: var(--font-google-text);
+}
+
+/* Custom scrollbar — light theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-google-off-white);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 30, 30, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 30, 30, 0.35);
+}
+
+/* Card — white surface, large radius, soft shadow (Material elevation) */
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  border: none;
+}
+
+/* Primary button — pill-shaped */
+.btn-primary {
+  border-radius: 9999px;
+  background-color: var(--color-google-blue);
+  color: #ffffff;
+  font-family: var(--font-google-text);
+  font-weight: 500;
+  transition: box-shadow 0.2s, background-color 0.2s;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #3367d6;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.35);
+}
+
+/* Fade up animation utility classes */
+.fade-up-1 { animation: fadeUp 0.5s ease 0.05s both; }
+.fade-up-2 { animation: fadeUp 0.5s ease 0.15s both; }
+.fade-up-3 { animation: fadeUp 0.5s ease 0.25s both; }
+.fade-up-4 { animation: fadeUp 0.5s ease 0.35s both; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.pulse-dot {
+  animation: pulseDot 1.8s ease-in-out infinite;
+}
+
+/* Typing indicator */
+@keyframes typingBounce {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.typing-dot:nth-child(1) { animation: typingBounce 1s ease infinite 0ms; }
+.typing-dot:nth-child(2) { animation: typingBounce 1s ease infinite 150ms; }
+.typing-dot:nth-child(3) { animation: typingBounce 1s ease infinite 300ms; }
+
+/* Skeleton shimmer — light theme */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-google-off-white) 25%,
+    rgba(30, 30, 30, 0.06) 50%,
+    var(--color-google-off-white) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
