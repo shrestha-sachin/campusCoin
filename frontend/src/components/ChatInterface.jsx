@@ -6,15 +6,15 @@ import EmergencyModal from './EmergencyModal.jsx'
 
 function TypingIndicator() {
   return (
-    <div className="flex items-end gap-3 mb-5">
-      <div className="w-9 h-9 rounded-full bg-google-blue-pastel flex items-center justify-center flex-shrink-0">
-        <Bot size={18} className="text-google-blue" />
+    <div className="flex items-end gap-2.5 mb-4">
+      <div className="w-8 h-8 rounded-full bg-g-blue-pastel flex items-center justify-center flex-shrink-0">
+        <Bot size={15} className="text-g-blue" />
       </div>
-      <div className="bg-white rounded-2xl rounded-bl-md px-5 py-3.5 shadow-card border border-black/6">
+      <div className="bg-g-surface rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm border border-g-border">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-google-blue/50 typing-dot" />
-          <span className="w-2 h-2 rounded-full bg-google-blue/50 typing-dot" />
-          <span className="w-2 h-2 rounded-full bg-google-blue/50 typing-dot" />
+          <span className="w-1.5 h-1.5 rounded-full bg-g-blue/50 typing-dot" />
+          <span className="w-1.5 h-1.5 rounded-full bg-g-blue/50 typing-dot" />
+          <span className="w-1.5 h-1.5 rounded-full bg-g-blue/50 typing-dot" />
         </div>
       </div>
     </div>
@@ -58,10 +58,10 @@ export default function ChatInterface() {
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.response }])
       if (res.emergency_mode) setShowEmergency(true)
-    } catch (err) {
+    } catch {
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, I had trouble connecting to the AI. Please try again.' },
+        { role: 'assistant', content: 'Sorry, I had trouble connecting. Please try again.' },
       ])
     } finally {
       setTyping(false)
@@ -79,29 +79,28 @@ export default function ChatInterface() {
   return (
     <>
       {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} />}
-      <div className="flex flex-col h-full bg-google-off-white">
+      <div className="flex flex-col h-full bg-g-bg">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-1">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-1">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`flex items-end gap-3 mb-5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+              className={`flex items-end gap-2 sm:gap-2.5 mb-3 sm:mb-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               {msg.role === 'assistant' ? (
-                <div className="w-9 h-9 rounded-full bg-google-blue-pastel flex items-center justify-center flex-shrink-0">
-                  <Bot size={18} className="text-google-blue" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-g-blue-pastel flex items-center justify-center flex-shrink-0">
+                  <Bot size={14} className="text-g-blue" />
                 </div>
               ) : (
-                <div className="w-9 h-9 rounded-full bg-google-off-white border border-black/8 flex items-center justify-center flex-shrink-0">
-                  <User size={18} className="text-google-black/50" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-g-bg border border-g-border flex items-center justify-center flex-shrink-0">
+                  <User size={14} className="text-g-text-secondary" />
                 </div>
               )}
               <div
-                className={`max-w-[75%] px-5 py-3 text-[15px] font-google-text leading-relaxed rounded-2xl ${
-                  msg.role === 'user'
-                    ? 'bg-google-blue text-white rounded-br-md'
-                    : 'bg-white text-google-black/90 rounded-bl-md shadow-card border border-black/6'
-                }`}
+                className={`max-w-[85%] sm:max-w-[72%] px-3.5 sm:px-4 py-2.5 text-[13px] sm:text-sm font-body leading-relaxed rounded-2xl ${msg.role === 'user'
+                    ? 'bg-g-blue text-white rounded-br-sm'
+                    : 'bg-g-surface text-g-text rounded-bl-sm shadow-sm border border-g-border'
+                  }`}
               >
                 {msg.content}
               </div>
@@ -111,28 +110,28 @@ export default function ChatInterface() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input — white surface, pill send button */}
-        <div className="px-8 py-6 bg-white border-t border-black/6">
-          <div className="flex items-center gap-3 bg-google-off-white rounded-2xl px-5 py-3 border border-black/6 focus-within:border-google-blue/40 focus-within:shadow-[0_0_0_2px_rgba(66,133,244,0.15)] transition-all">
+        {/* Input */}
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-g-surface border-t border-g-border">
+          <div className="flex items-center gap-2 bg-g-bg rounded-xl px-3 py-2 border border-g-border focus-within:border-g-blue focus-within:shadow-[0_0_0_3px_rgba(66,133,244,0.1)] transition-all">
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask me anything about your finances…"
-              className="flex-1 bg-transparent text-google-black font-google-text text-[15px] placeholder-google-black/35 outline-none"
+              placeholder="Ask about your finances…"
+              className="flex-1 bg-transparent text-g-text font-body text-sm placeholder-g-text-tertiary outline-none min-w-0"
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || typing}
-              className="w-10 h-10 rounded-full bg-google-blue flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#3367d6] transition-colors flex-shrink-0 shadow-[0_2px_8px_rgba(66,133,244,0.3)]"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-g-blue flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#3367d6] transition-colors flex-shrink-0 shadow-sm"
             >
-              <Send size={18} className="text-white" />
+              <Send size={14} className="text-white" />
             </button>
           </div>
-          <p className="font-google-mono text-xs text-google-black/40 text-center mt-3 tracking-wide">
-            Powered by Gemini on Modal · Knows your full financial profile
+          <p className="font-mono text-[10px] text-g-text-tertiary text-center mt-2 tracking-wide">
+            Powered by Gemini on Modal
           </p>
         </div>
       </div>

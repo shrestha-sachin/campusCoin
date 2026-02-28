@@ -155,11 +155,11 @@ All layers share this structure (Pydantic on backend, plain JS on frontend):
 
 ## Design System
 
-- **Background**: `#020817` deep navy
-- **Cards**: `#0D1526` with subtle teal gradient overlay
-- **Accent**: `#00E5CC` electric teal
-- **Fonts**: Syne (headings) + DM Sans (body) + JetBrains Mono (numbers)
-- **Aesthetic**: Bloomberg Terminal for Gen Z — dark, data-dense, precise
+- **Background**: Google Off-White (`#f0f0f0`)
+- **Cards**: Pure White (`#ffffff`) with subtle Material elevation shadows
+- **Accent**: Google Blue (`#4285f4`) and Google Green (`#34a853`)
+- **Fonts**: Google Sans, Google Sans Mono, and Google Sans Text
+- **Aesthetic**: Clean, modern Google Material-inspired light mode
 
 ---
 

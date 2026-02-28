@@ -5,6 +5,7 @@ import RunwayChart from '../components/RunwayChart.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import NextActionCard from '../components/NextActionCard.jsx'
 import EmergencyModal from '../components/EmergencyModal.jsx'
+import { FileText } from 'lucide-react'
 
 export default function Dashboard() {
   const { profile, aiInsight, loading, syncNessie, refreshRunway, refreshAI } = useApp()
@@ -18,60 +19,55 @@ export default function Dashboard() {
       await refreshAI(rw)
     }
     init()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (aiInsight?.emergency_mode) {
-      setShowEmergency(true)
-    }
+    if (aiInsight?.emergency_mode) setShowEmergency(true)
   }, [aiInsight?.emergency_mode])
 
   const hour = new Date().getHours()
-  const greeting =
-    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <>
       {showEmergency && <EmergencyModal onClose={() => setShowEmergency(false)} />}
 
-      <div className="p-10 space-y-8 max-w-6xl mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="fade-up-1 flex items-center justify-between">
+        <div className="fade-up-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="font-google font-bold text-3xl text-google-black">
+            <h1 className="font-display font-bold text-2xl sm:text-[28px] text-g-text tracking-tight">
               {greeting},{' '}
-              <span className="text-google-blue">{firstName}</span>
+              <span className="text-g-blue">{firstName}</span>
             </h1>
-            <p className="font-google-text text-google-black/55 text-base mt-2">
+            <p className="font-body text-g-text-secondary text-sm mt-1">
               {profile.university} · {profile.major} · Graduating {profile.graduation_date}
             </p>
           </div>
           <StatusBadge status={aiInsight?.status ?? 'on_track'} />
         </div>
 
-        {/* Balance + Next Action */}
-        <div className="fade-up-2 grid grid-cols-3 gap-6">
-          <div className="col-span-1">
-            <BalanceCard />
-          </div>
-          <div className="col-span-2">
-            <NextActionCard />
-          </div>
+        {/* Cards */}
+        <div className="fade-up-2 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="lg:col-span-1"><BalanceCard /></div>
+          <div className="lg:col-span-2"><NextActionCard /></div>
         </div>
 
-        {/* Runway Chart */}
-        <div className="fade-up-3">
-          <RunwayChart />
-        </div>
+        {/* Runway */}
+        <div className="fade-up-3"><RunwayChart /></div>
 
         {/* Full Analysis */}
-        <div className="fade-up-4 card p-8">
-          <p className="font-google-mono text-xs text-google-black/50 tracking-widest uppercase mb-5">
-            Full Analysis
-          </p>
+        <div className="fade-up-4 card p-5 sm:p-6">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-g-blue-pastel flex items-center justify-center">
+              <FileText size={16} className="text-g-blue" />
+            </div>
+            <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
+              Full Analysis
+            </span>
+          </div>
           {loading.ai ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="skeleton h-4 w-full" />
               <div className="skeleton h-4 w-5/6" />
               <div className="skeleton h-4 w-full" />
@@ -80,7 +76,7 @@ export default function Dashboard() {
               <div className="skeleton h-4 w-3/4" />
             </div>
           ) : (
-            <p className="font-google-text text-google-black/75 text-[15px] leading-relaxed whitespace-pre-line">
+            <p className="font-body text-g-text-secondary text-sm leading-relaxed whitespace-pre-line">
               {aiInsight?.full_analysis ?? 'Analyzing your financial data — please wait…'}
             </p>
           )}

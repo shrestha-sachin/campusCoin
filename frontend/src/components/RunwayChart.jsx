@@ -1,16 +1,11 @@
 import React from 'react'
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceLine,
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import { useApp } from '../store.jsx'
+import { TrendingUp } from 'lucide-react'
 
 function formatYAxis(value) {
   if (Math.abs(value) >= 1000) return `$${(value / 1000).toFixed(0)}k`
@@ -22,11 +17,11 @@ function CustomTooltip({ active, payload, label }) {
   const val = payload[0].value
   const color = val < 0 ? '#ea4335' : '#34a853'
   return (
-    <div className="bg-white rounded-xl px-5 py-3 shadow-modal border border-black/6">
-      <p className="font-google-mono text-xs text-google-black/50 mb-1">
+    <div className="bg-g-surface rounded-xl px-4 py-2.5 shadow-lg border border-g-border">
+      <p className="font-mono text-[10px] text-g-text-tertiary mb-0.5">
         {label ? format(parseISO(label), 'MMM d, yyyy') : ''}
       </p>
-      <p className="font-google-mono text-sm font-semibold" style={{ color }}>
+      <p className="font-mono text-sm font-semibold" style={{ color }}>
         {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val)}
       </p>
     </div>
@@ -40,23 +35,21 @@ function xTickFormatter(dateStr) {
 export default function RunwayChart() {
   const { runway, loading } = useApp()
 
-  const ticks = runway
-    .filter((_, i) => i % 14 === 0)
-    .map(p => p.date)
+  const ticks = runway.filter((_, i) => i % 14 === 0).map(p => p.date)
 
   if (loading.runway) {
     return (
-      <div className="card p-8">
-        <div className="skeleton h-5 w-40 mb-5" />
-        <div className="skeleton h-[240px] w-full" />
+      <div className="card p-5 sm:p-6">
+        <div className="skeleton h-5 w-40 mb-4" />
+        <div className="skeleton h-[200px] sm:h-[240px] w-full" />
       </div>
     )
   }
 
   if (!runway.length) {
     return (
-      <div className="card p-8 flex items-center justify-center h-[300px]">
-        <p className="font-google-mono text-sm text-google-black/50">
+      <div className="card p-5 sm:p-6 flex items-center justify-center h-[250px] sm:h-[300px]">
+        <p className="font-mono text-sm text-g-text-tertiary">
           No runway data — refreshing…
         </p>
       </div>
@@ -64,33 +57,38 @@ export default function RunwayChart() {
   }
 
   return (
-    <div className="card p-8">
-      <p className="font-google-mono text-xs text-google-black/50 tracking-widest uppercase mb-5">
-        180-Day Financial Runway
-      </p>
-      <ResponsiveContainer width="100%" height={260}>
-        <AreaChart data={runway} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+    <div className="card p-5 sm:p-6">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-g-green-pastel flex items-center justify-center">
+          <TrendingUp size={16} className="text-g-green" />
+        </div>
+        <span className="font-mono text-[11px] text-g-text-secondary tracking-widest uppercase">
+          180-Day Runway
+        </span>
+      </div>
+      <ResponsiveContainer width="100%" height={240}>
+        <AreaChart data={runway} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="runwayGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#34a853" stopOpacity={0.25} />
+              <stop offset="0%" stopColor="#34a853" stopOpacity={0.18} />
               <stop offset="100%" stopColor="#34a853" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,30,30,0.06)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
           <XAxis
             dataKey="date"
             ticks={ticks}
             tickFormatter={xTickFormatter}
-            tick={{ fill: 'rgba(30,30,30,0.5)', fontSize: 11, fontFamily: 'GoogleSansMono, monospace' }}
-            axisLine={{ stroke: 'rgba(30,30,30,0.08)' }}
+            tick={{ fill: '#9aa0a6', fontSize: 10, fontFamily: 'GoogleSansMono, monospace' }}
+            axisLine={{ stroke: '#e0e0e0' }}
             tickLine={false}
           />
           <YAxis
             tickFormatter={formatYAxis}
-            tick={{ fill: 'rgba(30,30,30,0.5)', fontSize: 11, fontFamily: 'GoogleSansMono, monospace' }}
+            tick={{ fill: '#9aa0a6', fontSize: 10, fontFamily: 'GoogleSansMono, monospace' }}
             axisLine={false}
             tickLine={false}
-            width={52}
+            width={48}
           />
           <Tooltip content={<CustomTooltip />} />
           <ReferenceLine
@@ -98,7 +96,7 @@ export default function RunwayChart() {
             stroke="#ea4335"
             strokeDasharray="6 4"
             strokeWidth={1.5}
-            label={{ value: '$0', fill: '#ea4335', fontSize: 11, fontFamily: 'GoogleSansMono, monospace' }}
+            label={{ value: '$0', fill: '#ea4335', fontSize: 10, fontFamily: 'GoogleSansMono, monospace' }}
           />
           <Area
             type="monotone"
@@ -107,7 +105,7 @@ export default function RunwayChart() {
             strokeWidth={2}
             fill="url(#runwayGrad)"
             dot={false}
-            activeDot={{ r: 5, fill: '#34a853', stroke: '#ffffff', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#34a853', stroke: '#fff', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
