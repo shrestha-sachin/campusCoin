@@ -63,11 +63,34 @@ export function AppProvider({ children }) {
 
   // Track the last known transaction count so we only trigger AI on changes
   const lastTxnCountRef = useRef(0)
+  const saveTimerRef = useRef(null)
 
   // Persist to localStorage on change
   useEffect(() => {
     saveToStorage({ auth, onboarded, profile, incomeStreams, expenses })
   }, [auth, onboarded, profile, incomeStreams, expenses])
+
+  // Persist to backend (Modal Dict) — debounced 2s after last change
+  useEffect(() => {
+    if (!onboarded || !profile.user_id) return
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      api.saveProfile(profile.user_id, {
+        profile,
+        income_streams: incomeStreams,
+        expenses,
+      }).then(() => {
+        console.log('[CampusCoin] Profile saved to backend')
+      }).catch(err => {
+        console.warn('[CampusCoin] Backend save failed (data safe in localStorage):', err.message)
+      })
+    }, 2000)
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [onboarded, profile, incomeStreams, expenses])
 
   function login({ email, name }) {
     setAuth({
@@ -75,6 +98,24 @@ export function AppProvider({ children }) {
       email: email?.trim() ?? '',
       name: name?.trim() ?? '',
     })
+  }
+
+  /** Try to restore profile from backend (for cross-device login) */
+  async function restoreFromBackend(userId) {
+    try {
+      const data = await api.getProfile(userId)
+      if (data?.profile) {
+        setProfile(data.profile)
+        setIncomeStreams(data.income_streams ?? [])
+        setExpenses(data.expenses ?? [])
+        setOnboarded(true)
+        console.log('[CampusCoin] Profile restored from backend')
+        return true
+      }
+    } catch {
+      // Profile not found on backend — that's okay for first-time users
+    }
+    return false
   }
 
   function logout() {
@@ -260,6 +301,7 @@ export function AppProvider({ children }) {
       auth,
       login,
       logout,
+      restoreFromBackend,
       onboarded, setOnboarded, completeOnboarding,
       profile, setProfile,
       incomeStreams, setIncomeStreams,
