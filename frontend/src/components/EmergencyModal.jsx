@@ -25,10 +25,12 @@ export default function EmergencyModal({ onClose, resources = [], university = '
       // Test if it parses as a real absolute URL with a recognisable protocol
       const parsed = new URL(rawLink.startsWith('http') ? rawLink : `https://${rawLink}`)
       const hasDomain = parsed.hostname.includes('.') && parsed.hostname.length > 4
-      const isLocal = parsed.hostname === 'localhost' || parsed.hostname.startsWith('127.')
+      const isInternal = parsed.hostname === 'localhost' ||
+        parsed.hostname.startsWith('127.') ||
+        parsed.hostname === window.location.hostname
       const isHashOnly = !rawLink || rawLink === '#' || rawLink.startsWith('#')
 
-      if (isHashOnly || isLocal || !hasDomain) {
+      if (isHashOnly || isInternal || !hasDomain) {
         throw new Error('invalid')
       }
       finalLink = parsed.href
