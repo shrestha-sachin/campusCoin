@@ -61,6 +61,8 @@ export const api = {
     request('/api/auth/signup', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload) =>
     request('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  changePassword: (payload) =>
+    request('/api/auth/change-password', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Health
   health: () =>

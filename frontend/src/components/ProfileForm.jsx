@@ -40,7 +40,6 @@ export default function ProfileForm() {
 
   return (
     <form onSubmit={saveProfile} className="space-y-5">
-      {/* Personal info */}
       <div className="card p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
@@ -49,11 +48,13 @@ export default function ProfileForm() {
           <h3 className="font-display font-bold text-g-text text-base">Personal Info</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label className="label">Name</label><input type="text" value={profile.name} onChange={e => handleChange('name', e.target.value)} className="input-field" /></div>
-          <div><label className="label">University</label><input type="text" value={profile.university} onChange={e => handleChange('university', e.target.value)} className="input-field" /></div>
-          <div><label className="label">Major</label><input type="text" value={profile.major} onChange={e => handleChange('major', e.target.value)} className="input-field" /></div>
-          <div><label className="label">Graduation Date</label><input type="date" value={profile.graduation_date} onChange={e => handleChange('graduation_date', e.target.value)} className="input-field" /></div>
+          <div><label className="label">Name</label><input type="text" value={profile.name} readOnly disabled className="input-field opacity-60 cursor-not-allowed bg-g-surface" /></div>
+          <div><label className="label">Student ID</label><input type="text" value={profile.student_id || ''} readOnly disabled className="input-field opacity-60 cursor-not-allowed bg-g-surface" /></div>
+          <div><label className="label">University</label><input type="text" value={profile.university} readOnly disabled className="input-field opacity-60 cursor-not-allowed bg-g-surface" /></div>
+          <div><label className="label">Major</label><input type="text" value={profile.major} readOnly disabled className="input-field opacity-60 cursor-not-allowed bg-g-surface" /></div>
+          <div className="sm:col-span-2"><label className="label">Graduation Date</label><input type="date" value={profile.graduation_date} readOnly disabled className="input-field opacity-60 cursor-not-allowed bg-g-surface max-w-sm" /></div>
         </div>
+        <p className="font-mono text-[10px] text-g-text-tertiary mt-4 break-words">Account created with Student ID: {profile.student_id || 'N/A'}</p>
       </div>
 
       {/* Account settings */}
@@ -100,8 +101,8 @@ export default function ProfileForm() {
         type="submit"
         disabled={saving || saved}
         className={`w-full py-3.5 rounded-full font-body text-[15px] font-medium transition-all flex items-center justify-center gap-2.5 shadow-sm ${saved
-            ? 'bg-g-green text-white'
-            : 'bg-g-blue text-white hover:bg-[#3367d6] hover:shadow-md'
+          ? 'bg-g-green text-white'
+          : 'bg-g-blue text-white hover:bg-[#3367d6] hover:shadow-md'
           }`}
       >
         {saved ? <><Check size={18} /> Saved</> : saving ? 'Saving…' : <><Save size={16} /> Save Profile</>}

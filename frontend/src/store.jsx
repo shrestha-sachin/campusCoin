@@ -21,6 +21,7 @@ const EMPTY_AUTH = {
   email: '',
   name: '',
   user_id: '',
+  student_id: '',
 }
 
 const STORAGE_KEY = 'campuscoin_data'
@@ -93,12 +94,13 @@ export function AppProvider({ children }) {
     }
   }, [onboarded, profile, incomeStreams, expenses])
 
-  function login({ email, name, user_id }) {
+  function login({ email, name, user_id, student_id }) {
     setAuth({
       isAuthenticated: true,
       email: email?.trim() ?? '',
       name: name?.trim() ?? '',
       user_id: user_id ?? '',
+      student_id: student_id ?? '',
     })
   }
 

@@ -12,6 +12,7 @@ class Profile(BaseModel):
     graduation_date: str  # YYYY-MM-DD
     financial_goals: List[str] = []
     current_balance: float = 0.0
+    student_id: Optional[str] = None
     nessie_account_id: Optional[str] = None
     nessie_customer_id: Optional[str] = None
 

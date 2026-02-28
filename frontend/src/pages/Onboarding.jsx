@@ -136,6 +136,7 @@ export default function Onboarding() {
 
         const profileData = {
             user_id: userId,
+            student_id: auth.student_id || '',
             name: name.trim(),
             university: university.trim(),
             major: major.trim(),

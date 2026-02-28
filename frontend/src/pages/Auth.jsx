@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, Shield, Zap, BarChart3, Brain, GraduationCap } from 'lucide-react'
+import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, Shield, Zap, BarChart3, Brain, GraduationCap, IdCard } from 'lucide-react'
 import Logo from '../components/Logo.jsx'
 import { useApp, clearStorage } from '../store.jsx'
 import { api } from '../api'
@@ -21,6 +21,7 @@ export default function Auth() {
   const [mode, setMode] = useState('signup')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [studentId, setStudentId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,19 +30,21 @@ export default function Auth() {
     e.preventDefault()
     setError('')
 
-    if (!email.trim() || !password) {
-      setError('Please enter your email and password.')
+    const identifier = email.trim()
+    if (!identifier || !password) {
+      setError('Please enter your email (or Student ID) and password.')
       return
     }
 
     setLoading(true)
     try {
-      const result = await api.login({ email: email.trim(), password })
+      const result = await api.login({ identifier, password })
 
       login({
         email: result.email,
         name: result.name,
         user_id: result.user_id,
+        student_id: result.student_id,
       })
 
       if (result.profile_data) {
@@ -61,7 +64,7 @@ export default function Auth() {
           const detail = JSON.parse(msg.split(': ').slice(1).join(': '))
           setError(detail.detail || 'Invalid credentials.')
         } catch {
-          setError(msg.includes('No account') ? 'No account found with this email. Please sign up first.' : 'Incorrect password.')
+          setError(msg.includes('No account') ? 'No account found. Please sign up first.' : 'Incorrect password.')
         }
       } else {
         setError('Unable to connect to server. Please try again.')
@@ -76,11 +79,15 @@ export default function Auth() {
     setError('')
 
     if (!name.trim()) {
-      setError('Please enter your name to continue.')
+      setError('Please enter your name.')
+      return
+    }
+    if (!studentId.trim()) {
+      setError('Please enter your university Student ID.')
       return
     }
     if (!email.trim()) {
-      setError('Please enter your email address.')
+      setError('Please enter your university email.')
       return
     }
     if (!email.trim().toLowerCase().endsWith('.edu')) {
@@ -98,6 +105,7 @@ export default function Auth() {
         email: email.trim(),
         password,
         name: name.trim(),
+        student_id: studentId.trim(),
       })
 
       clearStorage()
@@ -105,12 +113,18 @@ export default function Auth() {
         email: result.email,
         name: result.name,
         user_id: result.user_id,
+        student_id: result.student_id,
       })
       navigate('/onboarding')
     } catch (err) {
       const msg = err.message || ''
       if (msg.includes('409')) {
-        setError('An account with this email already exists. Please sign in.')
+        try {
+          const detail = JSON.parse(msg.split(': ').slice(1).join(': '))
+          setError(detail.detail || 'Account already exists.')
+        } catch {
+          setError('An account with this email or Student ID already exists.')
+        }
       } else {
         setError('Unable to connect to server. Please try again.')
       }
@@ -164,7 +178,7 @@ export default function Auth() {
               <span className="text-[#fbbc04]">campus life.</span>
             </h1>
             <p className="font-body text-white/70 text-base mt-5 max-w-md leading-relaxed">
-              Project your runway, track real transactions from Capital One,
+              Link your Student ID with Capital One, project your runway,
               and get AI insights designed for the student lifecycle.
             </p>
 
@@ -172,9 +186,9 @@ export default function Auth() {
             <div className="grid grid-cols-2 gap-2.5 mt-8 max-w-sm">
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
-                  <BarChart3 size={16} className="text-white" />
+                  <IdCard size={16} className="text-white" />
                 </div>
-                <span className="font-body text-white/90 text-xs font-medium">180-day runway</span>
+                <span className="font-body text-white/90 text-xs font-medium">Student ID linked</span>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
@@ -190,9 +204,9 @@ export default function Auth() {
               </div>
               <div className="flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
-                  <Zap size={16} className="text-white" />
+                  <BarChart3 size={16} className="text-white" />
                 </div>
-                <span className="font-body text-white/90 text-xs font-medium">Cloud synced</span>
+                <span className="font-body text-white/90 text-xs font-medium">180-day runway</span>
               </div>
             </div>
           </div>
@@ -248,8 +262,8 @@ export default function Auth() {
               </h2>
               <p className="font-body text-sm text-g-text-secondary mt-1.5 leading-relaxed">
                 {isSignIn
-                  ? 'Sign in to access your financial dashboard.'
-                  : 'Create an account with your university email to begin.'}
+                  ? 'Use your email or Student ID to sign in.'
+                  : 'Create an account with your university credentials.'}
               </p>
             </div>
 
@@ -266,31 +280,50 @@ export default function Auth() {
             {/* Form */}
             <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="space-y-4">
               {!isSignIn && (
-                <div>
-                  <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">Full Name</label>
-                  <div className="relative group">
-                    <UserIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
-                    <input
-                      type="text"
-                      className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
-                      placeholder="Your full name"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                    />
+                <>
+                  <div>
+                    <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">Full Name</label>
+                    <div className="relative group">
+                      <UserIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
+                      <input
+                        type="text"
+                        className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
+                        placeholder="Your full name"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div>
+                    <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">University Student ID</label>
+                    <div className="relative group">
+                      <IdCard size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
+                      <input
+                        type="text"
+                        className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
+                        placeholder="e.g. STU-2024-0001"
+                        value={studentId}
+                        onChange={e => setStudentId(e.target.value)}
+                      />
+                    </div>
+                    <p className="font-mono text-[10px] text-g-text-tertiary mt-1.5 ml-1">
+                      Linked to your Capital One banking account
+                    </p>
+                  </div>
+                </>
               )}
 
               <div>
                 <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">
-                  {isSignIn ? 'Email' : 'University Email'}
+                  {isSignIn ? 'Email or Student ID' : 'University Email'}
                 </label>
                 <div className="relative group">
                   <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-g-text-tertiary group-focus-within:text-g-blue transition-colors" />
                   <input
-                    type="email"
+                    type={isSignIn ? 'text' : 'email'}
                     className="input-field !pl-11 !py-3.5 !rounded-2xl !text-sm"
-                    placeholder={isSignIn ? 'you@university.edu' : 'name@university.edu'}
+                    placeholder={isSignIn ? 'you@university.edu or STU-2024-0001' : 'name@university.edu'}
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     autoFocus
@@ -350,7 +383,7 @@ export default function Auth() {
 
           {/* Mobile — Feature chips */}
           <div className="flex flex-wrap justify-center gap-2 mt-6 lg:hidden">
-            <FeatureChip icon={BarChart3} text="180-day runway" />
+            <FeatureChip icon={IdCard} text="Student ID linked" />
             <FeatureChip icon={Brain} text="AI strategist" />
             <FeatureChip icon={Shield} text="Capital One" />
           </div>
