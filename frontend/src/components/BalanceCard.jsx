@@ -50,14 +50,16 @@ export default function BalanceCard() {
 
       <div className="mt-6 pt-5 border-t border-g-border">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-g-green pulse-dot" />
+          <span className={`w-2.5 h-2.5 rounded-full ${profile.nessie_account_id ? 'bg-g-green pulse-dot' : 'bg-g-text-tertiary'}`} />
           <span className="font-mono text-xs text-g-text-tertiary tracking-wide">
-            Live via Capital One Nessie
+            {profile.nessie_account_id ? 'Connected via Capital One Nessie' : 'Local balance (no Nessie link)'}
           </span>
         </div>
-        <p className="font-mono text-xs text-g-text-tertiary mt-1.5 truncate">
-          {profile.nessie_account_id || 'Connect account in Settings'}
-        </p>
+        {profile.nessie_account_id && (
+          <p className="font-mono text-xs text-g-text-tertiary mt-1.5 truncate">
+            Account: {profile.nessie_account_id}
+          </p>
+        )}
       </div>
     </div>
   )

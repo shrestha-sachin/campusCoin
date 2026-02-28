@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store.jsx'
+import { api } from '../api'
 import { v4 as uuidv4 } from 'uuid'
 import { format, addMonths } from 'date-fns'
 import Logo from '../components/Logo.jsx'
 import {
     User, GraduationCap, Wallet, Briefcase, Receipt,
     Target, ChevronRight, ChevronLeft, Sparkles,
-    Plus, X, ArrowRight, DollarSign, Clock,
+    Plus, X, ArrowRight, DollarSign, Clock, Loader2,
 } from 'lucide-react'
 
 const today = new Date()
@@ -51,6 +52,10 @@ export default function Onboarding() {
     // Expense form
     const [expForm, setExpForm] = useState({ label: '', amount: '', frequency: 'monthly', type: 'fixed' })
     const [showExpForm, setShowExpForm] = useState(false)
+
+    // Submitting state (Nessie account creation)
+    const [submitting, setSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState('')
 
     function canNext() {
         if (step === 1) return name.trim() && university.trim() && major.trim() && gradDate
@@ -102,21 +107,47 @@ export default function Onboarding() {
         setNewGoal('')
     }
 
-    function finish() {
+    async function finish() {
+        setSubmitting(true)
+        setSubmitError('')
+
+        const userId = uuidv4()
+        const balanceNum = Number(balance)
+        let nessieAccountId = null
+
+        // Split name into first/last for Nessie
+        const parts = name.trim().split(/\s+/)
+        const firstName = parts[0] || 'Student'
+        const lastName = parts.slice(1).join(' ') || 'User'
+
+        try {
+            // Create Nessie customer + checking account
+            const nessie = await api.createNessieAccount({
+                first_name: firstName,
+                last_name: lastName,
+                balance: balanceNum,
+            })
+            nessieAccountId = nessie.account_id
+        } catch (err) {
+            console.warn('Nessie account creation failed (continuing without it):', err)
+            // Non-blocking — user can still use the app without Nessie
+        }
+
         completeOnboarding({
             profile: {
-                user_id: uuidv4(),
+                user_id: userId,
                 name: name.trim(),
                 university: university.trim(),
                 major: major.trim(),
                 graduation_date: gradDate,
                 financial_goals: goals,
-                current_balance: Number(balance),
-                nessie_account_id: null,
+                current_balance: balanceNum,
+                nessie_account_id: nessieAccountId,
             },
             incomeStreams: incomes,
             expenses: expenseList,
         })
+        setSubmitting(false)
         navigate('/dashboard')
     }
 
@@ -448,8 +479,8 @@ export default function Onboarding() {
                             onClick={goBack}
                             disabled={step === 0}
                             className={`flex items-center gap-2 px-5 py-3 rounded-full font-body text-[15px] font-medium transition-all ${step === 0
-                                    ? 'opacity-0 pointer-events-none'
-                                    : 'text-g-text-secondary hover:text-g-text bg-g-surface border border-g-border hover:shadow-sm'
+                                ? 'opacity-0 pointer-events-none'
+                                : 'text-g-text-secondary hover:text-g-text bg-g-surface border border-g-border hover:shadow-sm'
                                 }`}
                         >
                             <ChevronLeft size={18} /> Back
@@ -458,9 +489,14 @@ export default function Onboarding() {
                         {isLast ? (
                             <button
                                 onClick={finish}
-                                className="flex items-center gap-2.5 px-7 py-3 rounded-full bg-gradient-to-r from-g-blue to-g-blue-half text-white font-body text-[15px] font-semibold hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                                disabled={submitting}
+                                className="flex items-center gap-2.5 px-7 py-3 rounded-full bg-gradient-to-r from-g-blue to-g-blue-half text-white font-body text-[15px] font-semibold hover:shadow-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Launch Dashboard <ArrowRight size={18} />
+                                {submitting ? (
+                                    <><Loader2 size={18} className="animate-spin" /> Setting up your account…</>
+                                ) : (
+                                    <>Launch Dashboard <ArrowRight size={18} /></>
+                                )}
                             </button>
                         ) : (
                             <button

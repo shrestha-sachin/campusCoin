@@ -37,6 +37,8 @@ export const api = {
     request(`/api/nessie/transactions/${accountId}`),
   listNessieAccounts: () =>
     request('/api/nessie/accounts'),
+  createNessieAccount: (payload) =>
+    request('/api/nessie/create-account', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Supermemory
   storeMemory: (profile) =>
