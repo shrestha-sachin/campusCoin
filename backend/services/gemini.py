@@ -1,12 +1,13 @@
 import os
 import json
 import re
+import tempfile
 import google.generativeai as genai
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models import AnalyzeRequest, AIInsight, ChatRequest, ChatResponse
+from models import AnalyzeRequest, AIInsight, ChatRequest, ChatResponse, IngestionResponse
 
 router = APIRouter()
 
@@ -193,6 +194,74 @@ Rules:
 
         data = _extract_json(getattr(response, "text", "") or str(response))
         return AIInsight(**data)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Gemini returned invalid JSON: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ingest_academic", response_model=IngestionResponse)
+async def ingest_academic(
+    file: UploadFile = File(...),
+    user_id: str = Form("anonymous"),
+):
+    model = _get_client()
+
+    contents = await file.read()
+    mime = file.content_type or "application/octet-stream"
+
+    suffix = ".pdf" if "pdf" in mime else ".png"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(contents)
+        tmp_path = tmp.name
+
+    try:
+        uploaded = genai.upload_file(tmp_path, mime_type=mime)
+    finally:
+        os.unlink(tmp_path)
+
+    prompt = """You are an academic-financial analyst for college students who juggle campus jobs.
+
+Analyze this syllabus, course schedule, or academic calendar. Extract every major academic stress period — midterms, finals, large projects, lab practicals, paper deadlines — anything that would force a student to cut back on work hours.
+
+For each event, infer:
+1. The expected reduction in weekly working hours (e.g., a student who normally works 20 hrs/wk might drop to 8 during finals).
+2. The dollar financial impact = (hours_reduction) × $13/hr × (number_of_weeks).
+3. A concrete recommended_action the student should take NOW to cushion the gap (e.g., "Stash $78 this paycheck to cover finals week").
+
+Return ONLY valid JSON matching this exact schema (no markdown fences, no extra text):
+{
+  "events": [
+    {
+      "title": "Event name",
+      "date_range": "Mon DD - Mon DD",
+      "inferred_hours_reduction": 12,
+      "financial_impact": 156.00,
+      "recommended_action": "Concrete dollar-specific advice"
+    }
+  ],
+  "overall_summary": "A 2-3 sentence executive summary of the semester's financial risk from academic workload."
+}
+
+Rules:
+- Extract AT LEAST every midterm and final exam period. Include large projects and paper deadlines too.
+- If you cannot determine exact dates, estimate based on typical semester timing.
+- Be specific with dollar amounts — students need actionable numbers.
+- The overall_summary should quantify the total estimated income loss across the semester."""
+
+    try:
+        response = model.generate_content([prompt, uploaded])
+        data = _extract_json(getattr(response, "text", "") or str(response))
+        result = IngestionResponse(**data)
+
+        try:
+            from services.supermemory import store_academic_events
+            import asyncio
+            asyncio.ensure_future(store_academic_events(user_id, result.events))
+        except Exception as mem_err:
+            print(f"[CampusCoin] Supermemory store failed (non-blocking): {mem_err}")
+
+        return result
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Gemini returned invalid JSON: {e}")
     except Exception as e:

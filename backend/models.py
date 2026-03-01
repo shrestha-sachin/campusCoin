@@ -115,6 +115,19 @@ class ChatResponse(BaseModel):
     emergency_mode: bool = False
 
 
+class AcademicEvent(BaseModel):
+    title: str
+    date_range: str  # e.g., "Oct 15 - Oct 20"
+    inferred_hours_reduction: int
+    financial_impact: float
+    recommended_action: str  # e.g., "Stash $50 now to cover the gap"
+
+
+class IngestionResponse(BaseModel):
+    events: List[AcademicEvent]
+    overall_summary: str
+
+
 class MemoryStoreRequest(BaseModel):
     profile: Profile
 

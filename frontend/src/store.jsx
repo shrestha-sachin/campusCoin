@@ -68,6 +68,7 @@ export function AppProvider({ children }) {
   const [nessieTransactions, setNessieTransactions] = useState([])
   const [nessieBills, setNessieBills] = useState([])
   const [lastPoll, setLastPoll] = useState(null) // timestamp of last poll
+  const [academicEvents, setAcademicEvents] = useState(stored?.academicEvents ?? [])
 
   // Track the last known transaction count so we only trigger AI on changes
   const lastTxnCountRef = useRef(0)
@@ -75,8 +76,8 @@ export function AppProvider({ children }) {
 
   // Persist to localStorage on change
   useEffect(() => {
-    saveToStorage({ auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight })
-  }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight])
+    saveToStorage({ auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents })
+  }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents])
 
   // Persist to backend (Modal Dict) — debounced 2s after last change
   useEffect(() => {
@@ -304,6 +305,31 @@ export function AppProvider({ children }) {
         expenses: exp,
         days: 180,
       })
+
+      if (academicEvents.length > 0) {
+        const adjusted = data.map(point => {
+          let impact = 0
+          for (const evt of academicEvents) {
+            const parts = evt.date_range.split(' - ')
+            if (parts.length === 2) {
+              const startStr = parts[0].trim()
+              const endStr = parts[1].trim()
+              const year = new Date().getFullYear()
+              const evtStart = new Date(`${startStr}, ${year}`)
+              const evtEnd = new Date(`${endStr}, ${year}`)
+              const pointDate = new Date(point.date)
+              if (pointDate >= evtStart && pointDate <= evtEnd) {
+                const durationWeeks = Math.max(1, (evtEnd - evtStart) / (7 * 86400000))
+                impact += evt.financial_impact / (durationWeeks * 7)
+              }
+            }
+          }
+          return { ...point, projected_balance: point.projected_balance - impact }
+        })
+        setRunway(adjusted)
+        return adjusted
+      }
+
       setRunway(data)
       return data
     } catch (err) {
@@ -312,7 +338,21 @@ export function AppProvider({ children }) {
     } finally {
       setLoading(prev => ({ ...prev, runway: false }))
     }
-  }, [incomeStreams, expenses, profile.current_balance])
+  }, [incomeStreams, expenses, profile.current_balance, academicEvents])
+
+  const ingestAcademic = useCallback(async (file) => {
+    setLoading(prev => ({ ...prev, ingestion: true }))
+    try {
+      const data = await api.ingestAcademic(file, profile.user_id || 'anonymous')
+      setAcademicEvents(data.events || [])
+      return data
+    } catch (err) {
+      console.error('Academic ingestion failed:', err)
+      throw err
+    } finally {
+      setLoading(prev => ({ ...prev, ingestion: false }))
+    }
+  }, [profile.user_id])
 
   const refreshAI = useCallback(async (runwayData) => {
     setLoading(prev => ({ ...prev, ai: true }))
@@ -349,6 +389,9 @@ export function AppProvider({ children }) {
       loading,
       refreshRunway,
       refreshAI,
+      // Academic Ingestion
+      academicEvents, setAcademicEvents,
+      ingestAcademic,
       // Nessie
       syncNessie,
       nessieTransactions,

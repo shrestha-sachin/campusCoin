@@ -1,6 +1,9 @@
-import React from 'react'
-import ChatInterface from '../components/ChatInterface.jsx'
-import { Bot, TrendingUp, AlertCircle, CheckCircle2, Zap, Rocket, Lightbulb, Activity, ArrowUpRight, ArrowDownLeft, Target, ShieldCheck } from 'lucide-react'
+import React, { useCallback, useState } from 'react'
+import {
+  Bot, TrendingUp, AlertCircle, CheckCircle2, Zap, Rocket, Lightbulb,
+  Activity, ArrowUpRight, ArrowDownLeft, Target, ShieldCheck,
+  Upload, FileText, CalendarRange, DollarSign, Clock, ChevronRight, X, Loader2
+} from 'lucide-react'
 import { useApp } from '../store.jsx'
 
 const statusMap = {
@@ -27,21 +30,35 @@ const statusMap = {
   }
 }
 
-export default function Strategist() {
-  const { aiInsight, nessieTransactions, profile, refreshAI, loading } = useApp()
+const impactColors = [
+  { threshold: 100, bg: 'bg-g-green-pastel', text: 'text-g-green', border: 'border-g-green/20' },
+  { threshold: 200, bg: 'bg-g-yellow-pastel', text: 'text-g-yellow', border: 'border-g-yellow/20' },
+  { threshold: Infinity, bg: 'bg-g-red-pastel', text: 'text-g-red', border: 'border-g-red/20' },
+]
 
-  // Status for Financial Pulse
+function getImpactStyle(amount) {
+  return impactColors.find(c => amount <= c.threshold) || impactColors[2]
+}
+
+export default function Strategist() {
+  const {
+    aiInsight, nessieTransactions, profile, refreshAI, loading,
+    academicEvents, ingestAcademic, setAcademicEvents, refreshRunway
+  } = useApp()
+
   const s = statusMap[aiInsight?.status || 'on_track']
   const [showInfo, setShowInfo] = React.useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [ingestionError, setIngestionError] = useState(null)
+  const [summaryText, setSummaryText] = useState(null)
+  const fileInputRef = React.useRef(null)
 
-  // Initialize AI if null
   React.useEffect(() => {
     if (!aiInsight && !loading.ai) {
       refreshAI()
     }
   }, [aiInsight, loading.ai, refreshAI])
 
-  // Calculate days until shortfall
   const daysRemaining = React.useMemo(() => {
     if (!aiInsight?.shortfall_date) return 180
     const diff = new Date(aiInsight.shortfall_date) - new Date()
@@ -49,6 +66,51 @@ export default function Strategist() {
   }, [aiInsight?.shortfall_date])
 
   const wellnessScore = Math.min(100, Math.max(10, Math.round((daysRemaining / 180) * 100)))
+
+  const handleFile = useCallback(async (file) => {
+    if (!file) return
+    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      setIngestionError('Please upload a PDF or image file (PNG, JPG, WebP).')
+      return
+    }
+    setIngestionError(null)
+    setSummaryText(null)
+    try {
+      const result = await ingestAcademic(file)
+      setSummaryText(result.overall_summary)
+      refreshRunway()
+    } catch (err) {
+      setIngestionError(err.message || 'Ingestion failed. Please try again.')
+    }
+  }, [ingestAcademic, refreshRunway])
+
+  const onDrop = useCallback((e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer?.files?.[0]
+    handleFile(file)
+  }, [handleFile])
+
+  const onDragOver = useCallback((e) => {
+    e.preventDefault()
+    setDragOver(true)
+  }, [])
+
+  const onDragLeave = useCallback(() => setDragOver(false), [])
+
+  const onFileSelect = useCallback((e) => {
+    const file = e.target.files?.[0]
+    handleFile(file)
+  }, [handleFile])
+
+  const resetIngestion = useCallback(() => {
+    setAcademicEvents([])
+    setSummaryText(null)
+    setIngestionError(null)
+  }, [setAcademicEvents])
+
+  const totalImpact = academicEvents.reduce((sum, e) => sum + e.financial_impact, 0)
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-[1400px] mx-auto h-screen flex flex-col overflow-hidden">
@@ -62,7 +124,7 @@ export default function Strategist() {
               Campus Navigator
             </h1>
             <p className="font-body text-g-text-secondary text-sm">
-              Your financial Sage & assistance
+              Academic-to-Financial Inference Engine
             </p>
           </div>
         </div>
@@ -133,7 +195,7 @@ export default function Strategist() {
             </div>
           </div>
 
-          {/* New: Status Milestones */}
+          {/* Runway Target */}
           <div className="card p-6 border-none shadow-sm flex-shrink-0">
             <p className="font-display font-bold text-g-text text-[15px] mb-4 flex items-center gap-2">
               <Target size={18} className="text-g-blue" />
@@ -161,7 +223,7 @@ export default function Strategist() {
           <div className="card p-6 border-l-4 border-l-g-purple flex-shrink-0">
             <p className="font-display font-bold text-g-text text-[15px] mb-2">Proactive Planning</p>
             <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-4">
-              Sage isn't just a chatbot — it monitors your Nessie transactions in real-time to adjust advice.
+              Upload your syllabus and CampusCoin will predict how academic stress periods impact your income and runway.
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -176,7 +238,7 @@ export default function Strategist() {
             </div>
           </div>
 
-          {/* New: Active Signals (Transactions) */}
+          {/* Active Signals (Transactions) */}
           <div className="card p-5 border-none shadow-sm flex-shrink-0 bg-g-surface">
             <div className="flex items-center justify-between mb-4">
               <p className="font-display font-bold text-g-text text-[14px] flex items-center gap-2">
@@ -221,8 +283,228 @@ export default function Strategist() {
           </div>
         </div>
 
-        <div className="lg:col-span-8 fade-up-3 h-full overflow-hidden">
-          <ChatInterface />
+        {/* Right column — Ingestion Hub */}
+        <div className="lg:col-span-8 fade-up-3 h-full overflow-y-auto no-scrollbar pb-20">
+
+          {/* Loading State */}
+          {loading.ingestion && (
+            <div className="card p-0 overflow-hidden h-full flex flex-col items-center justify-center">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-g-blue/10 to-g-purple/10 flex items-center justify-center mb-6">
+                  <Loader2 size={40} className="text-g-blue animate-spin" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-g-green flex items-center justify-center animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-white" />
+                </div>
+              </div>
+              <p className="font-display font-bold text-g-text text-xl mb-2">Modal Compute: Inferring academic workload...</p>
+              <p className="font-body text-g-text-secondary text-sm max-w-md text-center leading-relaxed">
+                Gemini is scanning your syllabus for midterms, finals, and project deadlines to predict
+                how they'll impact your work hours and runway.
+              </p>
+              <div className="flex items-center gap-3 mt-6">
+                <div className="px-3 py-1.5 rounded-full bg-g-blue-pastel text-g-blue text-xs font-bold">Gemini 1.5</div>
+                <div className="px-3 py-1.5 rounded-full bg-g-purple-pastel text-g-purple text-xs font-bold">Modal</div>
+                <div className="px-3 py-1.5 rounded-full bg-g-green-pastel text-g-green text-xs font-bold">Supermemory</div>
+              </div>
+            </div>
+          )}
+
+          {/* Results: Academic Event Cards */}
+          {!loading.ingestion && academicEvents.length > 0 && (
+            <div className="space-y-5">
+              {/* Summary header */}
+              <div className="card p-6 bg-gradient-to-br from-g-blue/5 to-g-purple/5 border-none">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-g-blue to-g-purple flex items-center justify-center">
+                        <CalendarRange size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="font-display font-bold text-g-text text-lg">Semester Forecast</p>
+                        <p className="font-body text-g-text-tertiary text-xs">{academicEvents.length} stress periods detected</p>
+                      </div>
+                    </div>
+                    {summaryText && (
+                      <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-4">{summaryText}</p>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border">
+                        <DollarSign size={16} className="text-g-red" />
+                        <div>
+                          <p className="font-body text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Total Impact</p>
+                          <p className="font-display font-bold text-g-text">${totalImpact.toFixed(0)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border">
+                        <Clock size={16} className="text-g-blue" />
+                        <div>
+                          <p className="font-body text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Events</p>
+                          <p className="font-display font-bold text-g-text">{academicEvents.length}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={resetIngestion}
+                    className="p-2 rounded-xl text-g-text-tertiary hover:text-g-text hover:bg-white/50 transition-all"
+                    title="Upload a new syllabus"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Event cards */}
+              <div className="grid gap-4">
+                {academicEvents.map((evt, idx) => {
+                  const style = getImpactStyle(evt.financial_impact)
+                  return (
+                    <div key={idx} className={`card p-5 border-l-4 ${style.border} hover:shadow-md transition-all group`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`w-8 h-8 rounded-lg ${style.bg} flex items-center justify-center flex-shrink-0`}>
+                              <CalendarRange size={16} className={style.text} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-display font-bold text-g-text text-[15px] truncate">{evt.title}</p>
+                              <p className="font-body text-g-text-tertiary text-xs">{evt.date_range}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 mt-3 mb-3">
+                            <div className="flex items-center gap-1.5">
+                              <Clock size={13} className="text-g-text-tertiary" />
+                              <span className="font-body text-xs text-g-text-secondary">
+                                -{evt.inferred_hours_reduction} hrs/wk
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <DollarSign size={13} className={style.text} />
+                              <span className={`font-display font-bold text-sm ${style.text}`}>
+                                -${evt.financial_impact.toFixed(0)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <p className="font-body text-g-text-secondary text-[13px] leading-relaxed">
+                            {evt.recommended_action}
+                          </p>
+                        </div>
+
+                        <button className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${style.bg} ${style.text} font-body text-xs font-bold hover:opacity-80 transition-all flex-shrink-0 mt-1`}>
+                          Adjust Runway
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Re-upload prompt */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-3 rounded-2xl border-2 border-dashed border-g-border text-g-text-tertiary hover:border-g-blue/30 hover:text-g-blue transition-all font-body text-sm font-medium"
+              >
+                Upload another syllabus
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,image/*"
+                className="hidden"
+                onChange={onFileSelect}
+              />
+            </div>
+          )}
+
+          {/* Dropzone (initial state) */}
+          {!loading.ingestion && academicEvents.length === 0 && (
+            <div className="card p-0 overflow-hidden h-full flex flex-col">
+              <div className="p-6 pb-4 border-b border-g-border flex-shrink-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-purple flex items-center justify-center shadow-sm">
+                    <FileText size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-g-text text-xl tracking-tight">
+                      Academic Syllabus Ingestion
+                    </h2>
+                    <p className="font-body text-g-text-secondary text-sm">
+                      Upload your syllabus or Canvas schedule. We'll automatically predict how your midterms will impact your work hours and runway.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 p-6 flex items-center justify-center">
+                <div
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full max-w-xl mx-auto rounded-3xl border-2 border-dashed p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group
+                    ${dragOver
+                      ? 'border-g-blue bg-g-blue-pastel scale-[1.02] shadow-lg'
+                      : 'border-g-border hover:border-g-blue/40 hover:bg-g-blue-pastel/30'
+                    }
+                  `}
+                >
+                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 transition-all duration-300 ${
+                    dragOver
+                      ? 'bg-g-blue text-white shadow-lg scale-110'
+                      : 'bg-gradient-to-br from-g-blue/10 to-g-purple/10 text-g-blue group-hover:scale-105'
+                  }`}>
+                    <Upload size={36} strokeWidth={1.5} />
+                  </div>
+
+                  <p className="font-display font-bold text-g-text text-lg mb-1.5 text-center">
+                    {dragOver ? 'Drop it right here' : 'Drag & drop your syllabus'}
+                  </p>
+                  <p className="font-body text-g-text-secondary text-sm text-center mb-6 max-w-sm leading-relaxed">
+                    Support for PDF documents and images (PNG, JPG, WebP). We'll extract midterms, finals, and project deadlines automatically.
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <button className="px-5 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-bold hover:bg-[#3367d6] transition-all shadow-sm">
+                      Browse Files
+                    </button>
+                    <span className="font-body text-g-text-tertiary text-xs">or drag & drop</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-8">
+                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">PDF</div>
+                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">PNG</div>
+                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">JPG</div>
+                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">WebP</div>
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,image/*"
+                    className="hidden"
+                    onChange={onFileSelect}
+                  />
+                </div>
+              </div>
+
+              {ingestionError && (
+                <div className="px-6 pb-6">
+                  <div className="p-4 rounded-2xl bg-g-red-pastel border border-g-red/20 flex items-start gap-3">
+                    <AlertCircle size={18} className="text-g-red flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-body font-bold text-g-red text-sm mb-0.5">Ingestion Failed</p>
+                      <p className="font-body text-g-red/80 text-xs leading-relaxed">{ingestionError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -244,17 +526,17 @@ export default function Strategist() {
 
             <h3 className="font-display font-bold text-2xl text-g-text mb-2">Intelligence Engine</h3>
             <p className="font-body text-g-text-secondary text-[15px] leading-relaxed mb-8">
-              CampusCoin Sage is designed to be a proactive financial navigator, not just a reactive responder.
+              CampusCoin's Academic-to-Financial Inference Engine predicts how your academic schedule impacts your earnings.
             </p>
 
             <div className="space-y-6 mb-8">
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-xl bg-g-blue-pastel flex items-center justify-center flex-shrink-0">
-                  <Bot size={20} className="text-g-blue" />
+                  <FileText size={20} className="text-g-blue" />
                 </div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Real-time Nessie Sync</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Automatically imports transactions from your Capital One accounts to update your budget immediately.</p>
+                  <p className="font-body font-bold text-g-text text-sm">Multimodal Ingestion</p>
+                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Upload PDFs or photos of your syllabus. Gemini extracts every midterm, final, and major deadline automatically.</p>
                 </div>
               </div>
 
@@ -263,8 +545,8 @@ export default function Strategist() {
                   <TrendingUp size={20} className="text-g-green" />
                 </div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Predictive Analysis</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Calculates your 'Shortfall Date' using historical spending velocity to warn you before you hit zero.</p>
+                  <p className="font-body font-bold text-g-text text-sm">Predictive Financial Impact</p>
+                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">We calculate exactly how many work hours you'll lose and the dollar impact on your runway during each stress period.</p>
                 </div>
               </div>
 
@@ -273,8 +555,8 @@ export default function Strategist() {
                   <Rocket size={20} className="text-g-purple" />
                 </div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Adaptive Advice</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Sage adjusts its recommendations based on your actual income frequency and bill due dates.</p>
+                  <p className="font-body font-bold text-g-text text-sm">Persistent Memory</p>
+                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Supermemory stores your academic bottlenecks permanently, so your financial plan adapts across the entire semester.</p>
                 </div>
               </div>
             </div>
@@ -289,6 +571,5 @@ export default function Strategist() {
         </div>
       )}
     </div>
-
   )
 }

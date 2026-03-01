@@ -1,10 +1,11 @@
 import os
 import httpx
+from typing import List
 from fastapi import APIRouter, HTTPException
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models import MemoryStoreRequest
+from models import MemoryStoreRequest, AcademicEvent
 
 router = APIRouter()
 
@@ -43,6 +44,37 @@ async def store_memory(req: MemoryStoreRequest):
         if resp.status_code not in (200, 201):
             raise HTTPException(status_code=resp.status_code, detail=f"Supermemory error: {resp.text}")
         return {"success": True, "detail": resp.json()}
+
+
+async def store_academic_events(user_id: str, events: List[AcademicEvent]):
+    """Store extracted academic stress periods as Supermemory memories tied to user_id."""
+    for event in events:
+        content = (
+            f"Academic event: {event.title} ({event.date_range}). "
+            f"Expected hours reduction: {event.inferred_hours_reduction}hrs/wk. "
+            f"Financial impact: ${event.financial_impact:.2f}. "
+            f"Action: {event.recommended_action}"
+        )
+        payload = {
+            "content": content,
+            "metadata": {
+                "userId": user_id,
+                "type": "academic_event",
+                "title": event.title,
+                "date_range": event.date_range,
+            }
+        }
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{SUPERMEMORY_BASE}/memories",
+                    json=payload,
+                    headers=_headers()
+                )
+                if resp.status_code not in (200, 201):
+                    print(f"[Supermemory] Failed to store event '{event.title}': {resp.text}")
+        except Exception as e:
+            print(f"[Supermemory] Error storing event '{event.title}': {e}")
 
 
 @router.get("/recall/{user_id}")
