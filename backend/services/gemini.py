@@ -219,6 +219,8 @@ Rules:
 async def ingest_academic(
     file: UploadFile = File(...),
     user_id: str = Form("anonymous"),
+    weekly_hours: float = Form(0.0),
+    hourly_rate: float = Form(13.0),
 ):
     model = _get_client()
 
@@ -235,34 +237,37 @@ async def ingest_academic(
     finally:
         os.unlink(tmp_path)
 
-    prompt = """You are an academic-financial analyst for college students who juggle campus jobs.
+    prompt = f"""You are an academic-financial analyst for college students.
+A student works {weekly_hours} hours/week at ${hourly_rate}/hr.
 
-Analyze this syllabus, course schedule, or academic calendar. Extract every major academic stress period — midterms, finals, large projects, lab practicals, paper deadlines — anything that would force a student to cut back on work hours.
+Analyze this syllabus or schedule. Identify major stress periods (midterms, finals, projects).
+For each, estimate a REALISTIC reduction in their work hours for THAT SPECIFIC WEEK:
+- Midterms/Big Projects: 2-4 hour reduction (just enough to study extra).
+- Finals Week: 5-10 hour reduction (serious study time).
+- Never reduce hours by more than 50% of their total weekly hours unless it's an extreme multi-day lab.
 
 For each event, infer:
-1. The expected reduction in weekly working hours (e.g., a student who normally works 20 hrs/wk might drop to 8 during finals).
-2. The dollar financial impact = (hours_reduction) × $13/hr × (number_of_weeks).
-3. A concrete recommended_action the student should take NOW to cushion the gap (e.g., "Stash $78 this paycheck to cover finals week").
+1. The expected reduction in weekly working hours (e.g. 4).
+2. The dollar financial impact = (hours_reduction) × ${hourly_rate}/hr.
+3. A concrete recommended_action (e.g., "Stash ${hourly_rate * 4:.0f} this week to cover your study break").
 
-Return ONLY valid JSON matching this exact schema (no markdown fences, no extra text):
-{
+Return ONLY valid JSON matching this schema:
+{{
   "events": [
-    {
+    {{
       "title": "Event name",
       "date_range": "Mon DD - Mon DD",
-      "inferred_hours_reduction": 12,
-      "financial_impact": 156.00,
-      "recommended_action": "Concrete dollar-specific advice"
-    }
+      "inferred_hours_reduction": 4,
+      "financial_impact": 52.00,
+      "recommended_action": "Specific dollar advice"
+    }}
   ],
-  "overall_summary": "A 2-3 sentence executive summary of the semester's financial risk from academic workload."
-}
+  "overall_summary": "Summary of total semester risk."
+}}
 
 Rules:
-- Extract AT LEAST every midterm and final exam period. Include large projects and paper deadlines too.
-- If you cannot determine exact dates, estimate based on typical semester timing.
-- Be specific with dollar amounts — students need actionable numbers.
-- The overall_summary should quantify the total estimated income loss across the semester."""
+- Be conservative. Students usually try to keep working as much as possible.
+- Use the student's actual pay rate of ${hourly_rate}/hr for all calculations."""
 
     try:
         response = model.generate_content([prompt, uploaded])

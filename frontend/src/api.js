@@ -73,13 +73,15 @@ export const api = {
     request('/api/nessie/bill', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Academic Ingestion (multipart file upload)
-  ingestAcademic: async (file, userId = 'anonymous') => {
+  ingestAcademic: async (file, userId = 'anonymous', workContext = {}) => {
     if (!BASE_URL) {
       throw new Error('API URL not configured.')
     }
     const form = new FormData()
     form.append('file', file)
     form.append('user_id', userId)
+    form.append('weekly_hours', String(workContext.weeklyHours ?? 0))
+    form.append('hourly_rate', String(workContext.hourlyRate ?? 13))
     const res = await fetch(`${BASE_URL}/api/ai/ingest_academic`, {
       method: 'POST',
       body: form,

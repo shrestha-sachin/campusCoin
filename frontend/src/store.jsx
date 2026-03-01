@@ -307,24 +307,39 @@ export function AppProvider({ children }) {
       })
 
       if (academicEvents.length > 0) {
+        // Sort events by start date
+        const sortedEvents = [...academicEvents].map(evt => {
+          const parts = evt.date_range.split(' - ')
+          const startStr = parts[0]?.trim() || ''
+          const year = new Date().getFullYear()
+          return { ...evt, startDate: new Date(`${startStr}, ${year}`) }
+        }).sort((a, b) => a.startDate - b.startDate)
+
         const adjusted = data.map(point => {
-          let impact = 0
-          for (const evt of academicEvents) {
-            const parts = evt.date_range.split(' - ')
-            if (parts.length === 2) {
-              const startStr = parts[0].trim()
-              const endStr = parts[1].trim()
-              const year = new Date().getFullYear()
-              const evtStart = new Date(`${startStr}, ${year}`)
-              const evtEnd = new Date(`${endStr}, ${year}`)
-              const pointDate = new Date(point.date)
-              if (pointDate >= evtStart && pointDate <= evtEnd) {
-                const durationWeeks = Math.max(1, (evtEnd - evtStart) / (7 * 86400000))
-                impact += evt.financial_impact / (durationWeeks * 7)
+          const pointDate = new Date(point.date)
+          let totalAccumulatedImpact = 0
+
+          for (const evt of sortedEvents) {
+            if (pointDate >= evt.startDate) {
+              // If the point is AFTER the event has started, 
+              // we apply the impact based on how much of the event has passed.
+              const parts = evt.date_range.split(' - ')
+              const endStr = parts[1]?.trim() || ''
+              const evtEnd = new Date(`${endStr}, ${new Date().getFullYear()}`)
+
+              if (pointDate >= evtEnd) {
+                // Event is fully over, subtract full impact
+                totalAccumulatedImpact += evt.financial_impact
+              } else {
+                // Event is in progress, subtract proportional impact
+                const totalDuration = evtEnd - evt.startDate
+                const elapsed = pointDate - evt.startDate
+                const progress = Math.max(0, Math.min(1, elapsed / totalDuration))
+                totalAccumulatedImpact += evt.financial_impact * progress
               }
             }
           }
-          return { ...point, projected_balance: point.projected_balance - impact }
+          return { ...point, projected_balance: point.projected_balance - totalAccumulatedImpact }
         })
         setRunway(adjusted)
         return adjusted
@@ -362,7 +377,18 @@ export function AppProvider({ children }) {
   const ingestAcademic = useCallback(async (file) => {
     setLoading(prev => ({ ...prev, ingestion: true }))
     try {
-      const data = await api.ingestAcademic(file, profile.user_id || 'anonymous')
+      // Compute real work context from active income streams
+      const activeStreams = incomeStreams.filter(s => s.is_active && !s.is_lump_sum)
+      const weeklyHours = activeStreams.reduce((sum, s) => sum + (s.weekly_hours || 0), 0)
+      const hourlyRate = activeStreams.length > 0
+        ? activeStreams.reduce((sum, s) => sum + (s.hourly_rate || 13), 0) / activeStreams.length
+        : 13
+      const data = await api.ingestAcademic(
+        file,
+        profile.user_id || 'anonymous',
+        { weeklyHours, hourlyRate }
+      )
+
       setAcademicEvents(data.events || [])
       // Give Supermemory ~1.5s to persist, then re-trigger AI advisor
       // so "Your Advisor" automatically reflects the academic events
@@ -377,7 +403,7 @@ export function AppProvider({ children }) {
     } finally {
       setLoading(prev => ({ ...prev, ingestion: false }))
     }
-  }, [profile.user_id, refreshAI])
+  }, [profile.user_id, incomeStreams, refreshAI])
 
   return (
     <AppContext.Provider value={{
