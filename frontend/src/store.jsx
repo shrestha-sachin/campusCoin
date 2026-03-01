@@ -52,6 +52,10 @@ const AppContext = createContext(null)
 export function AppProvider({ children }) {
   const stored = loadFromStorage()
 
+  // Invalidate old-format AI cache that's missing strategy_points
+  const storedAi = stored?.aiInsight
+  const validAiInsight = storedAi && Array.isArray(storedAi.strategy_points) ? storedAi : null
+
   const [onboarded, setOnboarded] = useState(!!stored?.onboarded)
   const [profile, setProfile] = useState(stored?.profile ?? EMPTY_PROFILE)
   const [incomeStreams, setIncomeStreams] = useState(stored?.incomeStreams ?? [])
@@ -59,7 +63,7 @@ export function AppProvider({ children }) {
   const [auth, setAuth] = useState(stored?.auth ?? EMPTY_AUTH)
   const [goals, setGoals] = useState(stored?.goals ?? [])
   const [runway, setRunway] = useState(stored?.runway ?? [])
-  const [aiInsight, setAiInsight] = useState(stored?.aiInsight ?? null)
+  const [aiInsight, setAiInsight] = useState(validAiInsight)
   const [loading, setLoading] = useState({ runway: false, ai: false })
   const [nessieTransactions, setNessieTransactions] = useState([])
   const [nessieBills, setNessieBills] = useState([])

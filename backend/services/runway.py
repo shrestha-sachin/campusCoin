@@ -25,25 +25,28 @@ async def calculate_runway(req: RunwayRequest):
                 continue
             try:
                 start = date.fromisoformat(stream.start_date)
+                pay_start = date.fromisoformat(stream.first_payday) if stream.first_payday else start
                 end = date.fromisoformat(stream.end_date) if stream.end_date else date.max
             except Exception:
                 continue
-            if not (start <= current_date <= end):
+            
+            # Balance only increases starting from the first payday
+            if not (pay_start <= current_date <= end):
                 continue
+
+            # Apply tax deduction
+            tax_multiplier = 1.0 - (getattr(stream, 'tax_rate', 0.0) / 100.0)
 
             if stream.is_lump_sum and stream.lump_sum_amount:
                 if stream.end_date:
-                    duration_days = max((end - start).days, 1)
+                    duration_days = max((end - start).days, 1) # Distribution still based on work duration
+                    daily_delta += (stream.lump_sum_amount * tax_multiplier) / duration_days
                 else:
-                    duration_days = 1
-                
-                if current_date == start if not stream.end_date else (start <= current_date <= end):
-                    if not stream.end_date:
-                         daily_delta += stream.lump_sum_amount
-                    else:
-                         daily_delta += stream.lump_sum_amount / duration_days
+                    # One-time lump sum on pay_start
+                    if current_date == pay_start:
+                        daily_delta += stream.lump_sum_amount * tax_multiplier
             else:
-                daily_delta += (stream.hourly_rate * stream.weekly_hours) / 7.0
+                daily_delta += (stream.hourly_rate * stream.weekly_hours * tax_multiplier) / 7.0
 
         for expense in req.expenses:
             if not expense.is_active:

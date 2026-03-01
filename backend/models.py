@@ -27,6 +27,8 @@ class IncomeStream(BaseModel):
     weekly_hours: float = 0.0
     start_date: str  # YYYY-MM-DD
     end_date: Optional[str] = None    # YYYY-MM-DD
+    first_payday: Optional[str] = None  # Expected or actual first paycheck date
+    tax_rate: float = 0.0              # Tax percentage (e.g., 12.5)
     is_lump_sum: bool = False
     lump_sum_amount: Optional[float] = None
     is_active: bool = True
@@ -82,12 +84,20 @@ class EmergencyResource(BaseModel):
     link: str
 
 
+class StrategyPoint(BaseModel):
+    label: str
+    details: str
+    icon: str # Lucide icon name
+    color: str # 'blue', 'green', 'orange', 'red', 'purple'
+
+
 class AIInsight(BaseModel):
     status: Literal["on_track", "caution", "critical"]
     next_best_action: str
     emergency_mode: bool = False
     emergency_resources: List[EmergencyResource] = []
     full_analysis: str
+    strategy_points: List[StrategyPoint] = []
     shortfall_date: Optional[str] = None
     shortfall_amount: float = 0.0
 

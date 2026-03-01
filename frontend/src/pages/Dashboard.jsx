@@ -11,8 +11,20 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, Loader2, Bot,
+  RefreshCw, Loader2, Bot, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield
 } from 'lucide-react'
+
+const STRATEGY_ICONS = {
+  Wallet, TrendingUp, PiggyBank, CreditCard, GraduationCap, Briefcase, Zap, Shield
+}
+
+const STRATEGY_COLORS = {
+  blue: 'bg-g-blue-pastel text-g-blue border-g-blue/20',
+  green: 'bg-g-green-pastel text-g-green border-g-green/20',
+  orange: 'bg-orange-50 text-orange-600 border-orange-200',
+  red: 'bg-g-red-pastel text-g-red border-g-red/20',
+  purple: 'bg-purple-50 text-purple-600 border-purple-200'
+}
 
 function QuickStat({ icon: Icon, label, value, color, bgColor }) {
   return (
@@ -113,9 +125,19 @@ export default function Dashboard() {
     const nessiePurchases = nessieTransactions.filter(t => t.type === 'purchase')
     const totalDeposits = nessieDeposits.reduce((s, t) => s + (t.amount || 0), 0)
     const totalPurchases = nessiePurchases.reduce((s, t) => s + (t.amount || 0), 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
     const monthlyIncome = totalDeposits > 0 ? totalDeposits : incomeStreams
-      .filter(s => s.is_active && !s.is_lump_sum)
-      .reduce((sum, s) => sum + (s.hourly_rate * s.weekly_hours * 4.33), 0)
+      .filter(s => {
+        if (!s.is_active || s.is_lump_sum) return false
+        const payDate = s.first_payday ? new Date(s.first_payday) : new Date(s.start_date)
+        return payDate <= today
+      })
+      .reduce((sum, s) => {
+        const gross = s.hourly_rate * s.weekly_hours * 4.33
+        const taxMult = 1 - ((s.tax_rate || 15) / 100)
+        return sum + (gross * taxMult)
+      }, 0)
     const monthlyExpenses = totalPurchases > 0 ? totalPurchases : expenses
       .filter(e => e.is_active)
       .reduce((sum, e) => {
@@ -194,7 +216,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <QuickStat
-              icon={TrendingUp} label="Month Deposits"
+              icon={TrendingUp} label="Month Income (Net)"
               value={fmt(stats.monthlyIncome)}
               color="text-g-green" bgColor="bg-g-green-pastel"
             />
@@ -305,14 +327,14 @@ export default function Dashboard() {
             className="flex flex-col gap-6"
             style={{ width: isDesktop ? `${splitWidth}%` : '100%' }}
           >
-            <div className="flex-1 min-h-0 flex flex-col xl:pr-6">
+            <div className="flex-[2] min-h-[280px] flex flex-col xl:pr-6">
               <FinancialGoalsCard />
             </div>
-            <div className="flex-1 min-h-0 flex flex-col xl:pr-6">
+            <div className="flex-[2] min-h-[280px] flex flex-col xl:pr-6">
               <UpcomingBillsCard />
             </div>
             {expenses.filter(e => e.is_active).length > 0 && (
-              <div className="card flex-1 p-6 border-none shadow-premium bg-g-surface flex flex-col min-h-0 overflow-hidden xl:mr-6">
+              <div className="card flex-[2] min-h-[280px] p-6 border-none shadow-premium bg-g-surface flex flex-col overflow-hidden xl:mr-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-g-red-pastel flex items-center justify-center shadow-sm">
                     <Banknote size={20} className="text-g-red" />
@@ -365,14 +387,24 @@ export default function Dashboard() {
                 <FileText size={180} />
               </div>
               <div className="relative z-10 flex-1 flex flex-col">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-11 h-11 rounded-xl bg-g-blue-pastel flex items-center justify-center shadow-sm">
-                    <Bot size={24} className="text-g-blue" />
+                <div className="flex items-center justify-between gap-3 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-g-blue-pastel flex items-center justify-center shadow-sm">
+                      <Bot size={24} className="text-g-blue" />
+                    </div>
+                    <div>
+                      <h2 className="font-display font-bold text-2xl text-g-text">AI Strategy</h2>
+                      <span className="font-display text-[11px] text-g-text-tertiary uppercase font-bold tracking-[0.2em]">Campus Financial Wisdom</span>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-display font-bold text-2xl text-g-text">AI Strategy</h2>
-                    <span className="font-display text-[11px] text-g-text-tertiary uppercase font-bold tracking-[0.2em]">Campus Financial Wisdom</span>
-                  </div>
+                  <button
+                    onClick={async () => { setAiInsight(null); await refreshAI() }}
+                    disabled={loading.ai}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-g-blue-pastel text-g-blue text-xs font-display font-bold hover:bg-g-blue hover:text-white transition-all disabled:opacity-40"
+                  >
+                    <RefreshCw size={13} className={loading.ai ? 'animate-spin' : ''} />
+                    Refresh
+                  </button>
                 </div>
 
                 {loading.ai ? (
@@ -384,14 +416,38 @@ export default function Dashboard() {
                     <span className="font-display text-sm font-bold text-g-text-secondary uppercase tracking-[0.3em] animate-pulse">Synthesizing Signals...</span>
                   </div>
                 ) : aiInsight ? (
-                  <div className="grid grid-cols-1 h-full">
-                    <div className="p-6 sm:p-8 rounded-3xl bg-g-bg/40 border border-g-border/50 backdrop-blur-sm font-body text-[15px] sm:text-[16px] text-g-text-secondary leading-[1.8] flex-1 overflow-y-auto no-scrollbar shadow-inner relative group/analysis">
-                      <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <TrendingUp size={64} className="text-g-blue" />
-                      </div>
-                      <div className="relative z-10 whitespace-pre-wrap">
-                        {aiInsight.full_analysis}
-                      </div>
+                  <div className="flex flex-col h-full space-y-4">
+                    {/* Concise Summary */}
+                    <div className="px-6 py-4 rounded-2xl bg-g-bg/40 border border-g-border/30 backdrop-blur-sm">
+                      <p className="font-body text-sm text-g-text-secondary leading-relaxed italic">
+                        "{aiInsight.full_analysis}"
+                      </p>
+                    </div>
+
+                    {/* Strategy Points */}
+                    <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-2 pb-4">
+                      {(aiInsight.strategy_points || []).map((point, idx) => {
+                        const Icon = STRATEGY_ICONS[point.icon] || Wallet
+                        const colorClass = STRATEGY_COLORS[point.color] || STRATEGY_COLORS.blue
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex gap-4 p-4 rounded-2xl border bg-g-surface/50 hover:bg-g-surface transition-all duration-300 group/point animate-fade-in`}
+                            style={{ animationDelay: `${idx * 150}ms` }}
+                          >
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover/point:scale-110 ${colorClass}`}>
+                              <Icon size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-display font-bold text-g-text text-sm mb-1">{point.label}</h4>
+                              <p className="font-body text-xs text-g-text-tertiary leading-normal group-hover/point:text-g-text-secondary transition-colors">
+                                {point.details}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 ) : (

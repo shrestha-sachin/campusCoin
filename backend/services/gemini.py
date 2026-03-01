@@ -93,16 +93,25 @@ Return ONLY this JSON structure (no markdown fences, no extra text):
   "next_best_action": "one concrete actionable sentence",
   "emergency_mode": false,
   "emergency_resources": [],
-  "full_analysis": "2-3 paragraph analysis using real numbers from the data",
+  "full_analysis": "a concise executive summary",
+  "strategy_points": [
+    {{
+      "label": "Concrete action title here",
+      "details": "Specific 1-2 sentence advice using real numbers from this student's data.",
+      "icon": "Wallet",
+      "color": "blue"
+    }}
+  ],
   "shortfall_date": null,
   "shortfall_amount": 0.00
 }}
 
 Rules:
+- Provide exactly 3-4 strategy_points focusing on optimization, savings, and campus survival.
+- Each strategy point MUST have: "label", "details", "icon" (Lucide icon name), and "color" (blue|green|orange|red|purple).
 - Set status to "critical" if balance hits $0 or can't cover rent/food within 30 days
 - Set status to "caution" if projected balance drops below $300 within 60 days
 - Set emergency_mode to true if balance hits $0 or can't cover rent/food within 30 days
-- When emergency_mode is true, populate emergency_resources with objects like {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "...", "description": "...", "link": "..."}}
 - When emergency_mode is true, populate emergency_resources with 3 objects in this exact format:
   {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "Name of the program", "description": "One sentence description", "link": "https://..."}}
 - STRICT LINK RULE: The "link" value MUST be a complete, absolute URL beginning with "https://" that resolves to a real university or government webpage. You MUST research the exact page for that university. NEVER use "#", relative paths, internal routes, or placeholder values. DO NOT provide any links belonging to the domain "campuscoin.tech" or "localhost". If you're unsure of the exact URL for a university page, use the format: "https://www.google.com/search?q=UWGB+emergency+grant" replacing UWGB with the actual institution abbreviation. The student's email is {req.profile.email or 'unknown'} and university is {req.profile.university}.

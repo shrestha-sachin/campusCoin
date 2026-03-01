@@ -12,15 +12,34 @@ export default function Manage() {
   const { incomeStreams, expenses } = useApp()
 
   const { monthlyIncome, monthlyExpenses, netMonthly } = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     const regularInc = incomeStreams
-      .filter(s => s.is_active && !s.is_lump_sum)
-      .reduce((sum, s) => sum + (Number(s.hourly_rate || 0) * Number(s.weekly_hours || 0) * 4.33), 0)
+      .filter(s => {
+        if (!s.is_active || s.is_lump_sum) return false
+        const payDate = s.first_payday ? new Date(s.first_payday) : new Date(s.start_date)
+        return payDate <= today
+      })
+      .reduce((sum, s) => {
+        const gross = Number(s.hourly_rate || 0) * Number(s.weekly_hours || 0) * 4.33
+        const taxMult = 1 - (Number(s.tax_rate || 15) / 100)
+        return sum + (gross * taxMult)
+      }, 0)
 
-    const yearlyLumpSum = incomeStreams
-      .filter(s => s.is_active && s.is_lump_sum)
-      .reduce((sum, s) => sum + (Number(s.lump_sum_amount || 0)), 0)
+    const lumpInc = incomeStreams
+      .filter(s => {
+        if (!s.is_active || !s.is_lump_sum) return false
+        const payDate = s.first_payday ? new Date(s.first_payday) : new Date(s.start_date)
+        return payDate <= today
+      })
+      .reduce((sum, s) => {
+        const gross = Number(s.lump_sum_amount || 0)
+        const taxMult = 1 - (Number(s.tax_rate || 15) / 100)
+        return sum + (gross * taxMult)
+      }, 0)
 
-    const monthlyIncome = regularInc + (yearlyLumpSum / 12)
+    const monthlyIncome = regularInc + (lumpInc / 12)
 
     const monthlyExpenses = expenses
       .filter(e => e.is_active)
@@ -56,7 +75,7 @@ export default function Manage() {
             <div className="w-9 h-9 rounded-xl bg-g-green-pastel flex items-center justify-center">
               <TrendingUp size={18} className="text-g-green" />
             </div>
-            <p className="font-display font-bold text-g-text-secondary text-xs uppercase tracking-wider">Income/mo</p>
+            <p className="font-display font-bold text-g-text-secondary text-xs uppercase tracking-wider">Income/mo (Net)</p>
           </div>
           <p className="font-display font-bold text-g-text text-xl">{fmt(monthlyIncome)}</p>
         </div>

@@ -15,7 +15,19 @@ const TYPE_CLASSES = {
 
 const TODAY = format(new Date(), 'yyyy-MM-dd')
 const IN_4MO = format(addMonths(new Date(), 4), 'yyyy-MM-dd')
-const BLANK = { type: 'campus_job', label: '', hourly_rate: '', weekly_hours: '', start_date: TODAY, end_date: IN_4MO, is_lump_sum: false, lump_sum_amount: '', is_active: true }
+const BLANK = {
+  type: 'campus_job',
+  label: '',
+  hourly_rate: '',
+  weekly_hours: '',
+  start_date: TODAY,
+  end_date: IN_4MO,
+  first_payday: TODAY, // Default to today/start
+  tax_rate: '15',      // Default common student tax rate
+  is_lump_sum: false,
+  lump_sum_amount: '',
+  is_active: true
+}
 
 export default function IncomeStreamForm() {
   const { incomeStreams, setIncomeStreams, refreshRunway, refreshAI, createNessieDeposit } = useApp()
@@ -27,17 +39,16 @@ export default function IncomeStreamForm() {
   function remove(id) { const u = incomeStreams.filter(s => s.id !== id); setIncomeStreams(u); trigger(u) }
   async function save() {
     if (!form.label.trim()) return
-    const newStream = { ...form, id: uuidv4(), hourly_rate: Number(form.hourly_rate) || 0, weekly_hours: Number(form.weekly_hours) || 0, lump_sum_amount: form.is_lump_sum ? Number(form.lump_sum_amount) || 0 : null }
+    const newStream = {
+      ...form,
+      id: uuidv4(),
+      hourly_rate: Number(form.hourly_rate) || 0,
+      weekly_hours: Number(form.weekly_hours) || 0,
+      tax_rate: Number(form.tax_rate) || 0,
+      lump_sum_amount: form.is_lump_sum ? Number(form.lump_sum_amount) || 0 : null
+    }
     const u = [...incomeStreams, newStream]
     setIncomeStreams(u); setShowAdd(false); setForm(BLANK); trigger(u)
-
-    // Create a Nessie deposit for this income
-    const monthlyAmt = newStream.is_lump_sum
-      ? (newStream.lump_sum_amount || 0)
-      : (newStream.hourly_rate * newStream.weekly_hours * 4.33)
-    if (monthlyAmt > 0) {
-      createNessieDeposit(Math.round(monthlyAmt * 100) / 100, `${newStream.label} (${newStream.type})`)
-    }
   }
 
   return (
@@ -91,6 +102,9 @@ export default function IncomeStreamForm() {
           )}
           <div className="grid grid-cols-2 gap-4">
             <div><label className="label">Start Date</label><input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className="input-field" /></div>
+            <div><label className="label">First Payday</label><input type="date" value={form.first_payday} onChange={e => setForm(f => ({ ...f, first_payday: e.target.value }))} className="input-field" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">End Date</label>
               <input
@@ -99,6 +113,16 @@ export default function IncomeStreamForm() {
                 disabled={!form.end_date}
                 onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
                 className={`input-field ${!form.end_date ? 'opacity-50 grayscale' : ''}`}
+              />
+            </div>
+            <div>
+              <label className="label">Expected Tax (%)</label>
+              <input
+                type="number"
+                placeholder="15"
+                value={form.tax_rate}
+                onChange={e => setForm(f => ({ ...f, tax_rate: e.target.value }))}
+                className="input-field"
               />
             </div>
           </div>
