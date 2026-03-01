@@ -135,7 +135,140 @@ export function AppProvider({ children }) {
     setOnboarded(true)
   }
 
+  // ── Runway & AI ─────────────────────────────────────
+  const refreshRunway = useCallback(async (overrideIncome, overrideExpenses) => {
+    const inc = overrideIncome ?? incomeStreams
+    const exp = overrideExpenses ?? expenses
+
+    setLoading(prev => ({ ...prev, runway: true }))
+    try {
+      const data = await api.calculateRunway({
+        current_balance: profile.current_balance,
+        income_streams: inc,
+        expenses: exp,
+        days: 180,
+      })
+
+      if (academicEvents.length > 0) {
+        // Sort events by start date
+        const sortedEvents = [...academicEvents].map(evt => {
+          const parts = evt.date_range.split(' - ')
+          const startStr = parts[0]?.trim() || ''
+          const year = new Date().getFullYear()
+          return { ...evt, startDate: new Date(`${startStr}, ${year}`) }
+        }).sort((a, b) => a.startDate - b.startDate)
+
+        const adjusted = data.map(point => {
+          const pointDate = new Date(point.date)
+          let totalAccumulatedImpact = 0
+
+          for (const evt of sortedEvents) {
+            if (pointDate >= evt.startDate) {
+              // If the point is AFTER the event has started, 
+              // we apply the impact based on how much of the event has passed.
+              const parts = evt.date_range.split(' - ')
+              const endStr = parts[1]?.trim() || ''
+              const evtEnd = new Date(`${endStr}, ${new Date().getFullYear()}`)
+
+              if (pointDate >= evtEnd) {
+                // Event is fully over, subtract full impact
+                totalAccumulatedImpact += evt.financial_impact
+              } else {
+                // Event is in progress, subtract proportional impact
+                const totalDuration = evtEnd - evt.startDate
+                const elapsed = pointDate - evt.startDate
+                const progress = Math.max(0, Math.min(1, elapsed / totalDuration))
+                totalAccumulatedImpact += evt.financial_impact * progress
+              }
+            }
+          }
+          return { ...point, projected_balance: point.projected_balance - totalAccumulatedImpact }
+        })
+        setRunway(adjusted)
+        return adjusted
+      }
+
+      setRunway(data)
+      return data
+    } catch (err) {
+      console.error('Runway calculation failed:', err)
+      return []
+    } finally {
+      setLoading(prev => ({ ...prev, runway: false }))
+    }
+  }, [incomeStreams, expenses, profile.current_balance, academicEvents])
+
+  const refreshAI = useCallback(async (runwayData) => {
+    if (!auth.is_premium) {
+      console.warn('[CampusCoin] AI Advisor is a Premium feature.')
+      return null
+    }
+    setLoading(prev => ({ ...prev, ai: true }))
+    try {
+      const data = await api.analyzeFinances({
+        profile: { ...profile, email: auth.email },
+        income_streams: incomeStreams,
+        expenses,
+        runway: runwayData ?? runway,
+      })
+      setAiInsight(data)
+      return data
+    } catch (err) {
+      console.error('AI analysis failed:', err)
+      return null
+    } finally {
+      setLoading(prev => ({ ...prev, ai: false }))
+    }
+  }, [profile.name, profile.university, profile.major, profile.graduation_date, auth.email, auth.is_premium, incomeStreams, expenses])
+
+  const ingestAcademic = useCallback(async (file) => {
+    setLoading(prev => ({ ...prev, ingestion: true }))
+    try {
+      // Compute real work context from active income streams
+      const activeStreams = incomeStreams.filter(s => s.is_active && !s.is_lump_sum)
+      const weeklyHours = activeStreams.reduce((sum, s) => sum + (s.weekly_hours || 0), 0)
+      const hourlyRate = activeStreams.length > 0
+        ? activeStreams.reduce((sum, s) => sum + (s.hourly_rate || 13), 0) / activeStreams.length
+        : 13
+      const data = await api.ingestAcademic(
+        file,
+        profile.user_id || 'anonymous',
+        { weeklyHours, hourlyRate }
+      )
+
+      const docMeta = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        upload_date: new Date().toISOString(),
+        size: file.size,
+        event_count: data.events?.length || 0
+      }
+      setProfile(prev => ({
+        ...prev,
+        doc_history: [docMeta, ...(prev.doc_history || [])]
+      }))
+
+      setAcademicEvents(data.events || [])
+      return data
+    } catch (err) {
+      console.error('Academic ingestion failed:', err)
+      throw err
+    } finally {
+      setLoading(prev => ({ ...prev, ingestion: false }))
+    }
+  }, [profile.user_id, incomeStreams, refreshAI])
+
   // ── Nessie Integration ──────────────────────────────
+
+  // Auto-refresh runway whenever inputs or balance change (debounced)
+  useEffect(() => {
+    if (!onboarded) return
+    const timer = setTimeout(() => {
+      refreshRunway()
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [onboarded, incomeStreams, expenses, profile.current_balance, refreshRunway])
 
   /** Sync balance from Nessie (live bank balance) */
   const syncNessie = useCallback(async () => {
@@ -267,141 +400,7 @@ export function AppProvider({ children }) {
     return () => clearInterval(interval)
   }, [onboarded, profile.nessie_account_id])
 
-  // ── Runway & AI ─────────────────────────────────────
 
-  // Auto-refresh runway whenever inputs or balance change (debounced)
-  useEffect(() => {
-    if (!onboarded) return
-    const timer = setTimeout(() => {
-      refreshRunway()
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [onboarded, incomeStreams, expenses, profile.current_balance])
-
-  const refreshRunway = useCallback(async (overrideIncome, overrideExpenses) => {
-    const inc = overrideIncome ?? incomeStreams
-    const exp = overrideExpenses ?? expenses
-
-    setLoading(prev => ({ ...prev, runway: true }))
-    try {
-      const data = await api.calculateRunway({
-        current_balance: profile.current_balance,
-        income_streams: inc,
-        expenses: exp,
-        days: 180,
-      })
-
-      if (academicEvents.length > 0) {
-        // Sort events by start date
-        const sortedEvents = [...academicEvents].map(evt => {
-          const parts = evt.date_range.split(' - ')
-          const startStr = parts[0]?.trim() || ''
-          const year = new Date().getFullYear()
-          return { ...evt, startDate: new Date(`${startStr}, ${year}`) }
-        }).sort((a, b) => a.startDate - b.startDate)
-
-        const adjusted = data.map(point => {
-          const pointDate = new Date(point.date)
-          let totalAccumulatedImpact = 0
-
-          for (const evt of sortedEvents) {
-            if (pointDate >= evt.startDate) {
-              // If the point is AFTER the event has started, 
-              // we apply the impact based on how much of the event has passed.
-              const parts = evt.date_range.split(' - ')
-              const endStr = parts[1]?.trim() || ''
-              const evtEnd = new Date(`${endStr}, ${new Date().getFullYear()}`)
-
-              if (pointDate >= evtEnd) {
-                // Event is fully over, subtract full impact
-                totalAccumulatedImpact += evt.financial_impact
-              } else {
-                // Event is in progress, subtract proportional impact
-                const totalDuration = evtEnd - evt.startDate
-                const elapsed = pointDate - evt.startDate
-                const progress = Math.max(0, Math.min(1, elapsed / totalDuration))
-                totalAccumulatedImpact += evt.financial_impact * progress
-              }
-            }
-          }
-          return { ...point, projected_balance: point.projected_balance - totalAccumulatedImpact }
-        })
-        setRunway(adjusted)
-        return adjusted
-      }
-
-      setRunway(data)
-      return data
-    } catch (err) {
-      console.error('Runway calculation failed:', err)
-      return []
-    } finally {
-      setLoading(prev => ({ ...prev, runway: false }))
-    }
-  }, [incomeStreams, expenses, profile.current_balance, academicEvents])
-
-  const refreshAI = useCallback(async (runwayData) => {
-    if (!auth.is_premium) {
-      console.warn('[CampusCoin] AI Advisor is a Premium feature.')
-      return null
-    }
-    setLoading(prev => ({ ...prev, ai: true }))
-    try {
-      const data = await api.analyzeFinances({
-        profile: { ...profile, email: auth.email },
-        income_streams: incomeStreams,
-        expenses,
-        runway: runwayData ?? runway,
-      })
-      setAiInsight(data)
-      return data
-    } catch (err) {
-      console.error('AI analysis failed:', err)
-      return null
-    } finally {
-      setLoading(prev => ({ ...prev, ai: false }))
-    }
-  }, [profile.name, profile.university, profile.major, profile.graduation_date, auth.email, auth.is_premium, incomeStreams, expenses])
-
-  const ingestAcademic = useCallback(async (file) => {
-    setLoading(prev => ({ ...prev, ingestion: true }))
-    try {
-      // Compute real work context from active income streams
-      const activeStreams = incomeStreams.filter(s => s.is_active && !s.is_lump_sum)
-      const weeklyHours = activeStreams.reduce((sum, s) => sum + (s.weekly_hours || 0), 0)
-      const hourlyRate = activeStreams.length > 0
-        ? activeStreams.reduce((sum, s) => sum + (s.hourly_rate || 13), 0) / activeStreams.length
-        : 13
-      const data = await api.ingestAcademic(
-        file,
-        profile.user_id || 'anonymous',
-        { weeklyHours, hourlyRate }
-      )
-
-      const docMeta = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        type: file.type,
-        upload_date: new Date().toISOString(),
-        size: file.size,
-        event_count: data.events?.length || 0
-      }
-      setProfile(prev => ({
-        ...prev,
-        doc_history: [docMeta, ...(prev.doc_history || [])]
-      }))
-
-      setAcademicEvents(data.events || [])
-      // The global observer useEffect will pick up the change to academicEvents
-      // and trigger the AI refresh automatically after a short debounce.
-      return data
-    } catch (err) {
-      console.error('Academic ingestion failed:', err)
-      throw err
-    } finally {
-      setLoading(prev => ({ ...prev, ingestion: false }))
-    }
-  }, [profile.user_id, incomeStreams, refreshAI])
 
   // ── Persistence & Observers (placed at end to avoid TDZ errors) ──────
 
