@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import {
   Bot, TrendingUp, AlertCircle, CheckCircle2, Zap, Rocket, Lightbulb,
   Activity, ArrowUpRight, ArrowDownLeft, Target, ShieldCheck,
-  Upload, FileText, CalendarRange, DollarSign, Clock, ChevronRight, X, Loader2,
-  SlidersHorizontal, PiggyBank, CheckCheck, Library, FileCheck
+  Upload, FileText, CalendarRange, DollarSign, Clock, X, Loader2,
+  SlidersHorizontal, PiggyBank, CheckCheck, Library, FileCheck, Crown, Lock, Sparkles
 } from 'lucide-react'
 import { useApp } from '../store.jsx'
 
@@ -45,11 +45,12 @@ function getImpactStyle(amount) {
 export default function Strategist() {
   const {
     aiInsight, nessieTransactions, profile, setProfile, refreshAI, loading,
-    academicEvents, ingestAcademic, setAcademicEvents, refreshRunway
+    academicEvents, ingestAcademic, setAcademicEvents, refreshRunway, auth
   } = useApp()
+  const isPremium = auth.is_premium
 
   const s = statusMap[aiInsight?.status || 'on_track']
-  const [showInfo, setShowInfo] = React.useState(false)
+  const [showInfo, setShowInfo] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [ingestionError, setIngestionError] = useState(null)
   const [summaryText, setSummaryText] = useState(null)
@@ -128,7 +129,7 @@ export default function Strategist() {
   const totalImpact = academicEvents.reduce((sum, e) => sum + e.financial_impact, 0)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-6 lg:pt-8 max-w-[1400px] mx-auto min-h-0 lg:h-screen flex flex-col lg:overflow-hidden">
+    <div className="p-4 sm:p-6 lg:p-8 pt-6 lg:pt-8 max-w-[1400px] mx-auto min-h-0 lg:h-screen flex flex-col lg:overflow-hidden relative">
       <div className="fade-up-1 mb-6 sm:mb-8 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 text-left">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
@@ -147,22 +148,21 @@ export default function Strategist() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 lg:flex-1 lg:overflow-hidden min-h-0">
         {/* Left column — cards */}
-        <div className="lg:col-span-4 fade-up-2 flex flex-col lg:h-full space-y-6 lg:overflow-y-auto lg:pr-2 lg:no-scrollbar pb-10 lg:pb-20">
+        <div className="lg:col-span-4 fade-up-2 flex flex-col lg:h-full space-y-6 lg:overflow-y-auto lg:pr-2 lg:no-scrollbar pb-10 lg:pb-20 relative">
 
           {/* Financial Pulse Card */}
           <div className="card p-6 relative flex-shrink-0 overflow-hidden">
             <div className={`absolute -right-12 -top-12 w-32 h-32 rounded-full opacity-10 blur-2xl ${s.bg}`} />
-
             <div className="flex items-center justify-between mb-4">
               <p className="font-display font-bold text-g-text text-lg flex items-center gap-2">
                 <Zap size={18} className="text-g-purple" />
                 Financial Pulse
               </p>
               <button
-                onClick={() => refreshAI()}
-                disabled={loading.ai}
+                onClick={() => isPremium && refreshAI()}
+                disabled={loading.ai || !isPremium}
                 className={`p-1.5 rounded-lg border border-g-border text-g-text-tertiary hover:text-g-text hover:bg-g-bg transition-all ${loading.ai ? 'animate-spin opacity-50' : ''}`}
-                title="Refresh Analysis"
+                title={isPremium ? "Refresh Analysis" : "Premium Feature"}
               >
                 <Activity size={14} />
               </button>
@@ -205,9 +205,31 @@ export default function Strategist() {
                       {aiInsight.next_best_action}
                     </p>
                   </div>
+                  {!isPremium && <div className="absolute inset-0 bg-g-bg/60 backdrop-blur-[2px] rounded-2xl flex items-center justify-center">
+                    <Lock size={14} className="text-g-text-tertiary" />
+                  </div>}
                 </div>
               )}
             </div>
+
+            {!isPremium && (
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
+                <div className="w-14 h-14 rounded-3xl bg-white shadow-xl flex items-center justify-center mb-5 border border-g-border">
+                  <Crown size={28} className="text-g-blue" strokeWidth={1.5} />
+                </div>
+                <h4 className="font-display font-bold text-lg text-g-text mb-2">Gemini AI Strategist</h4>
+                <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-6 max-w-[200px]">
+                  Unlock your personal AI Advisor with CampusCoin Premium.
+                </p>
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-g-blue text-white font-display font-bold text-sm shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all"
+                >
+                  <Sparkles size={18} />
+                  Upgrade to Premium
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Runway Target */}
@@ -298,47 +320,62 @@ export default function Strategist() {
           </div>
 
           {/* Knowledge Vault — Saved Documents */}
-          {profile.doc_history && profile.doc_history.length > 0 && (
-            <div className="card p-5 border-none shadow-sm flex-shrink-0 bg-g-surface">
-              <div className="flex items-center justify-between mb-4">
-                <p className="font-display font-bold text-g-text text-[14px] flex items-center gap-2">
-                  <Library size={16} className="text-g-blue" />
-                  Knowledge Vault
-                </p>
-                <span className="text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider bg-g-bg px-2 py-0.5 rounded-full">
-                  {profile.doc_history.length} Docs
-                </span>
-              </div>
-              <div className="space-y-3">
-                {profile.doc_history.slice(0, 5).map((doc, idx) => (
-                  <div key={doc.id || idx} className="p-3 rounded-xl bg-g-bg border border-g-border/30 hover:border-g-blue/20 transition-all group cursor-default">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-g-blue-pastel text-g-blue flex items-center justify-center">
-                        <FileCheck size={14} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-body text-[12px] text-g-text font-bold truncate group-hover:text-g-blue transition-colors">
-                          {doc.name}
-                        </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="font-body text-[10px] text-g-text-tertiary">
-                            {new Date(doc.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          <div className="relative overflow-hidden rounded-[32px] flex-shrink-0">
+            {profile.doc_history && profile.doc_history.length > 0 && (
+              <div className="card p-5 border-none shadow-sm bg-g-surface">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-display font-bold text-g-text text-[14px] flex items-center gap-2">
+                    <Library size={16} className="text-g-blue" />
+                    Knowledge Vault
+                  </p>
+                  <span className="text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider bg-g-bg px-2 py-0.5 rounded-full">
+                    {profile.doc_history.length} Docs
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {profile.doc_history.slice(0, 5).map((doc, idx) => (
+                    <div key={doc.id || idx} className="p-3 rounded-xl bg-g-bg border border-g-border/30 hover:border-g-blue/20 transition-all group cursor-default">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-g-blue-pastel text-g-blue flex items-center justify-center">
+                          <FileCheck size={14} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-body text-[12px] text-g-text font-bold truncate group-hover:text-g-blue transition-colors">
+                            {doc.name}
                           </p>
-                          <span className="w-1 h-1 rounded-full bg-g-border" />
-                          <p className="font-body text-[10px] text-g-blue font-bold">{doc.event_count} events</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="font-body text-[10px] text-g-text-tertiary">
+                              {new Date(doc.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </p>
+                            <span className="w-1 h-1 rounded-full bg-g-border" />
+                            <p className="font-body text-[10px] text-g-blue font-bold">{doc.event_count} events</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {profile.doc_history.length > 5 && (
-                  <p className="text-center font-body text-[10px] text-g-text-tertiary mt-2 uppercase tracking-widest font-bold">
-                    + {profile.doc_history.length - 5} more archived
-                  </p>
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {!isPremium && (
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-xl flex items-center justify-center mb-4 border border-g-border">
+                  <Lock size={20} className="text-g-text-tertiary" />
+                </div>
+                <p className="font-display font-bold text-g-text text-base mb-1">Supermemory</p>
+                <p className="font-body text-g-text-secondary text-xs leading-relaxed mb-5">
+                  Unlock cross-session history and document persistence.
+                </p>
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="px-5 py-2.5 rounded-xl bg-g-text text-white font-display font-bold text-[11px] uppercase tracking-wider shadow-sm hover:scale-105 transition-transform"
+                >
+                  Go Premium
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right column — Ingestion Hub */}
@@ -350,9 +387,6 @@ export default function Strategist() {
               <div className="relative">
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-g-blue/10 to-g-purple/10 flex items-center justify-center mb-6">
                   <Loader2 size={40} className="text-g-blue animate-spin" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-g-green flex items-center justify-center animate-pulse">
-                  <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
               </div>
               <p className="font-display font-bold text-g-text text-xl mb-2">Powered by Modal</p>
@@ -371,7 +405,6 @@ export default function Strategist() {
           {/* Results: Academic Event Cards */}
           {!loading.ingestion && academicEvents.length > 0 && (
             <div className="space-y-5">
-              {/* Summary header */}
               <div className="card p-6 bg-gradient-to-br from-g-blue/5 to-g-purple/5 border-none">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -395,13 +428,6 @@ export default function Strategist() {
                           <p className="font-display font-bold text-g-text">${totalImpact.toFixed(0)}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border flex-1 sm:flex-none">
-                        <Clock size={16} className="text-g-blue" />
-                        <div>
-                          <p className="font-body text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Events</p>
-                          <p className="font-display font-bold text-g-text">{academicEvents.length}</p>
-                        </div>
-                      </div>
                     </div>
                   </div>
                   <button
@@ -414,7 +440,6 @@ export default function Strategist() {
                 </div>
               </div>
 
-              {/* Event cards */}
               <div className="grid gap-4">
                 {academicEvents.map((evt, idx) => {
                   const style = getImpactStyle(evt.financial_impact)
@@ -431,39 +456,25 @@ export default function Strategist() {
                               <p className="font-body text-g-text-tertiary text-xs">{evt.date_range}</p>
                             </div>
                           </div>
-
                           <div className="flex items-center gap-4 mt-3 mb-3">
                             <div className="flex items-center gap-1.5">
                               <Clock size={13} className="text-g-text-tertiary" />
-                              <span className="font-body text-xs text-g-text-secondary">
-                                -{evt.inferred_hours_reduction} hrs/wk
-                              </span>
+                              <span className="font-body text-xs text-g-text-secondary">-{evt.inferred_hours_reduction} hrs/wk</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <DollarSign size={13} className={style.text} />
-                              <span className={`font-display font-bold text-sm ${style.text}`}>
-                                -${evt.financial_impact.toFixed(0)}
-                              </span>
+                              <span className={`font-display font-bold text-sm ${style.text}`}>-${evt.financial_impact.toFixed(0)}</span>
                             </div>
                           </div>
-
-                          <p className="font-body text-g-text-secondary text-[13px] leading-relaxed">
-                            {evt.recommended_action}
-                          </p>
                         </div>
-
-                        <div className="flex flex-col gap-2 flex-shrink-0 mt-1">
-                          <button
-                            onClick={() => setAdjustingIdx(adjustingIdx === idx ? null : idx)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${style.bg} ${style.text} font-body text-xs font-bold hover:opacity-80 transition-all`}
-                          >
-                            <SlidersHorizontal size={13} />
-                            Adjust Runway
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setAdjustingIdx(adjustingIdx === idx ? null : idx)}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${style.bg} ${style.text} font-body text-xs font-bold hover:opacity-80 transition-all`}
+                        >
+                          <SlidersHorizontal size={13} />
+                          Adjust Runway
+                        </button>
                       </div>
-
-                      {/* Inline action panel */}
                       {adjustingIdx === idx && (
                         <div className="mt-4 pt-4 border-t border-g-border space-y-3 animate-fade-in">
                           <p className="font-display font-bold text-g-text text-[13px]">Recommended Action</p>
@@ -471,23 +482,15 @@ export default function Strategist() {
                             <PiggyBank size={18} className={style.text} />
                             <p className={`font-body text-xs font-medium ${style.text} flex-1`}>{evt.recommended_action}</p>
                           </div>
-                          <div className="flex gap-2 flex-wrap">
+                          <div className="flex gap-2">
                             <button
                               onClick={() => addSavingsGoal(evt, idx)}
                               disabled={!!goalAdded[idx]}
-                              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-display font-bold transition-all ${goalAdded[idx]
-                                ? 'bg-emerald-500 text-white cursor-default'
-                                : 'bg-g-blue text-white hover:bg-g-blue/90'
-                                }`}
+                              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-display font-bold transition-all ${goalAdded[idx] ? 'bg-emerald-500 text-white' : 'bg-g-blue text-white'}`}
                             >
-                              {goalAdded[idx] ? <><CheckCheck size={13} /> Goal Added!</> : <><PiggyBank size={13} /> Set as Financial Goal</>}
+                              {goalAdded[idx] ? 'Goal Added!' : 'Set as Goal'}
                             </button>
-                            <button
-                              onClick={() => navigate('/manage')}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-g-bg border border-g-border text-g-text text-xs font-display font-bold hover:border-g-blue/40 hover:text-g-blue transition-all"
-                            >
-                              <SlidersHorizontal size={13} /> Manage Budget
-                            </button>
+                            <button onClick={() => navigate('/manage')} className="px-4 py-2 rounded-xl bg-g-bg border border-g-border text-xs font-bold text-g-text">Manage Budget</button>
                           </div>
                         </div>
                       )}
@@ -495,110 +498,37 @@ export default function Strategist() {
                   )
                 })}
               </div>
-
-              {/* Re-upload prompt */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3.5 rounded-2xl border-2 border-dashed border-g-border hover:border-g-blue/40 transition-all group"
+                className="w-full py-4 border-2 border-dashed border-g-border rounded-2xl text-g-text-tertiary font-body text-sm hover:border-g-blue/30 transition-all"
               >
-                <p className="font-body text-sm font-medium text-g-text-tertiary group-hover:text-g-blue transition-colors mb-0.5">
-                  Upload another document
-                </p>
-                <p className="font-mono text-[10px] text-g-text-tertiary/60 tracking-wide">
-                  syllabus · course schedule · Canvas export · assignment planner · professor handout
-                </p>
+                Upload another document
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,image/*"
-                className="hidden"
-                onChange={onFileSelect}
-              />
+              <input ref={fileInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFileSelect} />
             </div>
           )}
 
           {/* Dropzone (initial state) */}
           {!loading.ingestion && academicEvents.length === 0 && (
-            <div className="card p-0 overflow-hidden lg:h-full min-h-[350px] flex flex-col">
-              <div className="p-6 pb-4 border-b border-g-border flex-shrink-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-purple flex items-center justify-center shadow-sm">
-                    <FileText size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h2 className="font-display font-bold text-g-text text-xl tracking-tight">
-                      Academic Document Ingestion
-                    </h2>
-                    <p className="font-body text-g-text-secondary text-sm">
-                      Upload your syllabus or Canvas schedule. We'll automatically predict how your midterms will impact your work hours and runway.
-                    </p>
-                  </div>
-                </div>
+            <div className="card p-0 overflow-hidden lg:h-full min-h-[400px] flex flex-col">
+              <div className="p-6 border-b border-g-border">
+                <h2 className="font-display font-bold text-xl text-g-text mb-1">Academic Document Ingestion</h2>
+                <p className="font-body text-sm text-g-text-secondary">Predict stress periods and their financial impact.</p>
               </div>
-
-              <div className="flex-1 p-6 flex items-center justify-center">
+              <div className="flex-1 p-8 flex items-center justify-center">
                 <div
-                  onDrop={onDrop}
-                  onDragOver={onDragOver}
-                  onDragLeave={onDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`w-full max-w-xl mx-auto rounded-3xl border-2 border-dashed p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group
-                    ${dragOver
-                      ? 'border-g-blue bg-g-blue-pastel scale-[1.02] shadow-lg'
-                      : 'border-g-border hover:border-g-blue/40 hover:bg-g-blue-pastel/30'
-                    }
-                  `}
+                  onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave} onClick={() => fileInputRef.current?.click()}
+                  className={`w-full max-w-lg rounded-3xl border-2 border-dashed p-12 text-center cursor-pointer transition-all ${dragOver ? 'border-g-blue bg-g-blue-pastel' : 'border-g-border hover:border-g-blue/20'}`}
                 >
-                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 transition-all duration-300 ${dragOver
-                    ? 'bg-g-blue text-white shadow-lg scale-110'
-                    : 'bg-gradient-to-br from-g-blue/10 to-g-purple/10 text-g-blue group-hover:scale-105'
-                    }`}>
-                    <Upload size={36} strokeWidth={1.5} />
+                  <div className="w-20 h-20 rounded-3xl bg-g-blue-pastel text-g-blue flex items-center justify-center mx-auto mb-6">
+                    <Upload size={32} />
                   </div>
-
-                  <p className="font-display font-bold text-g-text text-lg mb-1.5 text-center">
-                    {dragOver ? 'Drop it right here' : 'Drag & drop your documents'}
-                  </p>
-                  <p className="font-body text-g-text-secondary text-sm text-center mb-6 max-w-sm leading-relaxed">
-                    Support for PDF documents and images (PNG, JPG, WebP). We'll extract midterms, finals, and project deadlines automatically.
-                  </p>
-
-                  <div className="flex items-center gap-3">
-                    <button className="px-5 py-2.5 rounded-full bg-g-blue text-white font-body text-sm font-bold hover:bg-[#3367d6] transition-all shadow-sm">
-                      Browse Files
-                    </button>
-                    <span className="font-body text-g-text-tertiary text-xs">or drag & drop</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-8">
-                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">PDF</div>
-                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">PNG</div>
-                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">JPG</div>
-                    <div className="px-2.5 py-1 rounded-full bg-g-bg border border-g-border text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider">WebP</div>
-                  </div>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,image/*"
-                    className="hidden"
-                    onChange={onFileSelect}
-                  />
+                  <p className="font-display font-bold text-lg text-g-text mb-1">{dragOver ? 'Drop it here' : 'Drag & drop documents'}</p>
+                  <p className="font-body text-sm text-g-text-secondary mb-8">PDF, PNG, JPG, WebP supported.</p>
+                  <button className="px-6 py-3 rounded-2xl bg-g-blue text-white font-display font-bold text-sm">Browse Files</button>
+                  <input ref={fileInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFileSelect} />
                 </div>
               </div>
-
-              {ingestionError && (
-                <div className="px-6 pb-6">
-                  <div className="p-4 rounded-2xl bg-g-red-pastel border border-g-red/20 flex items-start gap-3">
-                    <AlertCircle size={18} className="text-g-red flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-body font-bold text-g-red text-sm mb-0.5">Ingestion Failed</p>
-                      <p className="font-body text-g-red/80 text-xs leading-relaxed">{ingestionError}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -607,62 +537,35 @@ export default function Strategist() {
       {/* Info Modal */}
       {showInfo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-md p-4" onClick={() => setShowInfo(false)}>
-          <div className="bg-g-surface rounded-3xl w-full max-w-lg p-7 sm:p-9 shadow-2xl scale-in" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-g-purple-pastel flex items-center justify-center">
-                <Zap size={24} className="text-g-purple" />
-              </div>
-              <button
-                onClick={() => setShowInfo(false)}
-                className="p-2 rounded-xl text-g-text-tertiary hover:text-g-text hover:bg-g-bg transition-colors"
-              >
-                <AlertCircle size={20} />
-              </button>
+          <div className="bg-g-surface rounded-3xl w-full max-w-md p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-display font-bold text-xl text-g-text">Intelligence Engine</h3>
+              <button onClick={() => setShowInfo(false)} className="p-2 rounded-xl hover:bg-g-bg transition-colors"><X size={20} /></button>
             </div>
-
-            <h3 className="font-display font-bold text-2xl text-g-text mb-2">Intelligence Engine</h3>
-            <p className="font-body text-g-text-secondary text-[15px] leading-relaxed mb-8">
-              CampusCoin's Academic-to-Financial Inference Engine predicts how your academic schedule impacts your earnings.
-            </p>
-
-            <div className="space-y-6 mb-8">
+            <div className="space-y-6">
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-g-blue-pastel flex items-center justify-center flex-shrink-0">
-                  <FileText size={20} className="text-g-blue" />
-                </div>
+                <div className="w-10 h-10 rounded-xl bg-g-blue-pastel flex items-center justify-center flex-shrink-0"><FileText size={20} className="text-g-blue" /></div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Multimodal Ingestion</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Upload PDFs or photos of your documents. Gemini extracts every midterm, final, and major deadline automatically.</p>
+                  <p className="font-body font-bold text-sm text-g-text">Multimodal Ingestion</p>
+                  <p className="font-body text-xs text-g-text-secondary">Upload PDFs or photos. Gemini extracts every midterm, final, and major deadline automatically.</p>
                 </div>
               </div>
-
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-g-green-pastel flex items-center justify-center flex-shrink-0">
-                  <TrendingUp size={20} className="text-g-green" />
-                </div>
+                <div className="w-10 h-10 rounded-xl bg-g-green-pastel flex items-center justify-center flex-shrink-0"><TrendingUp size={20} className="text-g-green" /></div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Predictive Financial Impact</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">We calculate exactly how many work hours you'll lose and the dollar impact on your runway during each stress period.</p>
+                  <p className="font-body font-bold text-sm text-g-text">Predictive Impact</p>
+                  <p className="font-body text-xs text-g-text-secondary">We calculate exactly how many work hours you'll lose and the dollar impact on your runway.</p>
                 </div>
               </div>
-
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-g-purple-pastel flex items-center justify-center flex-shrink-0">
-                  <Rocket size={20} className="text-g-purple" />
-                </div>
+                <div className="w-10 h-10 rounded-xl bg-g-purple-pastel flex items-center justify-center flex-shrink-0"><Rocket size={20} className="text-g-purple" /></div>
                 <div>
-                  <p className="font-body font-bold text-g-text text-sm">Persistent Memory</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Supermemory stores your academic bottlenecks permanently, so your financial plan adapts across the entire semester.</p>
+                  <p className="font-body font-bold text-sm text-g-text">Persistent Memory</p>
+                  <p className="font-body text-xs text-g-text-secondary">Supermemory stores your bottlenecks permanently, adapting your financial plan over time.</p>
                 </div>
               </div>
             </div>
-
-            <button
-              onClick={() => setShowInfo(false)}
-              className="w-full py-3.5 rounded-full bg-g-text text-white font-body text-sm font-bold hover:opacity-90 transition-all shadow-sm"
-            >
-              Close Navigator Info
-            </button>
+            <button onClick={() => setShowInfo(false)} className="w-full mt-8 py-3 rounded-2xl bg-g-text text-white font-display font-bold text-sm">Close</button>
           </div>
         </div>
       )}

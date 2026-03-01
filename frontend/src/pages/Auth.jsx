@@ -215,6 +215,16 @@ export default function Auth() {
                 <span className="font-body text-white/90 text-xs font-medium">180-day runway</span>
               </div>
             </div>
+            <div className="flex flex-col items-center gap-2 mt-auto pt-10 opacity-60">
+              <p className="flex items-center gap-2 text-[11px] font-body text-white/80">
+                <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Built for HackIllinois 2025</a>
+                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <a href="https://developer.capitalone.com/nessie-api-guide" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Powered by Capital One Nessie API</a>
+              </p>
+              <p className="font-mono text-[10px] text-white/60">
+                Built by <a href="https://github.com/shrestha-sachin" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-2">Sachin Shrestha</a> & <a href="https://github.com/Cdguzmanr" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline decoration-white/20 underline-offset-2">Carlos Guzman</a>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -388,7 +398,7 @@ export default function Auth() {
 
           <div className="text-center font-body text-[10px] sm:text-[11px] text-g-text-tertiary mt-8 lg:mt-12 flex flex-col items-center gap-2 opacity-70">
             <p className="flex items-center gap-2">
-              <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Built for HackIllinois 2026</a>
+              <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Built for HackIllinois 2025</a>
               <span className="w-1 h-1 rounded-full bg-g-border" />
               <a href="https://developer.capitalone.com/nessie-api-guide" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Powered by Capital One Nessie API</a>
             </p>

@@ -23,6 +23,7 @@ const EMPTY_AUTH = {
   name: '',
   user_id: '',
   student_id: '',
+  is_premium: false,
 }
 
 const STORAGE_KEY = 'campuscoin_data'
@@ -81,14 +82,19 @@ export function AppProvider({ children }) {
   }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents])
 
 
-  function login({ email, name, user_id, student_id }) {
+  function login({ email, name, user_id, student_id, is_premium = false }) {
     setAuth({
       isAuthenticated: true,
       email: email?.trim() ?? '',
       name: name?.trim() ?? '',
       user_id: user_id ?? '',
       student_id: student_id ?? '',
+      is_premium: is_premium,
     })
+  }
+
+  function togglePremium() {
+    setAuth(prev => ({ ...prev, is_premium: !prev.is_premium }))
   }
 
   /** Try to restore profile from backend (for cross-device login) */
@@ -335,6 +341,10 @@ export function AppProvider({ children }) {
   }, [incomeStreams, expenses, profile.current_balance, academicEvents])
 
   const refreshAI = useCallback(async (runwayData) => {
+    if (!auth.is_premium) {
+      console.warn('[CampusCoin] AI Advisor is a Premium feature.')
+      return null
+    }
     setLoading(prev => ({ ...prev, ai: true }))
     try {
       const data = await api.analyzeFinances({
@@ -475,6 +485,8 @@ export function AppProvider({ children }) {
       createNessieBill,
       pollNessie,
       lastPoll,
+      // Premium
+      togglePremium,
       // Nessie Bills
       nessieBills,
       fetchNessieBills,

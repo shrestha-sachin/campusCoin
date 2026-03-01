@@ -7,9 +7,12 @@ import {
   Settings,
   Menu,
   X,
+  Crown,
+  Sparkles,
 } from 'lucide-react'
 import Logo from './Logo.jsx'
 import PartnerLogos from './PartnerLogos.jsx'
+import { useApp } from '../store.jsx'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -21,6 +24,7 @@ const navItems = [
 const SCROLL_THRESHOLD = 10
 
 export default function Layout() {
+  const { auth } = useApp()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
   const lastScrollY = useRef(0)
@@ -92,8 +96,45 @@ export default function Layout() {
           ))}
         </nav>
 
+        {/* Premium CTA / Badge */}
+        <div className="mt-auto pt-6 border-t border-g-border mb-6">
+          {auth.is_premium ? (
+            <div className="p-4 rounded-[24px] bg-gradient-to-br from-g-blue/10 via-g-blue/5 to-transparent border border-g-blue/20 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-16 h-16 bg-g-blue/10 rounded-full blur-xl animate-pulse" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-g-blue text-white flex items-center justify-center shadow-lg shadow-g-blue/20">
+                  <Crown size={16} />
+                </div>
+                <div>
+                  <p className="font-display font-bold text-[14px] text-g-text">Campus VIP</p>
+                  <p className="font-body text-[11px] text-g-blue font-bold uppercase tracking-wider">Premium Active</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <NavLink
+              to="/pricing"
+              onClick={() => setSidebarOpen(false)}
+              className="p-4 rounded-[24px] bg-g-bg border border-g-border hover:border-g-blue/30 hover:bg-white transition-all group block shadow-sm hover:shadow-md"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-xl bg-g-blue-pastel text-g-blue flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Sparkles size={16} />
+                </div>
+                <p className="font-display font-bold text-[14px] text-g-text">Upgrade Today</p>
+              </div>
+              <p className="font-body text-[11px] text-g-text-tertiary leading-relaxed">
+                Unlock AI Strategy & Supermemory for just $4.99/mo.
+              </p>
+              <div className="mt-3 flex items-center gap-1.5 text-g-blue font-display text-[11px] font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+                View Plans <Crown size={10} strokeWidth={3} />
+              </div>
+            </NavLink>
+          )}
+        </div>
+
         {/* Partner logos */}
-        <div className="pt-5 mt-3 border-t border-g-border">
+        <div className="pt-5 border-t border-g-border">
           <PartnerLogos />
         </div>
       </aside>

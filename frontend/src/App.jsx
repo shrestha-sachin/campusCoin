@@ -8,6 +8,7 @@ import Strategist from './pages/Strategist.jsx'
 import Settings from './pages/Settings.jsx'
 import Onboarding from './pages/Onboarding.jsx'
 import Auth from './pages/Auth.jsx'
+import Pricing from './pages/Pricing.jsx'
 
 function RequireOnboarding({ children }) {
   const { auth, onboarded } = useApp()
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="manage" element={<Manage />} />
         <Route path="strategist" element={<Strategist />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="pricing" element={<Pricing />} />
       </Route>
     </Routes>
   )

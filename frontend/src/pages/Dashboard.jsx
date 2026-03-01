@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../store.jsx'
 import BalanceCard from '../components/BalanceCard.jsx'
 import RunwayChart from '../components/RunwayChart.jsx'
@@ -11,7 +12,7 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield
+  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield, Crown, Sparkles
 } from 'lucide-react'
 
 const STRATEGY_ICONS = {
@@ -60,8 +61,9 @@ export default function Dashboard() {
   const {
     profile, incomeStreams, expenses, aiInsight, setAiInsight, loading,
     refreshRunway, refreshAI,
-    nessieTransactions, pollNessie, lastPoll,
+    nessieTransactions, pollNessie, lastPoll, auth
   } = useApp()
+  const isPremium = auth.is_premium
 
   const [showEmergency, setShowEmergency] = useState(false)
   const [polling, setPolling] = useState(false)
@@ -70,6 +72,7 @@ export default function Dashboard() {
   const [isDragging, setIsDragging] = useState(false)
   const isResizing = useRef(false)
   const containerRef = useRef(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1280)
@@ -179,9 +182,23 @@ export default function Dashboard() {
         {/* Hero Section */}
         <div className="fade-up-1 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="font-display font-bold text-3xl sm:text-4xl text-g-text tracking-tight">
-              {greeting}, <span className="bg-gradient-to-r from-g-blue to-g-blue-half bg-clip-text text-transparent">{firstName}</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-display font-bold text-3xl sm:text-4xl text-g-text tracking-tight">
+                {greeting}, <span className="bg-gradient-to-r from-g-blue to-g-blue-half bg-clip-text text-transparent">{firstName}</span>
+              </h1>
+              {isPremium ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-g-blue/10 to-g-blue/5 border border-g-blue/20 text-g-blue font-display text-[10px] font-bold uppercase tracking-widest animate-fade-in shadow-sm mt-1">
+                  <Crown size={12} fill="currentColor" /> VIP
+                </div>
+              ) : (
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-g-bg border border-g-border text-g-text-tertiary hover:text-g-blue hover:border-g-blue/30 transition-all font-display text-[10px] font-bold uppercase tracking-widest group mt-1"
+                >
+                  Free <Sparkles size={11} className="group-hover:text-g-blue transition-colors" />
+                </button>
+              )}
+            </div>
             <p className="font-body text-g-text-secondary text-base flex items-center gap-2">
               <span className="opacity-60">{profile.university}</span>
               <span className="w-1 h-1 rounded-full bg-g-text-tertiary" />
