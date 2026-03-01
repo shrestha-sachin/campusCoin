@@ -49,13 +49,67 @@ def _extract_json(text: str) -> dict:
 async def analyze_finances(req: AnalyzeRequest):
     model = _get_client()
 
+    # Pre-compute key numbers for accuracy
+    from datetime import date as dt_date
+    today = dt_date.today()
+
+    # Net monthly income (post-tax, active streams only, only if payday has begun)
+    net_monthly_income = 0.0
+    for s in req.income_streams:
+        if not s.is_active:
+            continue
+        try:
+            pay_start = dt_date.fromisoformat(s.first_payday) if s.first_payday else dt_date.fromisoformat(s.start_date)
+        except Exception:
+            pay_start = today
+        if pay_start > today:
+            continue
+        tax_mult = 1.0 - (getattr(s, 'tax_rate', 0.0) / 100.0)
+        if s.is_lump_sum and s.lump_sum_amount:
+            net_monthly_income += (s.lump_sum_amount * tax_mult) / 12.0
+        else:
+            net_monthly_income += s.hourly_rate * s.weekly_hours * 4.33 * tax_mult
+
+    # Monthly expenses (active only)
+    monthly_expenses = 0.0
+    for e in req.expenses:
+        if not e.is_active:
+            continue
+        if e.frequency == "monthly":
+            monthly_expenses += e.amount
+        elif e.frequency == "weekly":
+            monthly_expenses += e.amount * 4.33
+        elif e.frequency == "semesterly":
+            monthly_expenses += e.amount / 4.0
+
+    net_monthly = net_monthly_income - monthly_expenses
+
+    # Months until graduation
+    try:
+        grad_date = dt_date.fromisoformat(req.profile.graduation_date[:10])
+        months_to_grad = max(0, round((grad_date - today).days / 30.44))
+    except Exception:
+        months_to_grad = None
+
+    # Burn rate context
+    burn_context = ""
+    if net_monthly < 0:
+        months_until_zero = abs(req.profile.current_balance / net_monthly) if net_monthly != 0 else 0
+        burn_context = f"CRITICAL: Net cashflow is ${net_monthly:.2f}/mo (spending more than earning). Current balance depleted in ~{months_until_zero:.1f} months."
+    elif net_monthly >= 0:
+        burn_context = f"Positive cashflow of ${net_monthly:.2f}/mo. Estimated savings over graduation period: ${net_monthly * (months_to_grad or 0):.2f}."
+
     income_summary = "\n".join([
-        f"  - {s.label}: {'$' + str(s.lump_sum_amount) + ' lump sum' if s.is_lump_sum else f'${s.hourly_rate}/hr x {s.weekly_hours}hrs/wk'} "
-        f"({s.start_date} to {s.end_date}) [{'ACTIVE' if s.is_active else 'INACTIVE'}]"
+        f"  - {s.label}: "
+        + (f"${s.lump_sum_amount} lump sum (${s.lump_sum_amount * (1 - getattr(s, 'tax_rate', 0)/100):.2f} after {getattr(s, 'tax_rate', 0)}% tax)" if s.is_lump_sum else
+           f"${s.hourly_rate}/hr x {s.weekly_hours}hrs/wk = ${s.hourly_rate * s.weekly_hours * 4.33 * (1 - getattr(s, 'tax_rate', 0)/100):.0f}/mo net after {getattr(s, 'tax_rate', 0)}% tax")
+        + f" | Start: {s.start_date}" + (f" | First Payday: {s.first_payday}" if s.first_payday else "")
+        + (f" | End: {s.end_date}" if s.end_date else " | Ongoing")
+        + f" [{'ACTIVE' if s.is_active else 'INACTIVE'}]"
         for s in req.income_streams
     ])
     expense_summary = "\n".join([
-        f"  - {e.label}: ${e.amount} {e.frequency} [{'ACTIVE' if e.is_active else 'INACTIVE'}]"
+        f"  - {e.label}: ${e.amount} {e.frequency} (≈${e.amount if e.frequency == 'monthly' else e.amount*4.33 if e.frequency == 'weekly' else e.amount/4:.0f}/mo) [{'ACTIVE' if e.is_active else 'INACTIVE'}]"
         for e in req.expenses
     ])
 
@@ -66,17 +120,28 @@ async def analyze_finances(req: AnalyzeRequest):
         negatives = [r for r in req.runway if r.projected_balance < 0]
         if negatives:
             runway_preview += f"\nFirst negative balance on: {negatives[0].date} (${negatives[0].projected_balance:.2f})"
+        else:
+            # Find the lowest point
+            min_point = min(req.runway, key=lambda r: r.projected_balance)
+            runway_preview += f"\nLowest projected balance: ${min_point.projected_balance:.2f} on {min_point.date}"
 
-    prompt = f"""You are a financial advisor for college students. Analyze this student's financial situation and return ONLY valid JSON (no markdown, no explanation outside JSON).
+    prompt = f"""You are a financial counselor personally reviewing a student's finances. Write in clear, warm, first-person voice — use "Based on my review," "I recommend," "My advice." Be specific with real dollar figures. Never sound like an AI. Sound like a knowledgeable human advisor who cares deeply about this student's success.
+
+Analyze this student's financial situation and return ONLY valid JSON (no markdown, no explanation outside JSON).
 
 STUDENT PROFILE:
 Name: {req.profile.name}
-Email: {req.profile.email}
 University: {req.profile.university}
 Major: {req.profile.major}
-Graduation: {req.profile.graduation_date}
+Graduation: {req.profile.graduation_date} ({months_to_grad} months away)
 Current Balance: ${req.profile.current_balance:.2f}
-Goals: {', '.join(req.profile.financial_goals)}
+Goals: {', '.join(req.profile.financial_goals) or 'None set'}
+
+COMPUTED FINANCIAL SUMMARY (use these exact numbers in your analysis):
+  Net Monthly Income (post-tax, active streams): ${net_monthly_income:.2f}
+  Monthly Expenses: ${monthly_expenses:.2f}
+  Net Monthly Cashflow: ${net_monthly:.2f}
+  {burn_context}
 
 INCOME STREAMS:
 {income_summary}
@@ -107,7 +172,7 @@ Return ONLY this JSON structure (no markdown fences, no extra text):
 }}
 
 Rules:
-- Provide exactly 3-4 strategy_points focusing on optimization, savings, and campus survival.
+- Provide exactly 5-6 strategy_points covering: income optimization, savings habits, expense reduction, long-term planning, campus resources, and any urgent risk areas.
 - Each strategy point MUST have: "label", "details", "icon" (Lucide icon name), and "color" (blue|green|orange|red|purple).
 - Set status to "critical" if balance hits $0 or can't cover rent/food within 30 days
 - Set status to "caution" if projected balance drops below $300 within 60 days

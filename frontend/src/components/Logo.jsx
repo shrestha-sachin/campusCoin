@@ -2,7 +2,7 @@ import React from 'react'
 import logoSrcDefault from '../assets/icons/campuscoin-logo.svg'
 import logoSrcLight from '../assets/icons/campuscoin-logo-light.svg'
 
-export default function Logo({ size = 'default', light=false, className = '' }) {
+export default function Logo({ size = 'default', light = false, className = '' }) {
   const sizes = {
     small: 28,
     default: 34,

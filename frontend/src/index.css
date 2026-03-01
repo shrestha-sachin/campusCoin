@@ -319,6 +319,45 @@ body {
 }
 
 
+/* ── Auth screen coin 3D spin ── */
+.coin-spin-3d {
+  animation: coinSpin3d 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center center;
+  filter: drop-shadow(0 8px 24px rgba(248, 171, 6, 0.5));
+}
+
+@keyframes coinSpin3d {
+  0% {
+    transform: rotateY(0deg) scaleX(1);
+    filter: drop-shadow(0 8px 24px rgba(248, 171, 6, 0.5));
+  }
+
+  20% {
+    transform: rotateY(0deg) scaleX(1);
+    filter: drop-shadow(0 8px 24px rgba(248, 171, 6, 0.7));
+  }
+
+  45% {
+    transform: rotateY(90deg) scaleX(0.08);
+    filter: drop-shadow(0 4px 8px rgba(248, 171, 6, 0.2));
+  }
+
+  50% {
+    transform: rotateY(180deg) scaleX(0.08);
+    filter: drop-shadow(0 4px 8px rgba(248, 171, 6, 0.2));
+  }
+
+  75% {
+    transform: rotateY(180deg) scaleX(1);
+    filter: drop-shadow(0 8px 24px rgba(248, 171, 6, 0.5));
+  }
+
+  100% {
+    transform: rotateY(360deg) scaleX(1);
+    filter: drop-shadow(0 8px 24px rgba(248, 171, 6, 0.5));
+  }
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

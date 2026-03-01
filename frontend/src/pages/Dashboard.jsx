@@ -11,7 +11,7 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, Loader2, Bot, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield
+  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield
 } from 'lucide-react'
 
 const STRATEGY_ICONS = {
@@ -333,36 +333,70 @@ export default function Dashboard() {
             <div className="flex-[2] min-h-[280px] flex flex-col xl:pr-6">
               <UpcomingBillsCard />
             </div>
-            {expenses.filter(e => e.is_active).length > 0 && (
-              <div className="card flex-[2] min-h-[280px] p-6 border-none shadow-premium bg-g-surface flex flex-col overflow-hidden xl:mr-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-g-red-pastel flex items-center justify-center shadow-sm">
-                    <Banknote size={20} className="text-g-red" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base text-g-text">Concentration</h3>
-                    <span className="font-display text-[10px] text-g-text-tertiary uppercase font-bold tracking-wide">Top Monthly Spend</span>
-                  </div>
-                </div>
-                <div className="space-y-4 flex-1 flex flex-col justify-center min-h-0 overflow-y-auto no-scrollbar">
-                  {expenses.filter(e => e.is_active).sort((a, b) => b.amount - a.amount).slice(0, 4).map(exp => {
-                    const maxAmt = Math.max(...expenses.filter(e => e.is_active).map(e => e.amount))
-                    const pct = maxAmt > 0 ? (exp.amount / maxAmt) * 100 : 0
-                    return (
-                      <div key={exp.id} className="space-y-1.5">
-                        <div className="flex justify-between items-center">
-                          <span className="font-display font-bold text-[13px] text-g-text">{exp.label}</span>
-                          <span className="font-display font-bold text-[11px] text-g-text-tertiary uppercase">{fmt(exp.amount)}</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-g-bg rounded-full overflow-hidden border border-g-border/30">
-                          <div className="h-full bg-gradient-to-r from-g-red/20 to-g-red transition-all duration-1000 ease-out" style={{ width: `${pct}%` }} />
-                        </div>
+            {expenses.filter(e => e.is_active).length > 0 && (() => {
+              const activeExp = expenses.filter(e => e.is_active).sort((a, b) => b.amount - a.amount).slice(0, 4)
+              const maxAmt = Math.max(...activeExp.map(e => e.amount))
+              const totalMonthly = expenses.filter(e => e.is_active).reduce((s, e) => {
+                if (e.frequency === 'monthly') return s + e.amount
+                if (e.frequency === 'weekly') return s + e.amount * 4.33
+                if (e.frequency === 'semesterly') return s + e.amount / 4
+                return s
+              }, 0)
+              const RANK_COLORS = [
+                'from-rose-400 to-red-500',
+                'from-orange-400 to-amber-500',
+                'from-blue-400 to-indigo-500',
+                'from-slate-400 to-gray-500',
+              ]
+              return (
+                <div className="card flex-[2] min-h-[280px] p-5 sm:p-6 border-none shadow-premium bg-g-surface flex flex-col overflow-hidden xl:mr-6 relative">
+                  <div className="absolute -top-8 -left-8 w-32 h-32 bg-g-red/5 rounded-full blur-2xl pointer-events-none" />
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-g-red-pastel to-red-100 flex items-center justify-center shadow-sm">
+                        <Banknote size={17} className="text-g-red" />
                       </div>
-                    )
-                  })}
+                      <div>
+                        <h3 className="font-display font-bold text-base text-g-text">Concentration</h3>
+                        <span className="font-display text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Top Monthly Spend</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono font-bold text-base text-g-text">{fmt(totalMonthly)}</p>
+                      <p className="font-display text-[10px] text-g-text-tertiary uppercase font-bold tracking-wide">total/mo</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-4 flex flex-col justify-center overflow-y-auto no-scrollbar">
+                    {activeExp.map((exp, idx) => {
+                      const pct = maxAmt > 0 ? (exp.amount / maxAmt) * 100 : 0
+                      const sharePct = totalMonthly > 0 ? ((exp.amount / totalMonthly) * 100).toFixed(0) : 0
+                      return (
+                        <div key={exp.id} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${RANK_COLORS[idx]} flex items-center justify-center shadow-sm`}>
+                                <span className="font-display font-black text-[9px] text-white">{idx + 1}</span>
+                              </div>
+                              <span className="font-display font-bold text-[13px] text-g-text">{exp.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-display text-[10px] text-g-text-tertiary font-bold">{sharePct}%</span>
+                              <span className="font-mono font-bold text-[12px] text-g-text">{fmt(exp.amount)}</span>
+                            </div>
+                          </div>
+                          <div className="w-full h-2 bg-g-bg rounded-full overflow-hidden border border-g-border/20">
+                            <div
+                              className={`h-full bg-gradient-to-r ${RANK_COLORS[idx]} transition-all duration-1000 ease-out rounded-full`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
 
           <div
@@ -389,12 +423,19 @@ export default function Dashboard() {
               <div className="relative z-10 flex-1 flex flex-col">
                 <div className="flex items-center justify-between gap-3 mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-g-blue-pastel flex items-center justify-center shadow-sm">
-                      <Bot size={24} className="text-g-blue" />
+                    <div className="relative">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-g-blue-pastel to-blue-100 flex items-center justify-center shadow-sm overflow-hidden">
+                        <span className="font-display font-black text-lg text-g-blue">CC</span>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-g-blue rounded-full flex items-center justify-center border-2 border-g-surface">
+                        <BadgeCheck size={12} className="text-white" />
+                      </div>
                     </div>
                     <div>
-                      <h2 className="font-display font-bold text-2xl text-g-text">AI Strategy</h2>
-                      <span className="font-display text-[11px] text-g-text-tertiary uppercase font-bold tracking-[0.2em]">Campus Financial Wisdom</span>
+                      <h2 className="font-display font-bold text-lg text-g-text">Your Advisor</h2>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="font-display text-[10px] text-g-text-tertiary uppercase font-bold tracking-[0.15em]">CampusCoin Finance Review</span>
+                      </div>
                     </div>
                   </div>
                   <button
@@ -403,24 +444,27 @@ export default function Dashboard() {
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-g-blue-pastel text-g-blue text-xs font-display font-bold hover:bg-g-blue hover:text-white transition-all disabled:opacity-40"
                   >
                     <RefreshCw size={13} className={loading.ai ? 'animate-spin' : ''} />
-                    Refresh
+                    New Review
                   </button>
                 </div>
 
                 {loading.ai ? (
-                  <div className="space-y-6 flex-1 flex flex-col justify-center items-center py-12">
+                  <div className="space-y-4 flex-1 flex flex-col justify-center items-center py-12">
                     <div className="relative">
                       <div className="absolute inset-0 bg-g-blue/20 blur-xl rounded-full scale-150 animate-pulse" />
                       <Loader2 size={32} className="animate-spin text-g-blue relative z-10" />
                     </div>
-                    <span className="font-display text-sm font-bold text-g-text-secondary uppercase tracking-[0.3em] animate-pulse">Synthesizing Signals...</span>
+                    <div className="text-center">
+                      <p className="font-display text-sm font-bold text-g-text-secondary uppercase tracking-[0.3em] animate-pulse">Reviewing your finances...</p>
+                      <p className="font-body text-xs text-g-text-tertiary mt-1">Preparing your personal report</p>
+                    </div>
                   </div>
                 ) : aiInsight ? (
                   <div className="flex flex-col h-full space-y-4">
-                    {/* Concise Summary */}
-                    <div className="px-6 py-4 rounded-2xl bg-g-bg/40 border border-g-border/30 backdrop-blur-sm">
-                      <p className="font-body text-sm text-g-text-secondary leading-relaxed italic">
-                        "{aiInsight.full_analysis}"
+                    {/* Summary */}
+                    <div className="px-5 py-4 rounded-2xl bg-g-bg/40 border border-g-border/30">
+                      <p className="font-body text-[15px] text-g-text-secondary leading-relaxed">
+                        {aiInsight.full_analysis}
                       </p>
                     </div>
 
@@ -440,8 +484,8 @@ export default function Dashboard() {
                               <Icon size={20} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-display font-bold text-g-text text-sm mb-1">{point.label}</h4>
-                              <p className="font-body text-xs text-g-text-tertiary leading-normal group-hover/point:text-g-text-secondary transition-colors">
+                              <h4 className="font-display font-bold text-g-text text-base mb-1.5">{point.label}</h4>
+                              <p className="font-body text-[13px] text-g-text-tertiary leading-relaxed group-hover/point:text-g-text-secondary transition-colors">
                                 {point.details}
                               </p>
                             </div>
@@ -452,8 +496,9 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col justify-center items-center text-center opacity-30 px-6">
-                    <Bot size={48} className="mb-4 text-g-blue" />
-                    <p className="font-display text-sm font-bold uppercase tracking-[0.3em]">Awaiting Financial Signals</p>
+                    <BadgeCheck size={48} className="mb-4 text-g-blue" />
+                    <p className="font-display text-sm font-bold uppercase tracking-[0.3em]">No Review Yet</p>
+                    <p className="font-body text-xs text-g-text-tertiary mt-1">Your report will appear here</p>
                   </div>
                 )}
               </div>

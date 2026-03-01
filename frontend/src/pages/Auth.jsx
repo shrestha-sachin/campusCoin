@@ -162,8 +162,20 @@ export default function Auth() {
             />
           </div>
 
-          {/* Center — Hero text */}
-          <div className="my-auto">
+          {/* Animated gold coin */}
+          <div className="my-auto flex flex-col items-start">
+            <div className="relative mb-10 self-start">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-[#FFD428]/20 blur-2xl scale-150 animate-pulse pointer-events-none" />
+              {/* Coin */}
+              <img
+                src="/coin-light.svg"
+                alt="CampusCoin gold coin"
+                className="coin-spin-3d relative z-10"
+                style={{ width: 120, height: 120 }}
+              />
+            </div>
+
             <h1 className="font-display font-bold text-4xl xl:text-5xl text-white leading-[1.15] tracking-tight">
               Financial clarity,
               <br />
@@ -231,8 +243,8 @@ export default function Auth() {
                 type="button"
                 onClick={() => { setMode('signin'); setError('') }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-body font-semibold transition-all duration-200 ${isSignIn
-                    ? 'bg-white text-g-text shadow-sm border border-g-border/50'
-                    : 'text-g-text-tertiary hover:text-g-text-secondary'
+                  ? 'bg-white text-g-text shadow-sm border border-g-border/50'
+                  : 'text-g-text-tertiary hover:text-g-text-secondary'
                   }`}
               >
                 Sign in
@@ -241,8 +253,8 @@ export default function Auth() {
                 type="button"
                 onClick={() => { setMode('signup'); setError('') }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-body font-semibold transition-all duration-200 ${!isSignIn
-                    ? 'bg-white text-g-text shadow-sm border border-g-border/50'
-                    : 'text-g-text-tertiary hover:text-g-text-secondary'
+                  ? 'bg-white text-g-text shadow-sm border border-g-border/50'
+                  : 'text-g-text-tertiary hover:text-g-text-secondary'
                   }`}
               >
                 Sign up
