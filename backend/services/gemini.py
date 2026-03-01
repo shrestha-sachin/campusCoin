@@ -8,6 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import AnalyzeRequest, AIInsight, ChatRequest, ChatResponse, IngestionResponse
+from services.supermemory import recall_academic_events
 
 router = APIRouter()
 
@@ -49,6 +50,16 @@ def _extract_json(text: str) -> dict:
 @router.post("/analyze", response_model=AIInsight)
 async def analyze_finances(req: AnalyzeRequest):
     model = _get_client()
+
+    # Fetch academic events from Supermemory (non-blocking, best-effort)
+    academic_context = ""
+    try:
+        user_id = getattr(req.profile, 'user_id', None) or getattr(req.profile, 'email', 'anonymous')
+        events = await recall_academic_events(str(user_id))
+        if events:
+            academic_context = "\n".join(f"  - {e}" for e in events)
+    except Exception as _mem_err:
+        print(f"[CampusCoin] Supermemory recall failed (non-blocking): {_mem_err}")
 
     # Pre-compute key numbers for accuracy
     from datetime import date as dt_date
@@ -153,6 +164,9 @@ EXPENSES:
 RUNWAY PROJECTION:
 {runway_preview}
 
+ACADEMIC STRESS PERIODS (from their uploaded syllabus — use these in your analysis):
+{academic_context if academic_context else '  None uploaded yet — advise them to upload their syllabus in Campus Navigator for a complete picture.'}
+
 Return ONLY this JSON structure (no markdown fences, no extra text):
 {{
   "status": "on_track|caution|critical",
@@ -174,6 +188,7 @@ Return ONLY this JSON structure (no markdown fences, no extra text):
 
 Rules:
 - Provide exactly 5-6 strategy_points covering: income optimization, savings habits, expense reduction, long-term planning, campus resources, and any urgent risk areas.
+- If ACADEMIC STRESS PERIODS are listed above, you MUST include at least one strategy_point specifically addressing the upcoming academic stress periods by name, with dollar-specific advice on how much to save before each event.
 - Each strategy point MUST have: "label", "details", "icon" (Lucide icon name), and "color" (blue|green|orange|red|purple).
 - Set status to "critical" if balance hits $0 or can't cover rent/food within 30 days
 - Set status to "caution" if projected balance drops below $300 within 60 days

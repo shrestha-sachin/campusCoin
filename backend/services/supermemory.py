@@ -77,6 +77,34 @@ async def store_academic_events(user_id: str, events: List[AcademicEvent]):
             print(f"[Supermemory] Error storing event '{event.title}': {e}")
 
 
+async def recall_academic_events(user_id: str) -> list[str]:
+    """Fetch previously stored academic events for a user from Supermemory.
+    Returns a list of formatted strings ready to inject into the advisor prompt."""
+    if not user_id or user_id == "anonymous":
+        return []
+    key = os.environ.get("SUPERMEMORY_KEY")
+    if not key:
+        return []
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(
+                f"{SUPERMEMORY_BASE}/memories",
+                params={"filter": f"userId:{user_id} type:academic_event"},
+                headers=headers,
+            )
+            if resp.status_code != 200:
+                return []
+            data = resp.json()
+            memories = data.get("memories", data) if isinstance(data, dict) else data
+            if not isinstance(memories, list):
+                return []
+            return [m.get("content", "") for m in memories if m.get("content")]
+    except Exception as e:
+        print(f"[Supermemory] recall_academic_events failed: {e}")
+        return []
+
+
 @router.get("/recall/{user_id}")
 async def recall_memory(user_id: str):
     async with httpx.AsyncClient() as client:

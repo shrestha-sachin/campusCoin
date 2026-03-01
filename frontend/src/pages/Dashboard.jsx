@@ -58,8 +58,8 @@ function timeAgo(date) {
 
 export default function Dashboard() {
   const {
-    profile, incomeStreams, expenses, aiInsight, loading,
-    refreshRunway,
+    profile, incomeStreams, expenses, aiInsight, setAiInsight, loading,
+    refreshRunway, refreshAI,
     nessieTransactions, pollNessie, lastPoll,
   } = useApp()
 
@@ -439,7 +439,11 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <button
-                    onClick={async () => { setAiInsight(null); await refreshAI() }}
+                    onClick={async () => {
+                      setAiInsight(null)
+                      const freshRunway = await refreshRunway()
+                      await refreshAI(freshRunway)
+                    }}
                     disabled={loading.ai}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-g-blue-pastel text-g-blue text-xs font-display font-bold hover:bg-g-blue hover:text-white transition-all disabled:opacity-40"
                   >

@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bot, TrendingUp, AlertCircle, CheckCircle2, Zap, Rocket, Lightbulb,
   Activity, ArrowUpRight, ArrowDownLeft, Target, ShieldCheck,
-  Upload, FileText, CalendarRange, DollarSign, Clock, ChevronRight, X, Loader2
+  Upload, FileText, CalendarRange, DollarSign, Clock, ChevronRight, X, Loader2,
+  SlidersHorizontal, PiggyBank, CheckCheck
 } from 'lucide-react'
 import { useApp } from '../store.jsx'
 
@@ -42,7 +44,7 @@ function getImpactStyle(amount) {
 
 export default function Strategist() {
   const {
-    aiInsight, nessieTransactions, profile, refreshAI, loading,
+    aiInsight, nessieTransactions, profile, setProfile, refreshAI, loading,
     academicEvents, ingestAcademic, setAcademicEvents, refreshRunway
   } = useApp()
 
@@ -51,7 +53,20 @@ export default function Strategist() {
   const [dragOver, setDragOver] = useState(false)
   const [ingestionError, setIngestionError] = useState(null)
   const [summaryText, setSummaryText] = useState(null)
+  const [adjustingIdx, setAdjustingIdx] = useState(null)
+  const [goalAdded, setGoalAdded] = useState({})
   const fileInputRef = React.useRef(null)
+  const navigate = useNavigate()
+
+  const addSavingsGoal = useCallback((evt, idx) => {
+    const goalText = `Save $${evt.financial_impact.toFixed(0)} before ${evt.title} (${evt.date_range})`
+    setProfile(prev => ({
+      ...prev,
+      financial_goals: [...(prev.financial_goals || []), goalText]
+    }))
+    setGoalAdded(prev => ({ ...prev, [idx]: true }))
+    setTimeout(() => setGoalAdded(prev => ({ ...prev, [idx]: false })), 3000)
+  }, [setProfile])
 
   React.useEffect(() => {
     if (!aiInsight && !loading.ai) {
@@ -394,11 +409,45 @@ export default function Strategist() {
                           </p>
                         </div>
 
-                        <button className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${style.bg} ${style.text} font-body text-xs font-bold hover:opacity-80 transition-all flex-shrink-0 mt-1`}>
-                          Adjust Runway
-                          <ChevronRight size={14} />
-                        </button>
+                        <div className="flex flex-col gap-2 flex-shrink-0 mt-1">
+                          <button
+                            onClick={() => setAdjustingIdx(adjustingIdx === idx ? null : idx)}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${style.bg} ${style.text} font-body text-xs font-bold hover:opacity-80 transition-all`}
+                          >
+                            <SlidersHorizontal size={13} />
+                            Adjust Runway
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Inline action panel */}
+                      {adjustingIdx === idx && (
+                        <div className="mt-4 pt-4 border-t border-g-border space-y-3 animate-fade-in">
+                          <p className="font-display font-bold text-g-text text-[13px]">Recommended Action</p>
+                          <div className={`flex items-center gap-3 p-3 rounded-xl ${style.bg} border ${style.border}`}>
+                            <PiggyBank size={18} className={style.text} />
+                            <p className={`font-body text-xs font-medium ${style.text} flex-1`}>{evt.recommended_action}</p>
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => addSavingsGoal(evt, idx)}
+                              disabled={!!goalAdded[idx]}
+                              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-display font-bold transition-all ${goalAdded[idx]
+                                ? 'bg-emerald-500 text-white cursor-default'
+                                : 'bg-g-blue text-white hover:bg-g-blue/90'
+                                }`}
+                            >
+                              {goalAdded[idx] ? <><CheckCheck size={13} /> Goal Added!</> : <><PiggyBank size={13} /> Set as Financial Goal</>}
+                            </button>
+                            <button
+                              onClick={() => navigate('/manage')}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-g-bg border border-g-border text-g-text text-xs font-display font-bold hover:border-g-blue/40 hover:text-g-blue transition-all"
+                            >
+                              <SlidersHorizontal size={13} /> Manage Budget
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -407,9 +456,14 @@ export default function Strategist() {
               {/* Re-upload prompt */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 rounded-2xl border-2 border-dashed border-g-border text-g-text-tertiary hover:border-g-blue/30 hover:text-g-blue transition-all font-body text-sm font-medium"
+                className="w-full py-3.5 rounded-2xl border-2 border-dashed border-g-border hover:border-g-blue/40 transition-all group"
               >
-                Upload another syllabus
+                <p className="font-body text-sm font-medium text-g-text-tertiary group-hover:text-g-blue transition-colors mb-0.5">
+                  Upload another document
+                </p>
+                <p className="font-mono text-[10px] text-g-text-tertiary/60 tracking-wide">
+                  syllabus · course schedule · Canvas export · assignment planner · professor handout
+                </p>
               </button>
               <input
                 ref={fileInputRef}
@@ -453,11 +507,10 @@ export default function Strategist() {
                     }
                   `}
                 >
-                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 transition-all duration-300 ${
-                    dragOver
-                      ? 'bg-g-blue text-white shadow-lg scale-110'
-                      : 'bg-gradient-to-br from-g-blue/10 to-g-purple/10 text-g-blue group-hover:scale-105'
-                  }`}>
+                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 transition-all duration-300 ${dragOver
+                    ? 'bg-g-blue text-white shadow-lg scale-110'
+                    : 'bg-gradient-to-br from-g-blue/10 to-g-purple/10 text-g-blue group-hover:scale-105'
+                    }`}>
                     <Upload size={36} strokeWidth={1.5} />
                   </div>
 

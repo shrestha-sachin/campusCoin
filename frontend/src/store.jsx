@@ -64,7 +64,7 @@ export function AppProvider({ children }) {
   const [goals, setGoals] = useState(stored?.goals ?? [])
   const [runway, setRunway] = useState(stored?.runway ?? [])
   const [aiInsight, setAiInsight] = useState(validAiInsight)
-  const [loading, setLoading] = useState({ runway: false, ai: false })
+  const [loading, setLoading] = useState({ runway: false, ai: false, ingestion: false })
   const [nessieTransactions, setNessieTransactions] = useState([])
   const [nessieBills, setNessieBills] = useState([])
   const [lastPoll, setLastPoll] = useState(null) // timestamp of last poll
@@ -340,20 +340,6 @@ export function AppProvider({ children }) {
     }
   }, [incomeStreams, expenses, profile.current_balance, academicEvents])
 
-  const ingestAcademic = useCallback(async (file) => {
-    setLoading(prev => ({ ...prev, ingestion: true }))
-    try {
-      const data = await api.ingestAcademic(file, profile.user_id || 'anonymous')
-      setAcademicEvents(data.events || [])
-      return data
-    } catch (err) {
-      console.error('Academic ingestion failed:', err)
-      throw err
-    } finally {
-      setLoading(prev => ({ ...prev, ingestion: false }))
-    }
-  }, [profile.user_id])
-
   const refreshAI = useCallback(async (runwayData) => {
     setLoading(prev => ({ ...prev, ai: true }))
     try {
@@ -372,6 +358,26 @@ export function AppProvider({ children }) {
       setLoading(prev => ({ ...prev, ai: false }))
     }
   }, [profile, incomeStreams, expenses, runway])
+
+  const ingestAcademic = useCallback(async (file) => {
+    setLoading(prev => ({ ...prev, ingestion: true }))
+    try {
+      const data = await api.ingestAcademic(file, profile.user_id || 'anonymous')
+      setAcademicEvents(data.events || [])
+      // Give Supermemory ~1.5s to persist, then re-trigger AI advisor
+      // so "Your Advisor" automatically reflects the academic events
+      setTimeout(() => {
+        setAiInsight(null)
+        refreshAI()
+      }, 1500)
+      return data
+    } catch (err) {
+      console.error('Academic ingestion failed:', err)
+      throw err
+    } finally {
+      setLoading(prev => ({ ...prev, ingestion: false }))
+    }
+  }, [profile.user_id, refreshAI])
 
   return (
     <AppContext.Provider value={{
