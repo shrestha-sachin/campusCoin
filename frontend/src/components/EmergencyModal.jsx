@@ -1,56 +1,43 @@
 import React from 'react'
 import { X, Phone, CreditCard, HeartHandshake, AlertTriangle, ExternalLink, GraduationCap, TrendingUp, ShoppingBag } from 'lucide-react'
-
-const FALLBACK_RESOURCES = [
-  { icon: Phone, label: '211 Helpline', desc: 'Free financial counseling', link: 'https://www.211.org/', color: 'from-g-blue to-g-blue-half' },
-  { icon: CreditCard, label: 'Emergency Aid', desc: 'University emergency funds', link: '#', color: 'from-g-green to-g-green-half' },
-  { icon: HeartHandshake, label: 'Food Pantry', desc: 'Campus food assistance', link: '#', color: 'from-g-yellow to-g-yellow-half' },
-]
-
-const PROACTIVE_RESOURCES = [
-  { icon: GraduationCap, label: 'Scholarship Portal', desc: 'Search regional grants & aid', link: 'https://www.scholarships.com/', color: 'from-g-blue to-g-blue-half' },
-  { icon: TrendingUp, label: 'High-Yield Savings', desc: 'Grow your student surplus', link: 'https://www.nerdwallet.com/best/banking/high-yield-savings-accounts', color: 'from-g-green to-g-green-half' },
-  { icon: ShoppingBag, label: 'Universal Discounts', desc: 'Verified 10% - 50% student savings', link: 'https://www.myunidays.com/', color: 'from-g-yellow to-g-yellow-half' },
-]
+import { sanitizeLink } from '../utils/links'
 
 export default function EmergencyModal({ onClose, resources = [], university = '', status = 'on_track' }) {
   const isEmergency = status === 'critical' || status === 'caution'
 
-  const displayResources = resources.length > 0 ? resources.map((r, i) => {
-    let color = 'from-g-blue to-g-blue-half'
-    let icon = Phone
-    if (i % 3 === 1) { color = 'from-g-green to-g-green-half'; icon = CreditCard }
-    if (i % 3 === 2) { color = 'from-g-yellow to-g-yellow-half'; icon = HeartHandshake }
+  const getFallbackResources = () => [
+    { icon: Phone, label: '211 Helpline', description: 'Free financial counseling', link: 'https://www.211.org/', color: 'from-g-blue to-g-blue-half' },
+    { icon: CreditCard, label: 'Emergency Aid', description: 'University emergency funds', link: `https://www.google.com/search?q=emergency+aid+${university}`, color: 'from-g-green to-g-green-half' },
+    { icon: HeartHandshake, label: 'Food Pantry', description: 'Campus food assistance', link: `https://www.google.com/search?q=food+pantry+${university}`, color: 'from-g-yellow to-g-yellow-half' },
+  ]
 
-    const rawLink = (r.link || '').trim()
-    let finalLink
+  const getProactiveResources = () => [
+    { icon: GraduationCap, label: 'Scholarship Portal', description: 'Search regional grants & aid', link: 'https://www.scholarships.com/', color: 'from-g-blue to-g-blue-half' },
+    { icon: TrendingUp, label: 'High-Yield Savings', description: 'Grow your student surplus', link: 'https://www.nerdwallet.com/best/banking/high-yield-savings-accounts', color: 'from-g-green to-g-green-half' },
+    { icon: ShoppingBag, label: 'Universal Discounts', description: 'Verified 10% - 50% student savings', link: 'https://www.myunidays.com/', color: 'from-g-yellow to-g-yellow-half' },
+  ]
 
-    try {
-      const parsed = new URL(rawLink.startsWith('http') ? rawLink : `https://${rawLink}`)
-      const hasDomain = parsed.hostname.includes('.') && parsed.hostname.length > 4
-      const isInternal = parsed.hostname === 'localhost' ||
-        parsed.hostname.startsWith('127.') ||
-        parsed.hostname === window.location.hostname
-      const isHashOnly = !rawLink || rawLink === '#' || rawLink.startsWith('#')
+  const rawResources = resources.length > 0 ? resources : (isEmergency ? getFallbackResources() : getProactiveResources())
 
-      if (isHashOnly || isInternal || !hasDomain) {
-        throw new Error('invalid')
-      }
-      finalLink = parsed.href
-    } catch {
-      const query = encodeURIComponent(`${r.label} ${university}`)
-      finalLink = `https://www.google.com/search?q=${query}`
+  const displayResources = rawResources.map((r, i) => {
+    let color = r.color || 'from-g-blue to-g-blue-half'
+    let icon = r.icon || Phone
+    if (!r.icon) {
+      if (i % 3 === 1) { color = 'from-g-green to-g-green-half'; icon = CreditCard }
+      if (i % 3 === 2) { color = 'from-g-yellow to-g-yellow-half'; icon = HeartHandshake }
     }
+
+    const finalLink = sanitizeLink(r.link, `${r.label} ${university}`)
 
     return {
       icon,
       label: r.label,
       desc: r.description,
       link: finalLink,
-      isGoogleFallback: finalLink.startsWith('https://www.google.com/search'),
+      isGoogleFallback: finalLink.includes('google.com/search'),
       color
     }
-  }) : (isEmergency ? FALLBACK_RESOURCES : PROACTIVE_RESOURCES)
+  })
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-md p-4">

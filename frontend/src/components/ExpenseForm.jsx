@@ -15,6 +15,15 @@ const FREQ_CLASSES = {
 const TODAY = format(new Date(), 'yyyy-MM-dd')
 const BLANK = { type: 'fixed', label: '', amount: '', frequency: 'monthly', due_date: TODAY, is_active: true }
 
+const CustomCheckbox = ({ checked, onChange }) => (
+  <div
+    onClick={onChange}
+    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${checked ? 'bg-g-blue border-g-blue shadow-sm scale-110' : 'border-g-border bg-white hover:border-g-blue/30'}`}
+  >
+    {checked && <Check size={12} className="text-white" strokeWidth={3} />}
+  </div>
+)
+
 export default function ExpenseForm() {
   const { expenses, setExpenses, refreshRunway, refreshAI, createNessiePurchase } = useApp()
   const [showAdd, setShowAdd] = useState(false)
@@ -81,7 +90,7 @@ export default function ExpenseForm() {
       <div className="space-y-2.5 mb-3">
         {expenses.map(exp => (
           <div key={exp.id} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${exp.is_active ? 'bg-g-surface border-g-border hover:border-g-red/30' : 'bg-g-bg border-g-border opacity-50'} ${editId === exp.id ? 'ring-2 ring-g-red border-g-red' : ''}`}>
-            <input type="checkbox" checked={exp.is_active} onChange={() => toggle(exp.id)} className="w-5 h-5 rounded accent-g-blue cursor-pointer flex-shrink-0" />
+            <CustomCheckbox checked={exp.is_active} onChange={() => toggle(exp.id)} />
             <div className="flex-1 min-w-0">
               <p className="font-body text-g-text text-[15px] font-medium truncate">{exp.label}</p>
               <p className="font-body text-xs text-g-text-tertiary mt-0.5">${exp.amount.toLocaleString()} · due {exp.due_date}</p>

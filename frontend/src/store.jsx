@@ -146,7 +146,7 @@ export function AppProvider({ children }) {
         current_balance: profile.current_balance,
         income_streams: inc,
         expenses: exp,
-        days: 180,
+        days: 365,
       })
 
       if (academicEvents.length > 0) {

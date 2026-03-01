@@ -179,7 +179,8 @@ Return ONLY this JSON structure (no markdown fences, no extra text):
       "label": "Concrete action title here",
       "details": "Specific 1-2 sentence advice using real numbers from this student's data.",
       "icon": "Wallet",
-      "color": "blue"
+      "color": "blue",
+      "link": "https://..."
     }}
   ],
   "shortfall_date": null,
@@ -189,13 +190,13 @@ Return ONLY this JSON structure (no markdown fences, no extra text):
 Rules:
 - Provide exactly 5-6 strategy_points covering: income optimization, savings habits, expense reduction, long-term planning, campus resources, and any urgent risk areas.
 - If ACADEMIC STRESS PERIODS are listed above, you MUST include at least one strategy_point specifically addressing the upcoming academic stress periods by name, with dollar-specific advice on how much to save before each event.
-- Each strategy point MUST have: "label", "details", "icon" (Lucide icon name), and "color" (blue|green|orange|red|purple).
+- Each strategy point MUST have: "label", "details", "icon" (Lucide icon name), and "color" (blue|green|orange|red|purple). "link" is optional but highly recommended.
 - Set status to "critical" if balance hits $0 or can't cover rent/food within 30 days
 - Set status to "caution" if projected balance drops below $300 within 60 days
 - Set emergency_mode to true if balance hits $0 or can't cover rent/food within 30 days
-- When emergency_mode is true, populate emergency_resources with 3 objects in this exact format:
+- Whenever status is "caution" or "critical", you MUST populate emergency_resources with 3 objects in this exact format:
   {{"type": "food_pantry|emergency_grant|work_study|financial_counseling", "label": "Name of the program", "description": "One sentence description", "link": "https://..."}}
-- STRICT LINK RULE: The "link" value MUST be a complete, absolute URL beginning with "https://" that resolves to a real university or government webpage. You MUST research the exact page for that university. NEVER use "#", relative paths, internal routes, or placeholder values. DO NOT provide any links belonging to the domain "campuscoin.tech" or "localhost". If you're unsure of the exact URL for a university page, use the format: "https://www.google.com/search?q=UWGB+emergency+grant" replacing UWGB with the actual institution abbreviation. The student's email is {req.profile.email or 'unknown'} and university is {req.profile.university}.
+- STRICT LINK RULE: The "link" value (for strategy points AND resources) MUST be a complete, absolute URL beginning with "https://" that resolves to a real university, government, or verified financial webpage. Use Google Search to find the EXACT URL for that specific university. NEVER use "#", relative paths, or placeholders. If you're unsure of the exact URL, use: "https://www.google.com/search?q=[Topic]+[University/Organization]". The university is {req.profile.university}.
 - shortfall_date should be the ISO date string when balance first goes negative, or null
 - shortfall_amount should be the magnitude of the shortfall at that date"""
 

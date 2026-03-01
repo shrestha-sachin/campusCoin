@@ -99,6 +99,7 @@ class StrategyPoint(BaseModel):
     details: str
     icon: str # Lucide icon name
     color: str # 'blue', 'green', 'orange', 'red', 'purple'
+    link: Optional[str] = None
 
 
 class AIInsight(BaseModel):

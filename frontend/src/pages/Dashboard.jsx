@@ -12,8 +12,9 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield, Crown, Sparkles
+  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield, Crown, Sparkles, ExternalLink
 } from 'lucide-react'
+import { sanitizeLink } from '../utils/links'
 
 const STRATEGY_ICONS = {
   Wallet, TrendingUp, PiggyBank, CreditCard, GraduationCap, Briefcase, Zap, Shield
@@ -496,21 +497,29 @@ export default function Dashboard() {
                         const colorClass = STRATEGY_COLORS[point.color] || STRATEGY_COLORS.blue
 
                         return (
-                          <div
+                          <a
                             key={idx}
-                            className={`flex gap-4 p-4 rounded-2xl border bg-g-surface/50 hover:bg-g-surface transition-all duration-300 group/point animate-fade-in`}
+                            href={point.link ? sanitizeLink(point.link, `${point.label} ${profile.university}`) : '#'}
+                            target={point.link ? "_blank" : "_self"}
+                            rel="noopener noreferrer"
+                            onClick={(e) => !point.link && e.preventDefault()}
+                            className={`flex gap-4 p-4 rounded-2xl border bg-g-surface/50 transition-all duration-300 group/point animate-fade-in ${point.link ? 'hover:bg-g-bg hover:border-g-blue/30 hover:shadow-sm cursor-pointer' : 'cursor-default'}`}
                             style={{ animationDelay: `${idx * 150}ms` }}
                           >
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover/point:scale-110 ${colorClass}`}>
                               <Icon size={20} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-display font-bold text-g-text text-base mb-1.5">{point.label}</h4>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <h4 className="font-display font-bold text-g-text text-base">{point.label}</h4>
+                                {point.link && <ExternalLink size={14} className="text-g-text-tertiary group-hover/point:text-g-blue opacity-0 group-hover/point:opacity-100 transition-all" />}
+                              </div>
                               <p className="font-body text-[13px] text-g-text-tertiary leading-relaxed group-hover/point:text-g-text-secondary transition-colors">
                                 {point.details}
+                                {point.link && <span className="block mt-1.5 text-[10px] font-bold text-g-blue uppercase tracking-widest">{sanitizeLink(point.link).includes('google.com') ? 'Research via Google →' : 'Visit Resource →'}</span>}
                               </p>
                             </div>
-                          </div>
+                          </a>
                         )
                       })}
                     </div>

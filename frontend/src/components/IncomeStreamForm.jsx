@@ -29,6 +29,15 @@ const BLANK = {
   is_active: true
 }
 
+const CustomCheckbox = ({ checked, onChange }) => (
+  <div
+    onClick={onChange}
+    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${checked ? 'bg-g-blue border-g-blue shadow-sm scale-110' : 'border-g-border bg-white hover:border-g-blue/30'}`}
+  >
+    {checked && <Check size={12} className="text-white" strokeWidth={3} />}
+  </div>
+)
+
 export default function IncomeStreamForm() {
   const { incomeStreams, setIncomeStreams, refreshRunway, refreshAI, createNessieDeposit } = useApp()
   const [showAdd, setShowAdd] = useState(false)
@@ -97,7 +106,7 @@ export default function IncomeStreamForm() {
       <div className="space-y-2.5 mb-3">
         {incomeStreams.map(s => (
           <div key={s.id} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${s.is_active ? 'bg-g-surface border-g-border hover:border-g-blue/30' : 'bg-g-bg border-g-border opacity-50'} ${editId === s.id ? 'ring-2 ring-g-blue border-g-blue' : ''}`}>
-            <input type="checkbox" checked={s.is_active} onChange={() => toggle(s.id)} className="w-5 h-5 rounded accent-g-blue cursor-pointer flex-shrink-0" />
+            <CustomCheckbox checked={s.is_active} onChange={() => toggle(s.id)} />
             <div className="flex-1 min-w-0">
               <p className="font-body text-g-text text-[15px] font-medium truncate">{s.label}</p>
               <p className="font-body text-xs text-g-text-tertiary mt-0.5">{s.is_lump_sum ? `$${s.lump_sum_amount?.toLocaleString()} lump sum` : `$${s.hourly_rate}/hr × ${s.weekly_hours}h/wk`}</p>
@@ -121,7 +130,7 @@ export default function IncomeStreamForm() {
             <div><label className="label">Label</label><input type="text" placeholder="e.g. Library Job" value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} className="input-field" /></div>
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <input type="checkbox" checked={form.is_lump_sum} onChange={e => setForm(f => ({ ...f, is_lump_sum: e.target.checked }))} className="w-5 h-5 rounded accent-g-blue" />
+            <CustomCheckbox checked={form.is_lump_sum} onChange={() => setForm(f => ({ ...f, is_lump_sum: !f.is_lump_sum }))} />
             <span className="font-body text-[15px] text-g-text-secondary">Lump sum payment</span>
           </label>
           {form.is_lump_sum ? (
@@ -159,11 +168,9 @@ export default function IncomeStreamForm() {
             </div>
           </div>
           <label className="flex items-center gap-2.5 cursor-pointer select-none -mt-2 ml-1">
-            <input
-              type="checkbox"
+            <CustomCheckbox
               checked={!form.end_date}
-              onChange={e => setForm(f => ({ ...f, end_date: e.target.checked ? null : IN_4MO }))}
-              className="w-4 h-4 rounded accent-g-blue"
+              onChange={() => setForm(f => ({ ...f, end_date: f.end_date ? null : IN_4MO }))}
             />
             <span className="font-body text-[13px] text-g-text-tertiary">Continuing indefinitely (no end date)</span>
           </label>

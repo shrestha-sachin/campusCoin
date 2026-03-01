@@ -8,7 +8,7 @@ import Logo from '../components/Logo.jsx'
 import {
     User, GraduationCap, Wallet, Briefcase, Receipt,
     Target, ChevronRight, ChevronLeft, Sparkles,
-    Plus, X, ArrowRight, DollarSign, Clock, Loader2,
+    Plus, X, ArrowRight, DollarSign, Clock, Loader2, Check
 } from 'lucide-react'
 
 const today = new Date()
@@ -26,6 +26,15 @@ const STEPS = [
 
 const TYPE_LABELS = { campus_job: 'Campus Job', internship: 'Internship', stipend: 'Stipend', family: 'Family', other: 'Other' }
 const FREQ_LABELS = { monthly: 'Monthly', weekly: 'Weekly', semesterly: 'Semesterly', 'one-time': 'One-time' }
+
+const CustomCheckbox = ({ checked, onChange }) => (
+    <div
+        onClick={onChange}
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${checked ? 'bg-g-blue border-g-blue shadow-sm scale-110' : 'border-g-border bg-white hover:border-g-blue/30'}`}
+    >
+        {checked && <Check size={12} className="text-white" strokeWidth={3} />}
+    </div>
+)
 
 export default function Onboarding() {
     const navigate = useNavigate()
@@ -371,8 +380,8 @@ export default function Onboarding() {
                                             <input type="text" value={incForm.label} onChange={e => setIncForm(f => ({ ...f, label: e.target.value }))} placeholder="Library Job" className="input-field" autoFocus />
                                         </div>
                                     </div>
-                                    <label className="flex items-center gap-2.5 cursor-pointer">
-                                        <input type="checkbox" checked={incForm.is_lump_sum} onChange={e => setIncForm(f => ({ ...f, is_lump_sum: e.target.checked }))} className="w-5 h-5 rounded accent-g-blue" />
+                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <CustomCheckbox checked={incForm.is_lump_sum} onChange={() => setIncForm(f => ({ ...f, is_lump_sum: !f.is_lump_sum }))} />
                                         <span className="font-body text-[15px] text-g-text-secondary">Lump sum payment</span>
                                     </label>
                                     {incForm.is_lump_sum ? (
