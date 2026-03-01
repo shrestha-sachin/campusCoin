@@ -79,28 +79,6 @@ export function AppProvider({ children }) {
     saveToStorage({ auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents })
   }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents])
 
-  // Persist to backend (Modal Dict) — debounced 2s after last change
-  useEffect(() => {
-    if (!onboarded || !profile.user_id) return
-
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(() => {
-      api.saveProfile(profile.user_id, {
-        profile,
-        income_streams: incomeStreams,
-        expenses,
-        goals,
-      }).then(() => {
-        console.log('[CampusCoin] Profile saved to backend')
-      }).catch(err => {
-        console.warn('[CampusCoin] Backend save failed (data safe in localStorage):', err.message)
-      })
-    }, 2000)
-
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    }
-  }, [onboarded, profile, incomeStreams, expenses, goals])
 
   function login({ email, name, user_id, student_id }) {
     setAuth({
@@ -390,12 +368,8 @@ export function AppProvider({ children }) {
       )
 
       setAcademicEvents(data.events || [])
-      // Give Supermemory ~1.5s to persist, then re-trigger AI advisor
-      // so "Your Advisor" automatically reflects the academic events
-      setTimeout(() => {
-        setAiInsight(null)
-        refreshAI()
-      }, 1500)
+      // The global observer useEffect will pick up the change to academicEvents
+      // and trigger the AI refresh automatically after a short debounce.
       return data
     } catch (err) {
       console.error('Academic ingestion failed:', err)
@@ -404,6 +378,58 @@ export function AppProvider({ children }) {
       setLoading(prev => ({ ...prev, ingestion: false }))
     }
   }, [profile.user_id, incomeStreams, refreshAI])
+
+  // ── Persistence & Observers (placed at end to avoid TDZ errors) ──────
+
+  // Persist to backend (Modal Dict) — debounced 2s after last change
+  useEffect(() => {
+    if (!onboarded || !profile.user_id) return
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      api.saveProfile(profile.user_id, {
+        profile,
+        income_streams: incomeStreams,
+        expenses,
+        goals,
+      }).then(() => {
+        console.log('[CampusCoin] Profile saved to backend')
+      }).catch(err => {
+        console.warn('[CampusCoin] Backend save failed (data safe in localStorage):', err.message)
+      })
+    }, 2000)
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [onboarded, profile, incomeStreams, expenses, goals])
+
+  // ── Global Observer: Auto-Refresh AI on major data changes ──────────
+  useEffect(() => {
+    if (!onboarded || !profile.user_id || loading.ai || loading.ingestion) return
+
+    const timer = setTimeout(async () => {
+      console.log('[CampusCoin] Major data change detected — auto-refiring AI Advisor')
+      const freshRunway = await refreshRunway()
+      await refreshAI(freshRunway)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [
+    incomeStreams,
+    expenses,
+    academicEvents,
+    profile.name,
+    profile.university,
+    profile.major,
+    profile.financial_goals,
+    profile.current_balance,
+    nessieTransactions.length,
+    onboarded,
+    profile.user_id,
+    refreshAI,
+    refreshRunway
+  ])
 
   return (
     <AppContext.Provider value={{
