@@ -128,9 +128,9 @@ export default function Strategist() {
   const totalImpact = academicEvents.reduce((sum, e) => sum + e.financial_impact, 0)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-[1400px] mx-auto min-h-full lg:h-screen flex flex-col lg:overflow-hidden">
+    <div className="p-4 sm:p-6 lg:p-8 pt-6 lg:pt-8 max-w-[1400px] mx-auto min-h-0 lg:h-screen flex flex-col lg:overflow-hidden">
       <div className="fade-up-1 mb-6 sm:mb-8 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 text-left">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
             <Bot size={22} className="text-white" />
           </div>
@@ -145,7 +145,7 @@ export default function Strategist() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 lg:flex-1 lg:overflow-hidden min-h-0">
         {/* Left column — cards */}
         <div className="lg:col-span-4 fade-up-2 flex flex-col lg:h-full space-y-6 lg:overflow-y-auto lg:pr-2 lg:no-scrollbar pb-10 lg:pb-20">
 
@@ -387,15 +387,15 @@ export default function Strategist() {
                     {summaryText && (
                       <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-4">{summaryText}</p>
                     )}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border flex-1 sm:flex-none">
                         <DollarSign size={16} className="text-g-red" />
                         <div>
                           <p className="font-body text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Total Impact</p>
                           <p className="font-display font-bold text-g-text">${totalImpact.toFixed(0)}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-g-border flex-1 sm:flex-none">
                         <Clock size={16} className="text-g-blue" />
                         <div>
                           <p className="font-body text-[10px] text-g-text-tertiary uppercase font-bold tracking-wider">Events</p>
@@ -520,7 +520,7 @@ export default function Strategist() {
 
           {/* Dropzone (initial state) */}
           {!loading.ingestion && academicEvents.length === 0 && (
-            <div className="card p-0 overflow-hidden lg:h-full min-h-[500px] flex flex-col">
+            <div className="card p-0 overflow-hidden lg:h-full min-h-[350px] flex flex-col">
               <div className="p-6 pb-4 border-b border-g-border flex-shrink-0">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-purple flex items-center justify-center shadow-sm">
