@@ -398,7 +398,7 @@ export default function Auth() {
 
           <div className="text-center font-body text-[10px] sm:text-[11px] text-g-text-tertiary mt-8 lg:mt-12 flex flex-col items-center gap-2 opacity-70">
             <p className="flex items-center gap-2">
-              <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Built for HackIllinois 2025</a>
+              <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Built for HackIllinois 2026</a>
               <span className="w-1 h-1 rounded-full bg-g-border" />
               <a href="https://developer.capitalone.com/nessie-api-guide" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Powered by Capital One Nessie API</a>
             </p>
