@@ -59,7 +59,7 @@ export default function PartnerLogos({ className = '' }) {
     <div className={className}>
       <div className="flex items-center gap-2.5">
         <span className="h-2 w-2 shrink-0 rounded-full bg-g-green pulse-dot" />
-        <span className="font-mono text-xs text-g-text-tertiary">
+        <span className="font-display text-xs font-bold text-g-text-tertiary">
           Powered by Modal
         </span>
       </div>

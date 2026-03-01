@@ -460,7 +460,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-center">
                       <p className="font-display text-sm font-bold text-g-text-secondary uppercase tracking-[0.3em] animate-pulse">Reviewing your finances...</p>
-                      <p className="font-body text-xs text-g-text-tertiary mt-1">Preparing your personal report</p>
+                      <p className="font-display text-[11px] text-g-text-tertiary mt-2 uppercase tracking-widest">Powered by Modal</p>
                     </div>
                   </div>
                 ) : aiInsight ? (

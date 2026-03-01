@@ -355,14 +355,14 @@ export default function Strategist() {
                   <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
               </div>
-              <p className="font-display font-bold text-g-text text-xl mb-2">Modal Compute: Inferring academic workload...</p>
+              <p className="font-display font-bold text-g-text text-xl mb-2">Powered by Modal</p>
               <p className="font-body text-g-text-secondary text-sm max-w-md text-center leading-relaxed">
                 Gemini is scanning your syllabus for midterms, finals, and project deadlines to predict
                 how they'll impact your work hours and runway.
               </p>
               <div className="flex items-center gap-3 mt-6">
                 <div className="px-3 py-1.5 rounded-full bg-g-blue-pastel text-g-blue text-xs font-bold">Gemini 1.5</div>
-                <div className="px-3 py-1.5 rounded-full bg-g-purple-pastel text-g-purple text-xs font-bold">Modal</div>
+                <div className="px-3 py-1.5 rounded-full bg-g-purple-pastel text-g-purple text-xs font-display font-bold">Powered by Modal</div>
                 <div className="px-3 py-1.5 rounded-full bg-g-green-pastel text-g-green text-xs font-bold">Supermemory</div>
               </div>
             </div>

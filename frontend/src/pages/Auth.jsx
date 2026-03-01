@@ -216,14 +216,6 @@ export default function Auth() {
               </div>
             </div>
           </div>
-
-          {/* Bottom — Trust signals */}
-          <div className="flex items-center gap-3">
-            <GraduationCap size={18} className="text-white/50" />
-            <span className="font-mono text-[11px] text-white/40 tracking-wide">
-              Built for HackIllinois 2025 · Powered by Capital One Nessie API
-            </span>
-          </div>
         </div>
       </div>
 
@@ -394,9 +386,16 @@ export default function Auth() {
             <FeatureChip icon={Shield} text="Capital One" />
           </div>
 
-          <p className="text-center font-mono text-[10px] text-g-text-tertiary mt-6 lg:mt-8">
-            Built for HackIllinois 2025 · Powered by Capital One Nessie API
-          </p>
+          <div className="text-center font-body text-[10px] sm:text-[11px] text-g-text-tertiary mt-8 lg:mt-12 flex flex-col items-center gap-2 opacity-70">
+            <p className="flex items-center gap-2">
+              <a href="https://hackillinois.org" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Built for HackIllinois 2026</a>
+              <span className="w-1 h-1 rounded-full bg-g-border" />
+              <a href="https://developer.capitalone.com/nessie-api-guide" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors font-medium">Powered by Capital One Nessie API</a>
+            </p>
+            <p className="font-mono text-[10px] opacity-80">
+              Built by <a href="https://github.com/shrestha-sachin" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors underline decoration-g-border underline-offset-2">Sachin Shrestha</a> & <a href="https://github.com/Cdguzmanr" target="_blank" rel="noopener noreferrer" className="hover:text-g-blue transition-colors underline decoration-g-border underline-offset-2">Carlos Guzman</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
