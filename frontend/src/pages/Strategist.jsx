@@ -238,7 +238,7 @@ export default function Strategist() {
           <div className="card p-6 border-l-4 border-l-g-purple flex-shrink-0">
             <p className="font-display font-bold text-g-text text-[15px] mb-2">Proactive Planning</p>
             <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-4">
-              Upload your syllabus and CampusCoin will predict how academic stress periods impact your income and runway.
+              Upload your documents and CampusCoin will predict how academic stress periods impact your income and runway.
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -357,7 +357,7 @@ export default function Strategist() {
               </div>
               <p className="font-display font-bold text-g-text text-xl mb-2">Powered by Modal</p>
               <p className="font-body text-g-text-secondary text-sm max-w-md text-center leading-relaxed">
-                Gemini is scanning your syllabus for midterms, finals, and project deadlines to predict
+                Gemini is scanning your documents for midterms, finals, and project deadlines to predict
                 how they'll impact your work hours and runway.
               </p>
               <div className="flex items-center gap-3 mt-6">
@@ -407,7 +407,7 @@ export default function Strategist() {
                   <button
                     onClick={resetIngestion}
                     className="p-2 rounded-xl text-g-text-tertiary hover:text-g-text hover:bg-white/50 transition-all"
-                    title="Upload a new syllabus"
+                    title="Upload new documents"
                   >
                     <X size={18} />
                   </button>
@@ -528,7 +528,7 @@ export default function Strategist() {
                   </div>
                   <div>
                     <h2 className="font-display font-bold text-g-text text-xl tracking-tight">
-                      Academic Syllabus Ingestion
+                      Academic Document Ingestion
                     </h2>
                     <p className="font-body text-g-text-secondary text-sm">
                       Upload your syllabus or Canvas schedule. We'll automatically predict how your midterms will impact your work hours and runway.
@@ -558,7 +558,7 @@ export default function Strategist() {
                   </div>
 
                   <p className="font-display font-bold text-g-text text-lg mb-1.5 text-center">
-                    {dragOver ? 'Drop it right here' : 'Drag & drop your syllabus'}
+                    {dragOver ? 'Drop it right here' : 'Drag & drop your documents'}
                   </p>
                   <p className="font-body text-g-text-secondary text-sm text-center mb-6 max-w-sm leading-relaxed">
                     Support for PDF documents and images (PNG, JPG, WebP). We'll extract midterms, finals, and project deadlines automatically.
@@ -632,7 +632,7 @@ export default function Strategist() {
                 </div>
                 <div>
                   <p className="font-body font-bold text-g-text text-sm">Multimodal Ingestion</p>
-                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Upload PDFs or photos of your syllabus. Gemini extracts every midterm, final, and major deadline automatically.</p>
+                  <p className="font-body text-g-text-secondary text-xs leading-relaxed">Upload PDFs or photos of your documents. Gemini extracts every midterm, final, and major deadline automatically.</p>
                 </div>
               </div>
 

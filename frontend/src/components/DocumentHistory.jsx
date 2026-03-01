@@ -69,7 +69,7 @@ export default function DocumentHistory() {
                     <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
                         <FileText size={48} className="text-g-text-tertiary mb-4" />
                         <p className="font-display font-bold text-sm uppercase tracking-widest">No Documents Yet</p>
-                        <p className="font-body text-xs mt-1">Upload a syllabus in Campus Navigator</p>
+                        <p className="font-body text-xs mt-1">Upload documents in Campus Navigator</p>
                     </div>
                 )}
             </div>
