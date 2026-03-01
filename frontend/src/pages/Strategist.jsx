@@ -395,7 +395,7 @@ export default function Strategist() {
                 how they'll impact your work hours and runway.
               </p>
               <div className="flex items-center gap-3 mt-6">
-                <div className="px-3 py-1.5 rounded-full bg-g-blue-pastel text-g-blue text-xs font-bold">Gemini 1.5</div>
+                <div className="px-3 py-1.5 rounded-full bg-g-blue-pastel text-g-blue text-xs font-bold">Gemini 3.0</div>
                 <div className="px-3 py-1.5 rounded-full bg-g-purple-pastel text-g-purple text-xs font-display font-bold">Powered by Modal</div>
                 <div className="px-3 py-1.5 rounded-full bg-g-green-pastel text-g-green text-xs font-bold">Supermemory</div>
               </div>
