@@ -62,7 +62,7 @@ export default function Layout() {
         {/* Logo + close */}
         <div className="pb-6 mb-3 border-b border-g-border flex items-center justify-between">
           <NavLink to="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center">
-            <Logo size="default" />
+            <Logo size="small" />
           </NavLink>
           <button
             onClick={() => setSidebarOpen(false)}
