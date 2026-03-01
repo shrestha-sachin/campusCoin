@@ -52,7 +52,7 @@ function PasswordChange() {
   }
 
   return (
-    <div className="card p-5 sm:p-6 mb-6">
+    <div className="card p-5 pt-8 sm:p-6 mb-6">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-text to-g-text-secondary flex items-center justify-center shadow-sm">
           <KeyRound size={20} className="text-white" />

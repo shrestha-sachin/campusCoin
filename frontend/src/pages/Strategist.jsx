@@ -129,7 +129,7 @@ export default function Strategist() {
   const totalImpact = academicEvents.reduce((sum, e) => sum + e.financial_impact, 0)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-6 lg:pt-8 max-w-[1400px] mx-auto min-h-0 lg:h-screen flex flex-col lg:overflow-hidden relative">
+    <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-[1400px] mx-auto min-h-0 lg:h-screen flex flex-col lg:overflow-hidden relative">
       <div className="fade-up-1 mb-6 sm:mb-8 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 text-left">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
