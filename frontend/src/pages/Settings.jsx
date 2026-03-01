@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProfileForm from '../components/ProfileForm.jsx'
+import DocumentHistory from '../components/DocumentHistory.jsx'
 import { useApp, clearStorage } from '../store.jsx'
 import { LogOut, RotateCcw, UserCircle2, Lock, KeyRound, Loader2, Check, Trash2, Bell, Moon, Download, Settings2, ExternalLink } from 'lucide-react'
 import { api } from '../api'
@@ -196,6 +197,7 @@ export default function Settings() {
         {/* Right Column (Sidebar) */}
         <div className="lg:col-span-2 space-y-5 sm:space-y-6 fade-up-3">
           <PasswordChange />
+          <DocumentHistory />
 
           {/* Danger zone */}
           <div className="card border border-g-red/15 overflow-hidden">

@@ -4,6 +4,15 @@ from pydantic import BaseModel, Field
 from datetime import date
 
 
+class UploadedDocument(BaseModel):
+    id: str
+    name: str
+    type: str  # e.g., "application/pdf"
+    upload_date: str  # ISO string
+    size: int
+    event_count: int = 0
+
+
 class Profile(BaseModel):
     user_id: str
     name: str
@@ -17,6 +26,7 @@ class Profile(BaseModel):
     avatar_url: Optional[str] = None
     nessie_account_id: Optional[str] = None
     nessie_customer_id: Optional[str] = None
+    doc_history: List[UploadedDocument] = []
 
 
 class IncomeStream(BaseModel):

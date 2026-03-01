@@ -4,7 +4,7 @@ import {
   Bot, TrendingUp, AlertCircle, CheckCircle2, Zap, Rocket, Lightbulb,
   Activity, ArrowUpRight, ArrowDownLeft, Target, ShieldCheck,
   Upload, FileText, CalendarRange, DollarSign, Clock, ChevronRight, X, Loader2,
-  SlidersHorizontal, PiggyBank, CheckCheck
+  SlidersHorizontal, PiggyBank, CheckCheck, Library, FileCheck
 } from 'lucide-react'
 import { useApp } from '../store.jsx'
 
@@ -128,7 +128,7 @@ export default function Strategist() {
   const totalImpact = academicEvents.reduce((sum, e) => sum + e.financial_impact, 0)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-[1400px] mx-auto h-screen flex flex-col overflow-hidden">
+    <div className="p-4 sm:p-6 lg:p-8 pt-8 max-w-[1400px] mx-auto min-h-full lg:h-screen flex flex-col lg:overflow-hidden">
       <div className="fade-up-1 mb-6 sm:mb-8 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center shadow-sm">
@@ -145,9 +145,9 @@ export default function Strategist() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 overflow-hidden min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden min-h-0">
         {/* Left column — cards */}
-        <div className="lg:col-span-4 fade-up-2 flex flex-col h-full space-y-6 overflow-y-auto pr-2 no-scrollbar pb-20">
+        <div className="lg:col-span-4 fade-up-2 flex flex-col lg:h-full space-y-6 lg:overflow-y-auto lg:pr-2 lg:no-scrollbar pb-10 lg:pb-20">
 
           {/* Financial Pulse Card */}
           <div className="card p-6 relative flex-shrink-0 overflow-hidden">
@@ -296,14 +296,57 @@ export default function Strategist() {
               "Building even a $500 'starter' emergency fund can prevent 80% of student loan borrowing for surprise costs."
             </p>
           </div>
+
+          {/* Knowledge Vault — Saved Documents */}
+          {profile.doc_history && profile.doc_history.length > 0 && (
+            <div className="card p-5 border-none shadow-sm flex-shrink-0 bg-g-surface">
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-display font-bold text-g-text text-[14px] flex items-center gap-2">
+                  <Library size={16} className="text-g-blue" />
+                  Knowledge Vault
+                </p>
+                <span className="text-[10px] font-bold text-g-text-tertiary uppercase tracking-wider bg-g-bg px-2 py-0.5 rounded-full">
+                  {profile.doc_history.length} Docs
+                </span>
+              </div>
+              <div className="space-y-3">
+                {profile.doc_history.slice(0, 5).map((doc, idx) => (
+                  <div key={doc.id || idx} className="p-3 rounded-xl bg-g-bg border border-g-border/30 hover:border-g-blue/20 transition-all group cursor-default">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-g-blue-pastel text-g-blue flex items-center justify-center">
+                        <FileCheck size={14} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-body text-[12px] text-g-text font-bold truncate group-hover:text-g-blue transition-colors">
+                          {doc.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="font-body text-[10px] text-g-text-tertiary">
+                            {new Date(doc.upload_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                          <span className="w-1 h-1 rounded-full bg-g-border" />
+                          <p className="font-body text-[10px] text-g-blue font-bold">{doc.event_count} events</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {profile.doc_history.length > 5 && (
+                  <p className="text-center font-body text-[10px] text-g-text-tertiary mt-2 uppercase tracking-widest font-bold">
+                    + {profile.doc_history.length - 5} more archived
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right column — Ingestion Hub */}
-        <div className="lg:col-span-8 fade-up-3 h-full overflow-y-auto no-scrollbar pb-20">
+        <div className="lg:col-span-8 fade-up-3 lg:h-full lg:overflow-y-auto lg:no-scrollbar pb-10 lg:pb-20">
 
           {/* Loading State */}
           {loading.ingestion && (
-            <div className="card p-0 overflow-hidden h-full flex flex-col items-center justify-center">
+            <div className="card p-0 overflow-hidden lg:h-full min-h-[400px] flex flex-col items-center justify-center py-12">
               <div className="relative">
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-g-blue/10 to-g-purple/10 flex items-center justify-center mb-6">
                   <Loader2 size={40} className="text-g-blue animate-spin" />
@@ -477,7 +520,7 @@ export default function Strategist() {
 
           {/* Dropzone (initial state) */}
           {!loading.ingestion && academicEvents.length === 0 && (
-            <div className="card p-0 overflow-hidden h-full flex flex-col">
+            <div className="card p-0 overflow-hidden lg:h-full min-h-[500px] flex flex-col">
               <div className="p-6 pb-4 border-b border-g-border flex-shrink-0">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-g-blue to-g-purple flex items-center justify-center shadow-sm">

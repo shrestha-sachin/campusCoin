@@ -14,6 +14,7 @@ const EMPTY_PROFILE = {
   current_balance: 0,
   nessie_account_id: null,
   nessie_customer_id: null,
+  doc_history: [],
 }
 
 const EMPTY_AUTH = {
@@ -367,6 +368,19 @@ export function AppProvider({ children }) {
         { weeklyHours, hourlyRate }
       )
 
+      const docMeta = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        upload_date: new Date().toISOString(),
+        size: file.size,
+        event_count: data.events?.length || 0
+      }
+      setProfile(prev => ({
+        ...prev,
+        doc_history: [docMeta, ...(prev.doc_history || [])]
+      }))
+
       setAcademicEvents(data.events || [])
       // The global observer useEffect will pick up the change to academicEvents
       // and trigger the AI refresh automatically after a short debounce.
@@ -404,15 +418,18 @@ export function AppProvider({ children }) {
     }
   }, [onboarded, profile, incomeStreams, expenses, goals])
 
-  // ── Global Observer: Auto-Refresh AI on major data changes ──────────
+  // ── Global Observer: Auto-Refresh AI on major USER edits ─────────────
   useEffect(() => {
+    // Only trigger if onboarded and not already loading.
+    // We EXCLUDE balance and transaction count here because Nessie polling 
+    // already triggers refreshAI() selectively when new data arrives.
     if (!onboarded || !profile.user_id || loading.ai || loading.ingestion) return
 
     const timer = setTimeout(async () => {
-      console.log('[CampusCoin] Major data change detected — auto-refiring AI Advisor')
+      console.log('[CampusCoin] User data change detected — auto-refiring AI Advisor')
       const freshRunway = await refreshRunway()
       await refreshAI(freshRunway)
-    }, 5000)
+    }, 15000) // 15s debounce for a smoother experience
 
     return () => clearTimeout(timer)
   }, [
@@ -423,8 +440,6 @@ export function AppProvider({ children }) {
     profile.university,
     profile.major,
     profile.financial_goals,
-    profile.current_balance,
-    nessieTransactions.length,
     onboarded,
     profile.user_id,
     refreshAI,
