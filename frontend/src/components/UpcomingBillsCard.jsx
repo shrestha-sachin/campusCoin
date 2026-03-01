@@ -4,74 +4,83 @@ import { useApp } from '../store.jsx'
 import { addDays, addMonths, addWeeks, subDays, isBefore, isSameDay, differenceInDays } from 'date-fns'
 
 export default function UpcomingBillsCard() {
-    const { expenses, nessieTransactions } = useApp()
+    const { expenses, nessieTransactions, nessieBills } = useApp()
 
     const upcomingBills = useMemo(() => {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-
         const in30Days = addDays(today, 30)
-
         const bills = []
 
+        // 1. Process manually added recurring expenses
         expenses.filter(e => e.is_active).forEach(exp => {
+            let nextDate = null
             if (exp.frequency === 'one-time' && exp.due_date) {
-                const dueDate = new Date(exp.due_date)
-                dueDate.setHours(0, 0, 0, 0)
-
-                if (dueDate >= today && dueDate <= in30Days) {
-                    bills.push({ ...exp, nextDate: dueDate })
-                }
+                nextDate = new Date(exp.due_date)
             } else if (exp.start_date && exp.frequency !== 'one-time') {
                 const startDate = new Date(exp.start_date)
                 startDate.setHours(0, 0, 0, 0)
-
-                let nextDate = startDate
-                // Fast forward nextDate to the first occurrence on or after today
+                nextDate = startDate
                 while (isBefore(nextDate, today)) {
                     if (exp.frequency === 'monthly') nextDate = addMonths(nextDate, 1)
                     else if (exp.frequency === 'weekly') nextDate = addWeeks(nextDate, 1)
-                    else if (exp.frequency === 'semesterly') nextDate = addMonths(nextDate, 4) // Approx 4 months
+                    else if (exp.frequency === 'semesterly') nextDate = addMonths(nextDate, 4)
                     else break
                 }
+            }
 
-                // Check if this specific bill was already paid recently via Nessie
-                // We'll look for a purchase within 7 days prior to or on the due date
-                // that matches the expense amount closely (+/- 10%)
+            if (nextDate && nextDate <= in30Days && nextDate >= today) {
+                // Check if paid recently via Nessie transactions
                 let isPaid = false
-                if (nessieTransactions && nessieTransactions.length > 0) {
+                if (nessieTransactions?.length > 0) {
                     const thresholdDate = subDays(nextDate, 7)
-
-                    const matchingTxn = nessieTransactions.find(tx => {
-                        if (tx.type !== 'purchase' || !tx.date) return false
+                    isPaid = !!nessieTransactions.find(tx => {
+                        if (tx.type !== 'purchase') return false
                         const txDate = new Date(tx.date)
                         txDate.setHours(0, 0, 0, 0)
-
-                        // Check date proximity
-                        if (txDate >= thresholdDate && txDate <= nextDate) {
-                            // Check amount similarity (e.g. Netflix might be $15.49 instead of $15.00)
-                            const margin = exp.amount * 0.10
-                            if (Math.abs(tx.amount - exp.amount) <= margin) {
-                                return true
-                            }
-                        }
-                        return false
+                        const margin = exp.amount * 0.15
+                        return txDate >= thresholdDate && txDate <= nextDate && Math.abs(tx.amount - exp.amount) <= margin
                     })
-
-                    if (matchingTxn) {
-                        isPaid = true
-                    }
                 }
-
-                if (nextDate <= in30Days && !isPaid) {
-                    bills.push({ ...exp, nextDate })
+                if (!isPaid) {
+                    bills.push({ ...exp, nextDate, source: 'user' })
                 }
             }
         })
 
-        // Sort by how soon they are due
-        return bills.sort((a, b) => a.nextDate - b.nextDate).slice(0, 5) // Take top 5
-    }, [expenses, nessieTransactions])
+        // 2. Process real bills from Nessie API
+        if (nessieBills?.length > 0) {
+            nessieBills.forEach(nb => {
+                // Nessie bills use 'upcoming_payment_date' or 'payment_date'
+                const billDateStr = nb.upcoming_payment_date || nb.payment_date
+                if (!billDateStr) return
+
+                const billDate = new Date(billDateStr)
+                billDate.setHours(0, 0, 0, 0)
+
+                if (billDate >= today && billDate <= in30Days) {
+                    // Avoid double counting if it matches a user expense very closely
+                    const isDuplicate = bills.find(b =>
+                        Math.abs(b.amount - (nb.payment_amount || nb.amount)) < 2 &&
+                        isSameDay(b.nextDate, billDate)
+                    )
+
+                    if (!isDuplicate) {
+                        bills.push({
+                            id: nb._id,
+                            label: nb.payee || nb.nickname || 'Linked Bill',
+                            amount: nb.payment_amount || nb.amount || 0,
+                            frequency: nb.recurring_date ? 'Monthly' : 'One-time',
+                            nextDate: billDate,
+                            source: 'nessie'
+                        })
+                    }
+                }
+            })
+        }
+
+        return bills.sort((a, b) => a.nextDate - b.nextDate).slice(0, 5)
+    }, [expenses, nessieTransactions, nessieBills])
 
     return (
         <div className="card p-5 sm:p-6 h-full flex flex-col bg-g-surface border border-g-border">

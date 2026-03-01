@@ -85,6 +85,19 @@ async def get_deposits(account_id: str):
         return resp.json()
 
 
+@router.get("/bills/{account_id}")
+async def get_bills(account_id: str):
+    """Get all bills (scheduled expenses) for an account."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{NESSIE_BASE}/accounts/{account_id}/bills",
+            params={"key": _key()}
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=resp.status_code, detail="Nessie API error")
+        return resp.json()
+
+
 @router.get("/purchases/{account_id}")
 async def get_purchases(account_id: str):
     """Get all purchases (expenses) for an account."""
@@ -348,4 +361,52 @@ async def create_purchase(req: CreatePurchaseRequest):
             "description": req.description,
             "date": px_date,
             "merchant_id": merchant_id,
+        }
+
+
+class CreateBillRequest(BaseModel):
+    account_id: str
+    payee: str
+    amount: float
+    payment_date: Optional[str] = None  # YYYY-MM-DD
+    recurring_date: Optional[int] = None  # 1-31
+    nickname: Optional[str] = None
+
+
+@router.post("/bill")
+async def create_bill(req: CreateBillRequest):
+    """
+    Create a bill (scheduled expense) on a Nessie account.
+    """
+    key = _key()
+    p_date = req.payment_date or datetime.now().strftime("%Y-%m-%d")
+
+    payload = {
+        "status": "pending",
+        "payee": req.payee,
+        "nickname": req.nickname or req.payee,
+        "payment_date": p_date,
+        "payment_amount": req.amount,
+    }
+    if req.recurring_date:
+        payload["recurring_date"] = req.recurring_date
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(
+            f"{NESSIE_BASE}/accounts/{req.account_id}/bills",
+            params={"key": key},
+            json=payload,
+        )
+        if resp.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=resp.status_code,
+                detail=f"Failed to create bill: {resp.text}",
+            )
+        data = resp.json()
+        bill_id = data.get("objectCreated", {}).get("_id")
+        return {
+            "bill_id": bill_id,
+            "payee": req.payee,
+            "amount": req.amount,
+            "date": p_date,
         }

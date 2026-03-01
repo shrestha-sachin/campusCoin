@@ -62,6 +62,7 @@ export function AppProvider({ children }) {
   const [aiInsight, setAiInsight] = useState(stored?.aiInsight ?? null)
   const [loading, setLoading] = useState({ runway: false, ai: false })
   const [nessieTransactions, setNessieTransactions] = useState([])
+  const [nessieBills, setNessieBills] = useState([])
   const [lastPoll, setLastPoll] = useState(null) // timestamp of last poll
 
   // Track the last known transaction count so we only trigger AI on changes
@@ -177,18 +178,30 @@ export function AppProvider({ children }) {
     }
   }, [profile.nessie_account_id])
 
+  /** Fetch Nessie bills (scheduled payments). */
+  const fetchNessieBills = useCallback(async () => {
+    if (!profile.nessie_account_id) return
+    try {
+      const bills = await api.getNessieBills(profile.nessie_account_id)
+      setNessieBills(bills)
+    } catch (err) {
+      console.error('Nessie bills fetch failed:', err)
+    }
+  }, [profile.nessie_account_id])
+
   /** Full poll cycle: sync balance → fetch txns → trigger AI only if new txns */
   const pollNessie = useCallback(async () => {
     if (!profile.nessie_account_id) return
 
     await syncNessie()
     const hasNew = await fetchNessieTransactions()
+    await fetchNessieBills()
 
     if (hasNew) {
       console.log('[CampusCoin] New Nessie transaction detected — running AI analysis')
       await refreshAI() // Runway updates automatically due to our new useEffect watching balance
     }
-  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions])
+  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions, fetchNessieBills])
 
   /** Create a Nessie deposit (income). */
   const createNessieDeposit = useCallback(async (amount, description) => {
@@ -222,6 +235,27 @@ export function AppProvider({ children }) {
       return result
     } catch (err) {
       console.error('Nessie purchase failed:', err)
+      return null
+    }
+  }, [profile.nessie_account_id, pollNessie])
+
+
+  /** Create a Nessie bill (scheduled expense). */
+  const createNessieBill = useCallback(async (amount, payee, payment_date, recurring_date) => {
+    if (!profile.nessie_account_id) return null
+    try {
+      const result = await api.createNessieBill({
+        account_id: profile.nessie_account_id,
+        amount,
+        payee,
+        payment_date,
+        recurring_date,
+      })
+      // Immediately poll to pick up the new bill
+      await pollNessie()
+      return result
+    } catch (err) {
+      console.error('Nessie bill creation failed:', err)
       return null
     }
   }, [profile.nessie_account_id, pollNessie])
@@ -317,8 +351,12 @@ export function AppProvider({ children }) {
       fetchNessieTransactions,
       createNessieDeposit,
       createNessiePurchase,
+      createNessieBill,
       pollNessie,
       lastPoll,
+      // Nessie Bills
+      nessieBills,
+      fetchNessieBills,
     }}>
       {children}
     </AppContext.Provider>
