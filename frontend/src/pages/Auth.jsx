@@ -45,6 +45,7 @@ export default function Auth() {
         name: result.name,
         user_id: result.user_id,
         student_id: result.student_id,
+        is_premium: result.is_premium ?? result.isPremium ?? false,
       })
 
       if (result.profile_data) {

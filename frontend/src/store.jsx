@@ -191,7 +191,7 @@ export function AppProvider({ children }) {
       console.log('[CampusCoin] New Nessie transaction detected — running AI analysis')
       await refreshAI() // Runway updates automatically due to our new useEffect watching balance
     }
-  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions, fetchNessieBills])
+  }, [profile.nessie_account_id, syncNessie, fetchNessieTransactions, fetchNessieBills, refreshAI])
 
   /** Create a Nessie deposit (income). */
   const createNessieDeposit = useCallback(async (amount, description) => {
@@ -361,7 +361,7 @@ export function AppProvider({ children }) {
     } finally {
       setLoading(prev => ({ ...prev, ai: false }))
     }
-  }, [profile.name, profile.university, profile.major, profile.graduation_date, auth.email, incomeStreams, expenses])
+  }, [profile.name, profile.university, profile.major, profile.graduation_date, auth.email, auth.is_premium, incomeStreams, expenses])
 
   const ingestAcademic = useCallback(async (file) => {
     setLoading(prev => ({ ...prev, ingestion: true }))
