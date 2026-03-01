@@ -157,8 +157,8 @@ export default function Auth() {
           {/* Top — Logo */}
           <div className="inline-flex scale-110 origin-left drop-shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
             <Logo
-              size="large"
-              className="[filter:brightness(0)_invert(1)] opacity-95"
+              size="small"
+              light={true}
             />
           </div>
 
@@ -220,7 +220,7 @@ export default function Auth() {
         <div className="w-full max-w-[420px]">
           {/* Mobile logo */}
           <div className="flex items-center justify-center mb-8 lg:hidden">
-            <Logo size="large" />
+            <Logo size="default" />
           </div>
 
           {/* Auth card */}
