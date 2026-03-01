@@ -26,7 +26,7 @@ const EMPTY_AUTH = {
 }
 
 const STORAGE_KEY = 'campuscoin_data'
-const POLL_INTERVAL = 30_000 // 30 seconds
+const POLL_INTERVAL = 120_000 // 2 minutes - balanced for mock data and API limits
 
 function loadFromStorage() {
   try {
@@ -351,7 +351,7 @@ export function AppProvider({ children }) {
     } finally {
       setLoading(prev => ({ ...prev, ai: false }))
     }
-  }, [profile, incomeStreams, expenses, runway])
+  }, [profile.name, profile.university, profile.major, profile.graduation_date, auth.email, incomeStreams, expenses])
 
   const ingestAcademic = useCallback(async (file) => {
     setLoading(prev => ({ ...prev, ingestion: true }))
@@ -429,9 +429,12 @@ export function AppProvider({ children }) {
       console.log('[CampusCoin] User data change detected — auto-refiring AI Advisor')
       const freshRunway = await refreshRunway()
       await refreshAI(freshRunway)
-    }, 15000) // 15s debounce for a smoother experience
+    }, 60000) // 60s debounce - prevents loop and excessive AI calls
 
     return () => clearTimeout(timer)
+    // We intentionally exclude refreshAI and refreshRunway from deps 
+    // to avoid recursive triggers when their identities change due to state updates they perform.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     incomeStreams,
     expenses,
@@ -441,9 +444,7 @@ export function AppProvider({ children }) {
     profile.major,
     profile.financial_goals,
     onboarded,
-    profile.user_id,
-    refreshAI,
-    refreshRunway
+    profile.user_id
   ])
 
   return (
