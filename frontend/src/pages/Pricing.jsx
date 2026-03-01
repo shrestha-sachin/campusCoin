@@ -161,7 +161,7 @@ export default function Pricing() {
             <div className="text-center">
                 <p className="font-body text-xs text-g-text-tertiary">
                     Prices in USD. Cancel anytime. <br />
-                    Built with ❤️ for student financial literacy.
+                    Built by <span className="font-bold">Sachin Shrestha</span> & <span className="font-bold">Carlos Guzman</span>
                 </p>
             </div>
         </div>

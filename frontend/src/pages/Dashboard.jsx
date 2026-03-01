@@ -366,7 +366,7 @@ export default function Dashboard() {
                 'from-slate-400 to-gray-500',
               ]
               return (
-                <div className="card flex-[2] min-h-[280px] p-5 sm:p-6 border-none shadow-premium bg-g-surface flex flex-col overflow-hidden xl:mr-6 relative">
+                <div className="card flex-[2] min-h-[280px] p-5 sm:p-6 border-none shadow-premium bg-g-surface flex flex-col overflow-hidden relative">
                   <div className="absolute -top-8 -left-8 w-32 h-32 bg-g-red/5 rounded-full blur-2xl pointer-events-none" />
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">

@@ -213,19 +213,19 @@ export default function Strategist() {
             </div>
 
             {!isPremium && (
-              <div className="absolute inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
-                <div className="w-14 h-14 rounded-3xl bg-white shadow-xl flex items-center justify-center mb-5 border border-g-border">
-                  <Crown size={28} className="text-g-blue" strokeWidth={1.5} />
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10 rounded-[32px]">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl sm:rounded-3xl bg-white shadow-xl flex items-center justify-center mb-4 sm:mb-5 border border-g-border">
+                  <Crown size={24} className="text-g-blue sm:w-7 sm:h-7" strokeWidth={1.5} />
                 </div>
-                <h4 className="font-display font-bold text-lg text-g-text mb-2">Gemini AI Strategist</h4>
-                <p className="font-body text-g-text-secondary text-sm leading-relaxed mb-6 max-w-[200px]">
+                <h4 className="font-display font-bold text-base sm:text-lg text-g-text mb-1.5 sm:mb-2">Gemini AI Strategist</h4>
+                <p className="font-body text-g-text-secondary text-[12px] sm:text-sm leading-relaxed mb-5 sm:mb-6 max-w-[180px] sm:max-w-[200px]">
                   Unlock your personal AI Advisor with CampusCoin Premium.
                 </p>
                 <button
                   onClick={() => navigate('/pricing')}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-g-blue text-white font-display font-bold text-sm shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all"
+                  className="w-full max-w-[240px] flex items-center justify-center gap-2 sm:gap-3 px-5 py-3.5 sm:px-6 sm:py-4 rounded-2xl bg-g-blue text-white font-display font-bold text-xs sm:text-sm shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all"
                 >
-                  <Sparkles size={18} />
+                  <Sparkles size={16} className="sm:w-4 sm:h-4" />
                   Upgrade to Premium
                 </button>
               </div>
@@ -359,17 +359,17 @@ export default function Strategist() {
             )}
 
             {!isPremium && (
-              <div className="absolute inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-xl flex items-center justify-center mb-4 border border-g-border">
-                  <Lock size={20} className="text-g-text-tertiary" />
+              <div className="absolute inset-0 bg-white/60 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10 rounded-[32px]">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white shadow-xl flex items-center justify-center mb-3 sm:mb-4 border border-g-border">
+                  <Lock size={18} className="text-g-text-tertiary sm:w-5 sm:h-5" />
                 </div>
-                <p className="font-display font-bold text-g-text text-base mb-1">Supermemory</p>
-                <p className="font-body text-g-text-secondary text-xs leading-relaxed mb-5">
+                <p className="font-display font-bold text-sm sm:text-base text-g-text mb-1">Supermemory</p>
+                <p className="font-body text-g-text-secondary text-[11px] sm:text-xs leading-relaxed mb-4 sm:mb-5 max-w-[160px] sm:max-w-[180px]">
                   Unlock cross-session history and document persistence.
                 </p>
                 <button
                   onClick={() => navigate('/pricing')}
-                  className="px-5 py-2.5 rounded-xl bg-g-text text-white font-display font-bold text-[11px] uppercase tracking-wider shadow-sm hover:scale-105 transition-transform"
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-g-text text-white font-display font-bold text-[10px] sm:text-[11px] uppercase tracking-wider shadow-sm hover:scale-105 transition-transform"
                 >
                   Go Premium
                 </button>
