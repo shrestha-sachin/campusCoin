@@ -1,34 +1,98 @@
-# Python
+# ── Python ───────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 *.egg-info/
+*.egg
 dist/
 build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.cover
+
+# ── Virtual Environments ─────────────────────────────
 .env
 .venv/
 venv/
 env/
+ENV/
 
-# Modal
+# ── Secrets & Keys ───────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets.json
+secrets.yaml
+secrets.yml
+.secrets
+
+# ── Modal ────────────────────────────────────────────
 .modal/
 
-# Node
+# ── Node / npm ───────────────────────────────────────
 node_modules/
-dist/
-.DS_Store
-*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+*.tgz
 
-# Vite
+# ── Vite / Frontend Build ────────────────────────────
 frontend/dist/
 frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.env.development
+frontend/.env.production
+frontend/.env.staging
 
-# Editor
+# ── Firebase ─────────────────────────────────────────
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+.firebaserc.local
+
+# ── Environment files (all locations) ────────────────
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Editor ───────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.history/
 
-# OS
+# ── OS ───────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────
+logs/
+*.log
+
+# ── Misc ─────────────────────────────────────────────
+*.local
+.cache/
+tmp/
+temp/
