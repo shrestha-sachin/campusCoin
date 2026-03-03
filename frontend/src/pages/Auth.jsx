@@ -40,6 +40,7 @@ export default function Auth() {
     try {
       const result = await api.login({ identifier, password })
 
+      clearStorage()
       login({
         email: result.email,
         name: result.name,
