@@ -59,9 +59,6 @@ async def signup(req: SignupRequest):
     if not student_id:
         raise HTTPException(status_code=400, detail="University Student ID is required")
 
-    # Validate .edu email
-    if not email.endswith(".edu"):
-        raise HTTPException(status_code=400, detail="Please use a valid university email (.edu)")
 
     # Check if email already exists
     try:
