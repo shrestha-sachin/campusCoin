@@ -3,7 +3,7 @@ import { Send, Bot, User, BrainCircuit, HandHeart, Globe, Sparkles, ListChecks, 
 import { useApp } from '../store.jsx'
 import { api } from '../api'
 
-/** Converts a subset of markdown to safe HTML for chat bubbles */
+/** Converts a subset of markdown to safe HTML for bubbles */
 function renderMarkdown(text) {
   const lines = text.split('\n')
   const html = []
