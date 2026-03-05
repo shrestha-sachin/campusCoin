@@ -24,6 +24,7 @@ const EMPTY_AUTH = {
   user_id: '',
   student_id: '',
   is_premium: false,
+  university: '',
 }
 
 const STORAGE_KEY = 'campuscoin_data'
@@ -82,7 +83,7 @@ export function AppProvider({ children }) {
   }, [auth, onboarded, profile, incomeStreams, expenses, goals, runway, aiInsight, academicEvents])
 
 
-  function login({ email, name, user_id, student_id, is_premium = false }) {
+  function login({ email, name, user_id, student_id, is_premium = false, university = '' }) {
     // Clear all stale data from any previous session before setting new auth.
     // This prevents old user's profile/income/expenses from leaking into the new session.
     clearStorage()
@@ -103,6 +104,7 @@ export function AppProvider({ children }) {
       user_id: user_id ?? '',
       student_id: student_id ?? '',
       is_premium: is_premium,
+      university: university?.trim() ?? '',
     })
   }
 

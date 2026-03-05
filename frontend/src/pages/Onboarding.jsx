@@ -45,7 +45,7 @@ export default function Onboarding() {
 
     // Form state
     const [name, setName] = useState(auth.name || '')
-    const [university, setUniversity] = useState('')
+    const [university, setUniversity] = useState(auth.university || '')
     const [major, setMajor] = useState('')
     const [gradDate, setGradDate] = useState('')
     const [balance, setBalance] = useState('')
