@@ -261,6 +261,21 @@ export default function Auth() {
     } finally { setLoading(false) }
   }
 
+  // ── Resend Verification ───────────────────────────────────────────────────
+  async function handleResendVerification() {
+    setLoading(true); setError(''); setSuccessMessage('')
+    try {
+      if (firebaseAuth.currentUser) {
+        await sendEmailVerification(firebaseAuth.currentUser)
+        setSuccessMessage('A new verification email has been sent! Please check your inbox.')
+      } else {
+        setError('Please sign in first to resend verification.')
+      }
+    } catch (err) {
+      setError(`Error sending email: ${err.message}`)
+    } finally { setLoading(false) }
+  }
+
   const isSignIn = mode === 'signin'
 
   // ── Email/password sign-in ────────────────────────────────────────────────
@@ -276,7 +291,18 @@ export default function Auth() {
       // 2. Check if verified (Optional, but recommended)
       if (!fbResult.user.emailVerified) {
         setLoading(false)
-        setError('Please verify your email address before signing in. Check your inbox for a link.')
+        setError(
+          <div className="flex flex-col gap-2">
+            <span>Please verify your email address before signing in. Check your inbox for a link.</span>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              className="text-left underline font-bold hover:text-white transition-colors"
+            >
+              Didn't get the email? Click here to resend.
+            </button>
+          </div>
+        )
         return
       }
 
