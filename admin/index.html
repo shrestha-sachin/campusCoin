@@ -38,6 +38,8 @@
             --yellow-dim: rgba(251, 191, 36, 0.12);
             --purple: #a78bfa;
             --purple-dim: rgba(167, 139, 250, 0.12);
+            --gold: #fbbc04;
+            --gold-dim: rgba(251, 188, 4, 0.12);
         }
 
         html,
@@ -903,6 +905,12 @@
             color: var(--purple);
         }
 
+        .pill-gold {
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: 1px solid rgba(251, 188, 4, 0.2);
+        }
+
         /* ─── Expandable JSON ────────────────────────────────────────── */
         .json-cell {
             cursor: pointer;
@@ -1357,9 +1365,9 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Student ID</th>
-                                    <th>User ID (MD5)</th>
-                                    <th>Password Hash (SHA-256)</th>
-                                    <th>Hash Algo</th>
+                                    <th>Firebase UID</th>
+                                    <th>School</th>
+                                    <th>Pro Plan</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -1598,26 +1606,33 @@
         <td><strong>${esc(u.name || '—')}</strong></td>
         <td>${esc(u.email || '—')}</td>
         <td><span class="pill pill-blue">${esc(u.student_id || '—')}</span></td>
-        <td class="mono truncate" title="${esc(u.user_id || '')}">${esc(u.user_id || '—')}</td>
-        <td class="mono truncate" style="color:var(--text-3); font-size:10px;" title="${esc(u.password_hash || '')}">${esc(u.password_hash || '—')}</td>
+        <td>${u.is_premium ? '<span class="pill pill-gold">PRO</span>' : '<span class="pill">Free</span>'}</td>
+        <td class="mono truncate" title="${esc(u.firebase_uid || '')}">${esc(u.firebase_uid || '—')}</td>
       </tr>`).join('');
         }
 
         function renderUsers(users) {
             const tbody = document.getElementById('userTable');
             if (!users.length) { tbody.innerHTML = emptyRow(7, 'No users found'); return; }
-            tbody.innerHTML = users.map(u => `
+            tbody.innerHTML = users.map(u => {
+                const isPro = u.is_premium;
+                return `
       <tr>
         <td><strong>${esc(u.name || '—')}</strong></td>
         <td>${esc(u.email || '—')}</td>
         <td><span class="pill pill-blue">${esc(u.student_id || '—')}</span></td>
-        <td class="mono truncate" title="${esc(u.user_id || '')}" style="max-width:120px;">${esc(u.user_id || '—')}</td>
-        <td class="mono truncate" style="color:var(--yellow); font-size:10px; max-width:180px;" title="${esc(u.password_hash || '')}">${esc(u.password_hash || '—')}</td>
-        <td><span class="pill pill-green">${esc(u.hash_algorithm || 'sha256')}</span></td>
+        <td class="mono truncate" title="${esc(u.firebase_uid || '')}" style="max-width:120px;">${esc(u.firebase_uid || '—')}</td>
+        <td>${esc(u.university || '—')}</td>
         <td>
-          <button class="btn btn-red" onclick="confirmDelete('${esc(u.email)}')">🗑 Delete</button>
+            ${isPro ? '<span class="pill pill-gold">PRO</span>' : '<span class="pill">Free</span>'}
+            <button class="btn btn-ghost" style="padding:2px 8px; font-size:10px; margin-left:8px;" onclick="togglePro('${u.firebase_uid}', ${isPro})">
+                ${isPro ? 'Revoke' : 'Grant Pro'}
+            </button>
         </td>
-      </tr>`).join('');
+        <td style="display:flex; gap:8px;">
+          <button class="btn btn-red" onclick="confirmDelete('${u.firebase_uid}', '${esc(u.email)}')">🗑 Delete</button>
+        </td>
+      </tr>`}).join('');
         }
 
         function renderProfiles(profiles) {
@@ -1686,31 +1701,50 @@
         }
 
         // ─── Delete ───────────────────────────────────────────────────────────────
-        let pendingDeleteEmail = null;
+        let pendingDeleteUid = null;
 
-        function confirmDelete(email) {
-            pendingDeleteEmail = email;
+        function confirmDelete(uid, email) {
+            pendingDeleteUid = uid;
             document.getElementById('confirmMsg').textContent =
-                `This will permanently delete the account for "${email}", including their profile, income, expenses, and student ID mapping. This cannot be undone.`;
+                `This will permanently delete the account for "${email}" (UID: ${uid}), including their profile, income, expenses, and student ID mapping. This cannot be undone.`;
             document.getElementById('confirmOkBtn').onclick = executeDelete;
             document.getElementById('confirmDialog').classList.add('show');
         }
 
         function closeConfirm() {
-            pendingDeleteEmail = null;
+            pendingDeleteUid = null;
             document.getElementById('confirmDialog').classList.remove('show');
         }
 
         async function executeDelete() {
-            if (!pendingDeleteEmail) return;
-            const email = encodeURIComponent(pendingDeleteEmail);
+            if (!pendingDeleteUid) return;
+            const uid = pendingDeleteUid;
             closeConfirm();
             try {
-                await apiDelete(`/users/${email}`);
-                toast(`✅ Deleted user: ${pendingDeleteEmail}`);
+                await apiDelete(`/users/${uid}`);
+                toast(`✅ Deleted user: ${uid}`);
                 loadUsers();
             } catch (e) {
                 toast('⚠️ Delete failed: ' + e.message, 4000);
+            }
+        }
+
+        // ─── Pro Status ───────────────────────────────────────────────────────────
+        async function togglePro(uid, currentStatus) {
+            const next = !currentStatus;
+            const action = next ? 'Granting' : 'Revoking';
+            toast(`⏳ ${action} Pro status…`);
+            try {
+                const key = document.getElementById('adminKey').value || ADMIN_KEY;
+                const res = await fetch(`${BASE_URL}/api/admin/users/${uid}/pro?enabled=${next}`, {
+                    method: 'POST',
+                    headers: { 'x-admin-key': key }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                toast(`✅ Pro status ${next ? 'granted' : 'revoked'}`);
+                loadUsers();
+            } catch (e) {
+                toast('⚠️ Failed setup: ' + e.message, 4000);
             }
         }
 
