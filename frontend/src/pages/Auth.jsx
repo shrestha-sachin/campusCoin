@@ -284,7 +284,7 @@ export default function Auth() {
         if (err.code === 'auth/popup-blocked') {
           setError('Popup was blocked. Please allow popups for this site.')
         } else {
-          setError('Google sign-in failed. Please try again.')
+          setError(`Google sign-in failed: ${err.code || err.message}`);
         }
       }
     } finally { setGoogleLoading(false) }
