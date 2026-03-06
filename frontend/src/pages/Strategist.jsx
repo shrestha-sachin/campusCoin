@@ -49,9 +49,6 @@ export default function Strategist() {
   } = useApp()
   const isPremium = auth.is_premium
 
-  React.useEffect(() => {
-    syncPremiumStatus()
-  }, [syncPremiumStatus])
 
   const s = statusMap[aiInsight?.status || 'on_track']
   const [showInfo, setShowInfo] = useState(false)

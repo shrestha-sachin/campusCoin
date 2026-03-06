@@ -66,9 +66,7 @@ export default function Dashboard() {
   } = useApp()
   const isPremium = auth.is_premium
 
-  useEffect(() => {
-    syncPremiumStatus()
-  }, [syncPremiumStatus])
+  const firstName = profile?.name?.trim() ? profile.name.split(' ')[0] : 'Member'
 
   const [showEmergency, setShowEmergency] = useState(false)
   const [polling, setPolling] = useState(false)
@@ -115,7 +113,6 @@ export default function Dashboard() {
     document.body.style.userSelect = 'none'
   }
 
-  const firstName = profile.name.split(' ')[0]
 
   useEffect(() => {
     refreshRunway()

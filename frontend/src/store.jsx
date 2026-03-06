@@ -444,7 +444,8 @@ export function AppProvider({ children }) {
     }, POLL_INTERVAL)
 
     return () => clearInterval(interval)
-  }, [onboarded, profile.nessie_account_id, syncPremiumStatus])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboarded, profile.nessie_account_id])
 
 
 
