@@ -12,7 +12,7 @@ import {
   FileText, TrendingUp, TrendingDown,
   ArrowUpRight, ArrowDownRight, CalendarDays, Banknote,
   ArrowUp, ArrowDown, History, CreditCard,
-  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield, Crown, Sparkles, ExternalLink
+  RefreshCw, Loader2, BadgeCheck, Wallet, PiggyBank, GraduationCap, Briefcase, Zap, Shield, Crown, Sparkles, ExternalLink, Lock
 } from 'lucide-react'
 import { sanitizeLink } from '../utils/links'
 
