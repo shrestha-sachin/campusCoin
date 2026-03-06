@@ -276,7 +276,38 @@ export default function Auth() {
     setGoogleLoading(true); setError('')
     try {
       const result = await signInWithGoogle()
-      setPendingGoogleUser(result.user)
+      const fbUser = result.user
+      const googleUid = fbUser.uid
+
+      // Try to login immediately to see if they already have an account/university
+      try {
+        const res = await api.login({ identifier: `google:${googleUid}`, password: googleUid })
+        clearStorage()
+
+        // If login succeeds and we have a profile, skip the university prompt
+        if (res.profile_data?.profile?.university) {
+          login({
+            email: res.email,
+            name: res.name,
+            user_id: res.user_id,
+            student_id: res.student_id ?? '',
+            is_premium: res.is_premium ?? false,
+            university: res.profile_data.profile.university
+          })
+          completeOnboarding({
+            profile: res.profile_data.profile,
+            incomeStreams: res.profile_data.income_streams ?? [],
+            expenses: res.profile_data.expenses ?? []
+          })
+          navigate('/dashboard')
+        } else {
+          // Account exists but no university set yet, or new account
+          setPendingGoogleUser(fbUser)
+        }
+      } catch {
+        // Login failed (account likely doesn't exist yet)
+        setPendingGoogleUser(fbUser)
+      }
     } catch (err) {
       if (err.code === 'auth/not-configured') {
         setError('Firebase is not configured. Add credentials to .env.local and restart.')
