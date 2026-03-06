@@ -9,7 +9,8 @@ import {
   auth as firebaseAuth,
   updatePassword,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  deleteUser
 } from '../firebase.js'
 
 function validatePassword(pass) {
@@ -180,15 +181,29 @@ export default function Settings() {
     if (window.confirm('WARNING: This will permanently delete your account, profile data, and remove you from the system. This cannot be undone. Are you absolutely sure?')) {
       setIsDeleting(true)
       try {
-        const uid = firebaseAuth.currentUser?.uid
-        if (uid) {
-          await api.deleteAccount({ firebase_uid: uid })
+        const user = firebaseAuth.currentUser
+        if (!user) throw new Error("No user signed in.")
+
+        // 1. Delete from Backend (Modal)
+        await api.deleteAccount({ firebase_uid: user.uid })
+
+        // 2. Delete from Firebase
+        try {
+          await deleteUser(user)
+        } catch (fbErr) {
+          if (fbErr.message.includes('requires-recent-login')) {
+            alert('For security, deleting your account requires a recent login. Please sign out, sign back in, and try again.')
+            setIsDeleting(false)
+            return
+          }
+          throw fbErr
         }
+
         clearStorage()
         window.location.href = '/auth'
       } catch (err) {
         console.error(err)
-        alert('Failed to delete account. Please try again.')
+        alert(`Failed to delete account: ${err.message || 'Please try again.'}`)
         setIsDeleting(false)
       }
     }

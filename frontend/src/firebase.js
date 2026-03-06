@@ -2,7 +2,8 @@ import { initializeApp } from 'firebase/app'
 import {
     getAuth, GoogleAuthProvider, signInWithPopup, signOut,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification,
-    sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider
+    sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider,
+    deleteUser
 } from 'firebase/auth'
 
 const config = (typeof window !== 'undefined' && window.__CAMPUSCOIN_CONFIG__) || {}
@@ -65,5 +66,6 @@ export {
     sendPasswordResetEmail,
     updatePassword,
     reauthenticateWithCredential,
-    EmailAuthProvider
+    EmailAuthProvider,
+    deleteUser
 }
