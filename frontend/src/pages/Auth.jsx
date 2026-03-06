@@ -312,7 +312,7 @@ export default function Auth() {
       })
 
       clearStorage()
-      login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id, is_premium: result.is_premium ?? false, university: result.profile_data?.profile?.university })
+      login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id, is_premium: result.is_premium ?? false, university: result.university || result.profile_data?.profile?.university })
 
       if (result.profile_data) {
         completeOnboarding({ profile: result.profile_data.profile, incomeStreams: result.profile_data.income_streams ?? [], expenses: result.profile_data.expenses ?? [] })
@@ -386,15 +386,16 @@ export default function Auth() {
         const res = await api.login({ firebase_uid: googleUid })
         clearStorage()
 
-        // If login succeeds and we have a profile, skip the university prompt
-        if (res.profile_data?.profile?.university) {
+        // If login succeeds and we have a university (either in auth or profile), skip the modal
+        const existingUni = res.university || res.profile_data?.profile?.university
+        if (existingUni) {
           login({
             email: res.email,
             name: res.name,
             user_id: res.user_id,
             student_id: res.student_id ?? '',
             is_premium: res.is_premium ?? false,
-            university: res.profile_data.profile.university
+            university: existingUni
           })
           completeOnboarding({
             profile: res.profile_data.profile,
