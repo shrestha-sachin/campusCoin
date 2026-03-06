@@ -135,14 +135,21 @@ function UniversityPicker({ value, onChange }) {
 // ─── University modal for Google sign-in ─────────────────────────────────────
 function UniversityModal({ user, onConfirm, onClose }) {
   const [university, setUniversity] = useState('')
+  const [studentId, setStudentId] = useState('')
+  const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   async function handleConfirm(e) {
     e.preventDefault()
     if (!university.trim()) { setError('Please select your university.'); return }
+    if (!studentId.trim()) { setError('Please enter your Student ID.'); return }
+    if (!password || password.length < 8) { setError('Please create a password (min 8 chars).'); return }
+
     setSubmitting(true); setError('')
-    try { await onConfirm(university.trim()) }
+    try {
+      await onConfirm(university.trim(), studentId.trim(), password)
+    }
     catch (err) { setError(err.message || 'Something went wrong.'); setSubmitting(false) }
   }
 
@@ -159,9 +166,9 @@ function UniversityModal({ user, onConfirm, onClose }) {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-g-blue to-g-blue-half flex items-center justify-center mb-3 shadow-lg">
             <Building2 size={22} className="text-white" />
           </div>
-          <h2 className="font-display font-bold text-xl text-g-text">Which university do you attend?</h2>
+          <h2 className="font-display font-bold text-xl text-g-text">Complete your setup</h2>
           <p className="font-body text-sm text-g-text-secondary mt-1.5 max-w-xs">
-            Hi <span className="font-semibold text-g-text">{user?.displayName?.split(' ')[0] || 'there'}</span>! We personalise your experience based on your campus.
+            Hi <span className="font-semibold text-g-text">{user?.displayName?.split(' ')[0] || 'there'}</span>! Link your campus details to get started.
           </p>
         </div>
         {error && (
@@ -175,9 +182,21 @@ function UniversityModal({ user, onConfirm, onClose }) {
             <label className="font-body text-xs font-semibold text-g-text-secondary mb-1.5 block tracking-wide">University</label>
             <UniversityPicker value={university} onChange={setUniversity} />
           </div>
+          <InputRow label="University Student ID" icon={IdCard}>
+            <input type="text"
+              className="input-field !pl-9 !py-2.5 !rounded-2xl !text-sm"
+              placeholder="e.g. 1029384"
+              value={studentId} onChange={e => setStudentId(e.target.value)} />
+          </InputRow>
+          <InputRow label="Account Password (for email login)" icon={Lock}>
+            <input type="password"
+              className="input-field !pl-9 !py-2.5 !rounded-2xl !text-sm"
+              placeholder="Create a password"
+              value={password} onChange={e => setPassword(e.target.value)} />
+          </InputRow>
           <button type="submit" disabled={submitting}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl bg-g-blue text-white font-body text-sm font-semibold shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all disabled:opacity-60">
-            {submitting ? <><Loader2 size={16} className="animate-spin" /> Setting up…</> : <>Continue <ArrowRight size={16} /></>}
+            {submitting ? <><Loader2 size={16} className="animate-spin" /> Finalizing…</> : <>Continue <ArrowRight size={16} /></>}
           </button>
         </form>
       </div>
@@ -321,14 +340,14 @@ export default function Auth() {
     } finally { setGoogleLoading(false) }
   }
 
-  async function handleGoogleUniversityConfirm(uni) {
+  async function handleGoogleUniversityConfirm(uni, sid, pass) {
     const fbUser = pendingGoogleUser
     const googleEmail = fbUser.email
     const googleName = fbUser.displayName || googleEmail.split('@')[0]
     const googleUid = fbUser.uid
 
     try {
-      const result = await api.login({ identifier: `google:${googleUid}`, password: googleUid })
+      const result = await api.login({ identifier: `google:${googleUid}`, password: googleUid, google_uid: googleUid })
       clearStorage()
       login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? '', is_premium: result.is_premium ?? false, university: uni })
       setPendingGoogleUser(null)
@@ -338,9 +357,17 @@ export default function Auth() {
       } else { navigate('/onboarding') }
     } catch {
       try {
-        const result = await api.signup({ email: googleEmail, password: googleUid, name: googleName, student_id: `google:${googleUid}`, university: uni, auth_provider: 'google' })
+        const result = await api.signup({
+          email: googleEmail,
+          password: pass || googleUid, // Use the manual password or fallback to googleUid
+          name: googleName,
+          student_id: sid || `google:${googleUid}`, // Use manual sid or fallback 
+          university: uni,
+          auth_provider: 'google',
+          google_uid: googleUid
+        })
         clearStorage()
-        login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? `google:${googleUid}`, university: uni })
+        login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? sid, university: uni })
         setPendingGoogleUser(null)
         navigate('/onboarding')
       } catch (signupErr) {
