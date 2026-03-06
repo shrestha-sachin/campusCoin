@@ -27,7 +27,19 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: |
           cd frontend
-          node -e "require('fs').writeFileSync('public/config.js', 'window.__CAMPUSCOIN_API_URL__=' + JSON.stringify(process.env.VITE_MODAL_URL || '') + ';');"
+          node -e "
+            const config = {
+              VITE_MODAL_URL: process.env.VITE_MODAL_URL || '',
+              VITE_FIREBASE_API_KEY: process.env.VITE_FIREBASE_API_KEY || '',
+              VITE_FIREBASE_AUTH_DOMAIN: process.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+              VITE_FIREBASE_PROJECT_ID: process.env.VITE_FIREBASE_PROJECT_ID || '',
+              VITE_FIREBASE_STORAGE_BUCKET: process.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+              VITE_FIREBASE_MESSAGING_SENDER_ID: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+              VITE_FIREBASE_APP_ID: process.env.VITE_FIREBASE_APP_ID || ''
+            };
+            const content = 'window.__CAMPUSCOIN_CONFIG__ = ' + JSON.stringify(config) + ';';
+            require('fs').writeFileSync('public/config.js', content);
+          "
           npm ci
           npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0

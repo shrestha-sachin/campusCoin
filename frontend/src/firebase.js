@@ -1,9 +1,11 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
 
-const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
-const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN
-const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
+const config = (typeof window !== 'undefined' && window.__CAMPUSCOIN_CONFIG__) || {}
+
+const apiKey = config.VITE_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY
+const authDomain = config.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN
+const projectId = config.VITE_FIREBASE_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID
 
 // Only initialize Firebase if ALL required config values are present.
 // This lets the rest of the app render normally even without a .env.local file —

@@ -1,6 +1,8 @@
 function getBaseUrl() {
-  if (typeof window !== 'undefined' && window.__CAMPUSCOIN_API_URL__) {
-    return window.__CAMPUSCOIN_API_URL__.trim() || null
+  const config = (typeof window !== 'undefined' && window.__CAMPUSCOIN_CONFIG__) || {}
+
+  if (config.VITE_MODAL_URL) {
+    return config.VITE_MODAL_URL.trim()
   }
   if (import.meta.env.VITE_MODAL_URL) {
     return import.meta.env.VITE_MODAL_URL
