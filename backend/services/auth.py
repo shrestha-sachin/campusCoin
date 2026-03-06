@@ -54,12 +54,17 @@ async def signup(req: SignupRequest):
     except KeyError:
         pass
 
+    import datetime
+    premium_expiry = (datetime.datetime.now() + datetime.timedelta(days=90)).isoformat()
+
     auth_entry = {
         "firebase_uid": uid,
         "email": email,
         "name": req.name.strip(),
         "student_id": student_id,
-        "university": req.university
+        "university": req.university,
+        "is_premium": True, # Open for 3 months free
+        "premium_until": premium_expiry
     }
     
     # Store by UID
@@ -70,10 +75,12 @@ async def signup(req: SignupRequest):
 
     return {
         "success": True,
-        "user_id": uid, # We use firebase UID as user_id now
+        "user_id": uid, 
         "name": auth_entry["name"],
         "email": email,
         "student_id": student_id,
+        "is_premium": True,
+        "premium_until": premium_expiry
     }
 
 @router.post("/login")
@@ -107,6 +114,8 @@ async def login(req: LoginRequest):
         "email": auth_entry["email"],
         "student_id": auth_entry.get("student_id", ""),
         "university": auth_entry.get("university", ""),
+        "is_premium": auth_entry.get("is_premium", False),
+        "premium_until": auth_entry.get("premium_until"),
         "profile_data": profile_data,
     }
 

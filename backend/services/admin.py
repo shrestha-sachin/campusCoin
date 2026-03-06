@@ -37,20 +37,42 @@ async def get_all_users(x_admin_key: Optional[str] = Header(None)):
     """Return all registered user auth records."""
     _require_admin(x_admin_key)
     users = []
-    for key, raw in _iter_dict(auth_dict):
+    for uid, raw in _iter_dict(auth_dict):
         try:
             entry = json.loads(raw)
             users.append({
-                "email": entry.get("email", key),
-                "user_id": entry.get("user_id"),
+                "firebase_uid": uid,
+                "email": entry.get("email"),
                 "name": entry.get("name"),
                 "student_id": entry.get("student_id"),
-                "password_hash": entry.get("password_hash"),  # SHA-256 hex, not plaintext
-                "hash_algorithm": "sha256",
+                "is_premium": entry.get("is_premium", False),
+                "premium_until": entry.get("premium_until"),
+                "university": entry.get("university")
             })
         except Exception:
-            users.append({"email": key, "raw": str(raw)[:200], "parse_error": True})
+            users.append({"firebase_uid": uid, "raw": str(raw)[:200], "parse_error": True})
     return {"count": len(users), "users": users}
+
+
+@router.post("/users/{uid}/pro")
+async def toggle_pro(uid: str, enabled: bool, x_admin_key: Optional[str] = Header(None)):
+    """Manually grant or revoke pro status for a user."""
+    _require_admin(x_admin_key)
+    try:
+        raw = auth_dict[uid]
+        entry = json.loads(raw)
+        entry["is_premium"] = enabled
+        if enabled:
+            # Grant for 1 year by default if manually enabled
+            import datetime
+            entry["premium_until"] = (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat()
+        else:
+            entry["premium_until"] = None
+            
+        auth_dict[uid] = json.dumps(entry)
+        return {"success": True, "is_premium": enabled}
+    except KeyError:
+        raise HTTPException(status_code=404, detail="User not found")
 
 
 @router.get("/profiles")
@@ -69,11 +91,11 @@ async def get_all_profiles(x_admin_key: Optional[str] = Header(None)):
 
 @router.get("/student-ids")
 async def get_student_id_map(x_admin_key: Optional[str] = Header(None)):
-    """Return all student-id -> email mappings (reverse lookup index)."""
+    """Return all student-id -> firebase_uid mappings."""
     _require_admin(x_admin_key)
     mappings = []
-    for student_id, email in _iter_dict(student_id_dict):
-        mappings.append({"student_id": student_id, "email": email})
+    for student_id, uid in _iter_dict(student_id_dict):
+        mappings.append({"student_id": student_id, "firebase_uid": uid})
     return {"count": len(mappings), "mappings": mappings}
 
 
@@ -91,21 +113,21 @@ async def get_stats(x_admin_key: Optional[str] = Header(None)):
     }
 
 
-@router.delete("/users/{email}")
-async def delete_user(email: str, x_admin_key: Optional[str] = Header(None)):
-    """Admin hard-delete a user by email (auth + profile + student-id)."""
+@router.delete("/users/{uid}")
+async def delete_user(uid: str, x_admin_key: Optional[str] = Header(None)):
+    """Admin hard-delete a user by firebase_uid."""
     _require_admin(x_admin_key)
-    email = email.strip().lower()
-    user_id = hashlib.md5(email.encode()).hexdigest()
-
+    
     results = {}
 
     try:
-        raw = auth_dict[email]
+        raw = auth_dict[uid]
         entry = json.loads(raw)
         sid = entry.get("student_id")
-        del auth_dict[email]
+        
+        del auth_dict[uid]
         results["auth_deleted"] = True
+        
         if sid:
             try:
                 del student_id_dict[sid]
@@ -116,9 +138,9 @@ async def delete_user(email: str, x_admin_key: Optional[str] = Header(None)):
         results["auth_deleted"] = False
 
     try:
-        del profiles_dict[user_id]
+        del profiles_dict[uid]
         results["profile_deleted"] = True
     except KeyError:
         results["profile_deleted"] = False
 
-    return {"success": True, "email": email, **results}
+    return {"success": True, "uid": uid, **results}
