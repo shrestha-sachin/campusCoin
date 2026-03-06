@@ -10,6 +10,7 @@ import { api } from '../api'
 import {
   signInWithGoogle, firebaseIsConfigured,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification,
+  sendPasswordResetEmail,
   auth as firebaseAuth
 } from '../firebase.js'
 import { US_UNIVERSITIES } from '../data/universities.js'
@@ -253,9 +254,25 @@ export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [pendingGoogleUser, setPendingGoogleUser] = useState(null)
+
+  // ── Forgot Password ────────────────────────────────────────────────────────
+  async function handleForgotPassword() {
+    if (!email.trim()) {
+      setError('Please enter your email address first.')
+      return
+    }
+    setLoading(true); setError(''); setSuccessMessage('')
+    try {
+      await sendPasswordResetEmail(firebaseAuth, email.trim())
+      setSuccessMessage('Password reset email sent! Check your inbox.')
+    } catch (err) {
+      setError(`Error: ${err.message}`)
+    } finally { setLoading(false) }
+  }
 
   const isSignIn = mode === 'signin'
 
@@ -558,7 +575,14 @@ export default function Auth() {
               )}
 
               {/* Form */}
-              <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="space-y-3">
+              {successMessage && (
+                <div className="mb-6 flex items-start gap-2 rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3">
+                  <span className="text-green-500 text-xs font-bold mt-0.5">✓</span>
+                  <p className="text-xs font-body text-green-600 dark:text-green-400">{successMessage}</p>
+                </div>
+              )}
+
+              <form onSubmit={isSignIn ? handleSignIn : handleSignUp} className="space-y-4">
                 {!isSignIn && (
                   <>
                     <InputRow label="Full Name" icon={UserIcon}>
@@ -592,6 +616,18 @@ export default function Auth() {
                     value={password} onChange={e => setPassword(e.target.value)} />
                 </InputRow>
 
+                {isSignIn && (
+                  <div className="flex justify-end px-1">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-[11px] font-medium text-g-blue hover:underline bg-transparent border-none p-0"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
                 {!isSignIn && (
                   <p className="text-[10px] text-g-text-tertiary px-1">
                     Must include: 8+ chars, uppercase, lowercase, number, and special character.
@@ -609,8 +645,8 @@ export default function Auth() {
               {/* Footer toggle */}
               <p className="text-center font-body text-xs text-g-text-tertiary mt-4">
                 {isSignIn
-                  ? <>Don't have an account?{' '}<button type="button" onClick={() => { setMode('signup'); setError('') }} className="text-g-blue font-medium hover:underline">Sign up</button></>
-                  : <>Already have an account?{' '}<button type="button" onClick={() => { setMode('signin'); setError('') }} className="text-g-blue font-medium hover:underline">Sign in</button></>}
+                  ? <>Don't have an account?{' '}<button type="button" onClick={() => { setMode('signup'); setError(''); setSuccessMessage('') }} className="text-g-blue font-medium hover:underline">Sign up</button></>
+                  : <>Already have an account?{' '}<button type="button" onClick={() => { setMode('signin'); setError(''); setSuccessMessage('') }} className="text-g-blue font-medium hover:underline">Sign in</button></>}
               </p>
             </div>
 
