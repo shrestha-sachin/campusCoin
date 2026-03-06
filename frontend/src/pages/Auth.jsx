@@ -151,7 +151,6 @@ function UniversityPicker({ value, onChange }) {
 function UniversityModal({ user, onConfirm, onClose }) {
   const [university, setUniversity] = useState('')
   const [studentId, setStudentId] = useState('')
-  const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -160,12 +159,9 @@ function UniversityModal({ user, onConfirm, onClose }) {
     if (!university.trim()) { setError('Please select your university.'); return }
     if (!studentId.trim()) { setError('Please enter your Student ID.'); return }
 
-    const passError = validatePassword(password)
-    if (passError) { setError(passError); return }
-
     setSubmitting(true); setError('')
     try {
-      await onConfirm(university.trim(), studentId.trim(), password)
+      await onConfirm(university.trim(), studentId.trim())
     }
     catch (err) { setError(err.message || 'Something went wrong.'); setSubmitting(false) }
   }
@@ -204,15 +200,6 @@ function UniversityModal({ user, onConfirm, onClose }) {
               className="input-field !pl-9 !py-2.5 !rounded-2xl !text-sm"
               placeholder="e.g. 1029384"
               value={studentId} onChange={e => setStudentId(e.target.value)} />
-          </InputRow>
-          <InputRow label="Account Password (for email login)" icon={Lock}>
-            <input type="password"
-              className="input-field !pl-9 !py-2.5 !rounded-2xl !text-sm"
-              placeholder="Create a password"
-              value={password} onChange={e => setPassword(e.target.value)} />
-            <p className="text-[10px] text-g-text-tertiary mt-1 px-1">
-              8+ chars, uppercase, lowercase, number, and special character.
-            </p>
           </InputRow>
           <button type="submit" disabled={submitting}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl bg-g-blue text-white font-body text-sm font-semibold shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all disabled:opacity-60">
@@ -293,11 +280,9 @@ export default function Auth() {
         return
       }
 
-      // 3. Login to our backend using the Firebase UID as the "password" fallback
+      // 3. Login to our backend using the Firebase UID
       const result = await api.login({
-        identifier: identifier,
-        password: password,
-        google_uid: fbResult.user.uid
+        firebase_uid: fbResult.user.uid
       })
 
       clearStorage()
@@ -339,12 +324,11 @@ export default function Auth() {
 
       // 3. Register in our backend
       const result = await api.signup({
+        firebase_uid: fbResult.user.uid,
         email: email.trim(),
-        password: password,
         name: name.trim(),
         student_id: email.trim(),
-        university: university.trim(),
-        google_uid: fbResult.user.uid // Optional: linking firebase UID
+        university: university.trim()
       })
 
       clearStorage()
@@ -371,9 +355,9 @@ export default function Auth() {
       const fbUser = result.user
       const googleUid = fbUser.uid
 
-      // Try to login immediately to see if they already have an account/university
+      // Try to login immediately to see if they already have a backend profile
       try {
-        const res = await api.login({ identifier: `google:${googleUid}`, password: googleUid })
+        const res = await api.login({ firebase_uid: googleUid })
         clearStorage()
 
         // If login succeeds and we have a profile, skip the university prompt
@@ -413,14 +397,15 @@ export default function Auth() {
     } finally { setGoogleLoading(false) }
   }
 
-  async function handleGoogleUniversityConfirm(uni, sid, pass) {
+  async function handleGoogleUniversityConfirm(uni, sid) {
     const fbUser = pendingGoogleUser
     const googleEmail = fbUser.email
     const googleName = fbUser.displayName || googleEmail.split('@')[0]
     const googleUid = fbUser.uid
 
     try {
-      const result = await api.login({ identifier: `google:${googleUid}`, password: googleUid, google_uid: googleUid })
+      // 1. Double check if they exist (rare case)
+      const result = await api.login({ firebase_uid: googleUid })
       clearStorage()
       login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? '', is_premium: result.is_premium ?? false, university: uni })
       setPendingGoogleUser(null)
@@ -429,15 +414,14 @@ export default function Auth() {
         navigate('/dashboard')
       } else { navigate('/onboarding') }
     } catch {
+      // 2. Register them in the backend
       try {
         const result = await api.signup({
+          firebase_uid: googleUid,
           email: googleEmail,
-          password: pass || googleUid, // Use the manual password or fallback to googleUid
           name: googleName,
-          student_id: sid || `google:${googleUid}`, // Use manual sid or fallback 
-          university: uni,
-          auth_provider: 'google',
-          google_uid: googleUid
+          student_id: sid || googleEmail,
+          university: uni
         })
         clearStorage()
         login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? sid, university: uni })
@@ -445,7 +429,7 @@ export default function Auth() {
         navigate('/onboarding')
       } catch (signupErr) {
         const msg = signupErr.message || ''
-        if (msg.includes('409')) throw new Error('An account with this email already exists. Please sign in with your password.')
+        if (msg.includes('409')) throw new Error('Something went wrong linking your account. Please try again.')
         throw signupErr
       }
     }
