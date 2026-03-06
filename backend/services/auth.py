@@ -106,6 +106,7 @@ async def login(req: LoginRequest):
         "name": auth_entry["name"],
         "email": auth_entry["email"],
         "student_id": auth_entry.get("student_id", ""),
+        "university": auth_entry.get("university", ""),
         "profile_data": profile_data,
     }
 
