@@ -108,9 +108,38 @@ export function AppProvider({ children }) {
     })
   }
 
-  function togglePremium() {
-    setAuth(prev => ({ ...prev, is_premium: !prev.is_premium }))
+  async function togglePremium() {
+    if (!auth.user_id) return
+    try {
+      const result = await api.upgrade({ firebase_uid: auth.user_id })
+      if (result.success) {
+        setAuth(prev => ({ ...prev, is_premium: true }))
+        console.log('[CampusCoin] Account upgraded and persisted')
+      }
+    } catch (err) {
+      console.error('[CampusCoin] Failed to persist upgrade:', err)
+      // Fallback: toggle locally anyway so UI response is snappy
+      setAuth(prev => ({ ...prev, is_premium: !prev.is_premium }))
+    }
   }
+
+  /** Force sync auth status from backend (checks for manual Pro grants) */
+  const syncPremiumStatus = useCallback(async () => {
+    if (!auth.isAuthenticated || !auth.user_id) return
+    try {
+      const result = await api.login({ firebase_uid: auth.user_id })
+      if (result.success) {
+        setAuth(prev => ({
+          ...prev,
+          is_premium: result.is_premium,
+          university: result.university || prev.university,
+        }))
+        console.log('[CampusCoin] Premium status synced:', result.is_premium)
+      }
+    } catch (err) {
+      console.warn('[CampusCoin] Failed to sync premium status:', err)
+    }
+  }, [auth.isAuthenticated, auth.user_id])
 
   /** Try to restore profile from backend (for cross-device login) */
   async function restoreFromBackend(userId) {
@@ -406,14 +435,16 @@ export function AppProvider({ children }) {
 
     // Initial poll on mount
     pollNessie()
+    syncPremiumStatus()
 
     // Set up interval for auto-polling
     const interval = setInterval(() => {
       pollNessie()
+      syncPremiumStatus()
     }, POLL_INTERVAL)
 
     return () => clearInterval(interval)
-  }, [onboarded, profile.nessie_account_id])
+  }, [onboarded, profile.nessie_account_id, syncPremiumStatus])
 
 
 

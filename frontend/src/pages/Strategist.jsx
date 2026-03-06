@@ -45,9 +45,13 @@ function getImpactStyle(amount) {
 export default function Strategist() {
   const {
     aiInsight, nessieTransactions, profile, setProfile, refreshAI, loading,
-    academicEvents, ingestAcademic, setAcademicEvents, refreshRunway, auth
+    academicEvents, ingestAcademic, setAcademicEvents, refreshRunway, auth, syncPremiumStatus
   } = useApp()
   const isPremium = auth.is_premium
+
+  React.useEffect(() => {
+    syncPremiumStatus()
+  }, [syncPremiumStatus])
 
   const s = statusMap[aiInsight?.status || 'on_track']
   const [showInfo, setShowInfo] = useState(false)
@@ -510,25 +514,39 @@ export default function Strategist() {
 
           {/* Dropzone (initial state) */}
           {!loading.ingestion && academicEvents.length === 0 && (
-            <div className="card p-0 overflow-hidden lg:h-full min-h-[400px] flex flex-col">
+            <div className="card p-0 overflow-hidden lg:h-full min-h-[400px] flex flex-col relative">
               <div className="p-6 border-b border-g-border">
                 <h2 className="font-display font-bold text-xl text-g-text mb-1">Academic Document Ingestion</h2>
                 <p className="font-body text-sm text-g-text-secondary">Predict stress periods and their financial impact.</p>
               </div>
               <div className="flex-1 p-8 flex items-center justify-center">
                 <div
-                  onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave} onClick={() => fileInputRef.current?.click()}
+                  onDrop={(e) => isPremium ? onDrop(e) : null}
+                  onDragOver={(e) => isPremium ? onDragOver(e) : null}
+                  onDragLeave={() => isPremium ? onDragLeave() : null}
+                  onClick={() => isPremium ? fileInputRef.current?.click() : navigate('/pricing')}
                   className={`w-full max-w-lg rounded-3xl border-2 border-dashed p-12 text-center cursor-pointer transition-all ${dragOver ? 'border-g-blue bg-g-blue-pastel' : 'border-g-border hover:border-g-blue/20'}`}
                 >
                   <div className="w-20 h-20 rounded-3xl bg-g-blue-pastel text-g-blue flex items-center justify-center mx-auto mb-6">
-                    <Upload size={32} />
+                    {isPremium ? <Upload size={32} /> : <Lock size={32} className="text-g-text-tertiary" />}
                   </div>
-                  <p className="font-display font-bold text-lg text-g-text mb-1">{dragOver ? 'Drop it here' : 'Drag & drop documents'}</p>
-                  <p className="font-body text-sm text-g-text-secondary mb-8">PDF, PNG, JPG, WebP supported.</p>
-                  <button className="px-6 py-3 rounded-2xl bg-g-blue text-white font-display font-bold text-sm">Browse Files</button>
-                  <input ref={fileInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFileSelect} />
+                  <p className="font-display font-bold text-lg text-g-text mb-1">{dragOver ? 'Drop it here' : isPremium ? 'Drag & drop documents' : 'Unlock Academic Ingestion'}</p>
+                  <p className="font-body text-sm text-g-text-secondary mb-8">
+                    {isPremium ? 'PDF, PNG, JPG, WebP supported.' : 'Convert your syllabi and schedule into financial buffers.'}
+                  </p>
+                  <button className="px-6 py-3 rounded-2xl bg-g-blue text-white font-display font-bold text-sm shadow-lg shadow-g-blue/20">
+                    {isPremium ? 'Browse Files' : 'Go Premium'}
+                  </button>
+                  {isPremium && <input ref={fileInputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFileSelect} />}
                 </div>
               </div>
+
+              {!isPremium && (
+                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-white via-white/90 to-transparent pt-20 text-center">
+                  <p className="text-[10px] font-bold text-g-text-tertiary uppercase tracking-widest mb-2">Exclusive Premium Feature</p>
+                  <p className="text-xs text-g-text-secondary">Upgrade to unlock Predictive Stress Analysis</p>
+                </div>
+              )}
             </div>
           )}
         </div>

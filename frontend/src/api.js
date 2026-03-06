@@ -106,6 +106,8 @@ export const api = {
     request('/api/auth/signup', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload) =>
     request('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  upgrade: (payload) =>
+    request('/api/auth/upgrade', { method: 'POST', body: JSON.stringify(payload) }),
   deleteAccount: (payload) =>
     request('/api/auth/delete-account', { method: 'POST', body: JSON.stringify(payload) }),
 

@@ -142,3 +142,21 @@ async def delete_account(req: LoginRequest):
         return {"success": True, "message": "Account deleted from backend."}
     except KeyError:
         return {"success": False, "message": "User not found."}
+
+
+@router.post("/upgrade")
+async def upgrade_account(req: LoginRequest):
+    """Manually upgrade a user's account (persistent)."""
+    uid = req.firebase_uid.strip()
+    try:
+        raw = auth_dict[uid]
+        auth_entry = json.loads(raw)
+        
+        import datetime
+        auth_entry["is_premium"] = True
+        auth_entry["premium_until"] = (datetime.datetime.now() + datetime.timedelta(days=365)).isoformat()
+        
+        auth_dict[uid] = json.dumps(auth_entry)
+        return {"success": True, "is_premium": True}
+    except KeyError:
+        raise HTTPException(status_code=404, detail="User not found")

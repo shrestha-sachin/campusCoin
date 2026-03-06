@@ -62,9 +62,13 @@ export default function Dashboard() {
   const {
     profile, incomeStreams, expenses, aiInsight, setAiInsight, loading,
     refreshRunway, refreshAI,
-    nessieTransactions, pollNessie, lastPoll, auth
+    nessieTransactions, pollNessie, lastPoll, auth, syncPremiumStatus
   } = useApp()
   const isPremium = auth.is_premium
+
+  useEffect(() => {
+    syncPremiumStatus()
+  }, [syncPremiumStatus])
 
   const [showEmergency, setShowEmergency] = useState(false)
   const [polling, setPolling] = useState(false)
@@ -458,6 +462,10 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={async () => {
+                      if (!isPremium) {
+                        navigate('/pricing')
+                        return
+                      }
                       setAiInsight(null)
                       const freshRunway = await refreshRunway()
                       await refreshAI(freshRunway)
@@ -465,8 +473,8 @@ export default function Dashboard() {
                     disabled={loading.ai}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-g-blue-pastel text-g-blue text-xs font-display font-bold hover:bg-g-blue hover:text-white transition-all disabled:opacity-40"
                   >
-                    <RefreshCw size={13} className={loading.ai ? 'animate-spin' : ''} />
-                    New Review
+                    {isPremium ? <RefreshCw size={13} className={loading.ai ? 'animate-spin' : ''} /> : <Lock size={13} />}
+                    {isPremium ? 'New Review' : 'Unlock AI'}
                   </button>
                 </div>
 
@@ -479,6 +487,28 @@ export default function Dashboard() {
                     <div className="text-center">
                       <p className="font-display text-sm font-bold text-g-text-secondary uppercase tracking-[0.3em] animate-pulse">Reviewing your finances...</p>
                       <p className="font-display text-[11px] text-g-text-tertiary mt-2 uppercase tracking-widest">Powered by Modal</p>
+                    </div>
+                  </div>
+                ) : !isPremium ? (
+                  <div className="flex-1 flex flex-col justify-center items-center text-center p-8 space-y-6 relative">
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-0" />
+                    <div className="relative z-10 space-y-4">
+                      <div className="w-16 h-16 rounded-3xl bg-white shadow-xl flex items-center justify-center mx-auto border border-g-border">
+                        <Crown size={32} className="text-g-blue" />
+                      </div>
+                      <div>
+                        <p className="font-display text-base font-bold text-g-text">Gemini AI Strategist</p>
+                        <p className="font-body text-xs text-g-text-secondary mt-2 max-w-[200px] mx-auto">
+                          Get deep financial insights and personalized advice based on your school and spending habits.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => navigate('/pricing')}
+                        className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-g-blue text-white font-display font-bold text-sm shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all"
+                      >
+                        <Sparkles size={16} />
+                        Upgrade to VIP
+                      </button>
                     </div>
                   </div>
                 ) : aiInsight ? (
@@ -525,7 +555,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col justify-center items-center text-center opacity-30 px-6">
+                  <div className="flex-1 flex flex-col justify-center items-center text-center opacity-30 px-6 py-12">
                     <BadgeCheck size={48} className="mb-4 text-g-blue" />
                     <p className="font-display text-sm font-bold uppercase tracking-[0.3em]">No Review Yet</p>
                     <p className="font-body text-xs text-g-text-tertiary mt-1">Your report will appear here</p>
