@@ -3,8 +3,23 @@ import { useNavigate } from 'react-router-dom'
 import ProfileForm from '../components/ProfileForm.jsx'
 import DocumentHistory from '../components/DocumentHistory.jsx'
 import { useApp, clearStorage } from '../store.jsx'
-import { LogOut, RotateCcw, UserCircle2, Lock, KeyRound, Loader2, Check, Trash2, Bell, Moon, Download, Settings2, ExternalLink } from 'lucide-react'
+import { LogOut, RotateCcw, UserCircle2, Lock, KeyRound, Loader2, Check, Trash2, Bell, Moon, Download, Settings2, ExternalLink, AlertCircle } from 'lucide-react'
 import { api } from '../api'
+import {
+  auth as firebaseAuth,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
+} from '../firebase.js'
+
+function validatePassword(pass) {
+  if (pass.length < 8) return "Password must be at least 8 characters long."
+  if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter."
+  if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter."
+  if (!/[0-9]/.test(pass)) return "Password must contain at least one number."
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character."
+  return null
+}
 
 function PasswordChange() {
   const { auth } = useApp()
@@ -13,6 +28,9 @@ function PasswordChange() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  // Determine if the user is a Google user
+  const isGoogleUser = firebaseAuth.currentUser?.providerData.some(p => p.providerId === 'google.com')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -23,32 +41,60 @@ function PasswordChange() {
       setError('Please fill out both fields.')
       return
     }
-    if (newPassword.length < 4) {
-      setError('New password must be at least 4 characters.')
+
+    const passError = validatePassword(newPassword)
+    if (passError) {
+      setError(passError)
       return
     }
 
     setLoading(true)
     try {
-      await api.changePassword({
-        email: auth.email,
-        current_password: currentPassword,
-        new_password: newPassword,
-      })
+      const user = firebaseAuth.currentUser
+      if (!user) throw new Error("No user signed in.")
+
+      // 1. Re-authenticate (required by Firebase for sensitive actions)
+      const credential = EmailAuthProvider.credential(user.email, currentPassword)
+      await reauthenticateWithCredential(user, credential)
+
+      // 2. Update password
+      await updatePassword(user, newPassword)
+
       setSuccess(true)
       setCurrentPassword('')
       setNewPassword('')
-      setTimeout(() => setSuccess(false), 3000)
+      setTimeout(() => setSuccess(false), 5000)
     } catch (err) {
       const msg = err.message || ''
-      if (msg.includes('401')) {
+      if (msg.includes('invalid-credential') || msg.includes('auth/wrong-password')) {
         setError('Current password is incorrect.')
+      } else if (msg.includes('requires-recent-login')) {
+        setError('Security threshold reached. Please sign out and sign back in to change your password.')
       } else {
-        setError('Failed to update password. Please try again.')
+        setError(msg.includes('auth/') ? `Auth error: ${msg}` : 'Failed to update password. Please try again.')
       }
     } finally {
       setLoading(false)
     }
+  }
+
+  if (isGoogleUser) {
+    return (
+      <div className="card p-5 pt-8 sm:p-6 mb-6 opacity-80">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-2xl bg-g-blue-pastel flex items-center justify-center shadow-sm">
+            <KeyRound size={20} className="text-g-blue" />
+          </div>
+          <h3 className="font-display font-bold text-g-text text-base">Password</h3>
+        </div>
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-g-bg border border-g-border/60">
+          <AlertCircle size={18} className="text-g-blue mt-0.5 flex-shrink-0" />
+          <p className="text-xs font-body text-g-text-secondary leading-relaxed">
+            You're signed in via **Google**. To change your password, please visit your <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" className="text-g-blue font-semibold hover:underline">Google Security settings</a>.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -134,7 +180,10 @@ export default function Settings() {
     if (window.confirm('WARNING: This will permanently delete your account, profile data, and remove you from the system. This cannot be undone. Are you absolutely sure?')) {
       setIsDeleting(true)
       try {
-        await api.deleteAccount({ email: auth.email })
+        const uid = firebaseAuth.currentUser?.uid
+        if (uid) {
+          await api.deleteAccount({ firebase_uid: uid })
+        }
         clearStorage()
         window.location.href = '/auth'
       } catch (err) {
