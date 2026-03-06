@@ -7,7 +7,11 @@ import {
 import Logo from '../components/Logo.jsx'
 import { useApp, clearStorage } from '../store.jsx'
 import { api } from '../api'
-import { signInWithGoogle, firebaseIsConfigured } from '../firebase.js'
+import {
+  signInWithGoogle, firebaseIsConfigured,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification,
+  auth as firebaseAuth
+} from '../firebase.js'
 import { US_UNIVERSITIES } from '../data/universities.js'
 
 // ─── University list (2,338 US colleges from Hipo dataset) ───────────────────
@@ -25,6 +29,16 @@ function GoogleIcon({ size = 18 }) {
       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </svg>
   )
+}
+
+// ─── Password Strength Validation ──────────────────────────────────────────
+function validatePassword(pass) {
+  if (pass.length < 8) return "Password must be at least 8 characters long."
+  if (!/[A-Z]/.test(pass)) return "Password must contain at least one uppercase letter."
+  if (!/[a-z]/.test(pass)) return "Password must contain at least one lowercase letter."
+  if (!/[0-9]/.test(pass)) return "Password must contain at least one number."
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(pass)) return "Password must contain at least one special character."
+  return null
 }
 
 // ─── Searchable university dropdown ──────────────────────────────────────────
@@ -144,7 +158,9 @@ function UniversityModal({ user, onConfirm, onClose }) {
     e.preventDefault()
     if (!university.trim()) { setError('Please select your university.'); return }
     if (!studentId.trim()) { setError('Please enter your Student ID.'); return }
-    if (!password || password.length < 8) { setError('Please create a password (min 8 chars).'); return }
+
+    const passError = validatePassword(password)
+    if (passError) { setError(passError); return }
 
     setSubmitting(true); setError('')
     try {
@@ -193,6 +209,9 @@ function UniversityModal({ user, onConfirm, onClose }) {
               className="input-field !pl-9 !py-2.5 !rounded-2xl !text-sm"
               placeholder="Create a password"
               value={password} onChange={e => setPassword(e.target.value)} />
+            <p className="text-[10px] text-g-text-tertiary mt-1 px-1">
+              8+ chars, uppercase, lowercase, number, and special character.
+            </p>
           </InputRow>
           <button type="submit" disabled={submitting}
             className="w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl bg-g-blue text-white font-body text-sm font-semibold shadow-lg shadow-g-blue/20 hover:bg-[#3367d6] transition-all disabled:opacity-60">
@@ -247,21 +266,39 @@ export default function Auth() {
     if (!identifier || !password) { setError('Please enter your email and password.'); return }
     setLoading(true)
     try {
-      const result = await api.login({ identifier, password })
+      // 1. Sign in to Firebase
+      const fbResult = await signInWithEmailAndPassword(firebaseAuth, identifier, password)
+
+      // 2. Check if verified (Optional, but recommended)
+      if (!fbResult.user.emailVerified) {
+        setLoading(false)
+        setError('Please verify your email address before signing in. Check your inbox for a link.')
+        return
+      }
+
+      // 3. Login to our backend using the Firebase UID as the "password" fallback
+      const result = await api.login({
+        identifier: identifier,
+        password: password,
+        google_uid: fbResult.user.uid
+      })
+
       clearStorage()
-      login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id, is_premium: result.is_premium ?? false })
+      login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id, is_premium: result.is_premium ?? false, university: result.profile_data?.profile?.university })
+
       if (result.profile_data) {
         completeOnboarding({ profile: result.profile_data.profile, incomeStreams: result.profile_data.income_streams ?? [], expenses: result.profile_data.expenses ?? [] })
         navigate('/dashboard')
       } else { navigate('/onboarding') }
     } catch (err) {
       const msg = err.message || ''
-      if (msg.includes('401')) {
-        try {
-          const detail = JSON.parse(msg.split(': ').slice(1).join(': '))
-          setError(detail.detail || 'Invalid credentials.')
-        } catch { setError(msg.includes('No account') ? 'No account found. Please sign up.' : 'Incorrect password.') }
-      } else { setError('Unable to connect to server. Please try again.') }
+      if (msg.includes('invalid-credential') || msg.includes('401')) {
+        setError('Invalid email or password.')
+      } else if (msg.includes('user-not-found')) {
+        setError('No account found. Please sign up.')
+      } else {
+        setError('Unable to connect to server. Please try again.')
+      }
     } finally { setLoading(false) }
   }
 
@@ -271,22 +308,41 @@ export default function Auth() {
     if (!name.trim()) { setError('Please enter your name.'); return }
     if (!university.trim()) { setError('Please select your university.'); return }
     if (!email.trim()) { setError('Please enter your email.'); return }
-    if (!password || password.length < 8) { setError('Password must be at least 8 characters.'); return }
+
+    const passError = validatePassword(password)
+    if (passError) { setError(passError); return }
 
     setLoading(true)
     try {
-      const result = await api.signup({ email: email.trim(), password, name: name.trim(), student_id: email.trim(), university: university.trim() })
+      // 1. Create user in Firebase
+      const fbResult = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password)
+
+      // 2. Send verification email
+      await sendEmailVerification(fbResult.user)
+
+      // 3. Register in our backend
+      const result = await api.signup({
+        email: email.trim(),
+        password: password,
+        name: name.trim(),
+        student_id: email.trim(),
+        university: university.trim(),
+        google_uid: fbResult.user.uid // Optional: linking firebase UID
+      })
+
       clearStorage()
       login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id, university: university.trim() })
+
+      // Notify user about verification
+      alert('Account created! Please check your email for a verification link.')
       navigate('/onboarding')
     } catch (err) {
       const msg = err.message || ''
-      if (msg.includes('409')) {
-        try {
-          const detail = JSON.parse(msg.split(': ').slice(1).join(': '))
-          setError(detail.detail || 'Account already exists.')
-        } catch { setError('An account with this email already exists.') }
-      } else { setError('Unable to connect to server. Please try again.') }
+      if (msg.includes('409') || msg.includes('email-already-in-use')) {
+        setError('An account with this email already exists.')
+      } else {
+        setError(msg.includes('auth/') ? `Auth error: ${msg}` : 'Unable to connect to server. Please try again.')
+      }
     } finally { setLoading(false) }
   }
 
@@ -535,6 +591,12 @@ export default function Auth() {
                     placeholder={isSignIn ? 'Your password' : 'Min. 8 characters'}
                     value={password} onChange={e => setPassword(e.target.value)} />
                 </InputRow>
+
+                {!isSignIn && (
+                  <p className="text-[10px] text-g-text-tertiary px-1">
+                    Must include: 8+ chars, uppercase, lowercase, number, and special character.
+                  </p>
+                )}
 
                 <button type="submit" disabled={loading}
                   className="!mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-g-blue text-white font-body text-sm font-semibold shadow-lg shadow-g-blue/20 hover:shadow-xl hover:bg-[#3367d6] transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed">

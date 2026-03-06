@@ -1,5 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
+import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification
+} from 'firebase/auth'
 
 const config = (typeof window !== 'undefined' && window.__CAMPUSCOIN_CONFIG__) || {}
 
@@ -53,4 +56,9 @@ export async function firebaseSignOut() {
     if (_auth) await signOut(_auth)
 }
 
-export { isConfigured as firebaseIsConfigured }
+export {
+    isConfigured as firebaseIsConfigured,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    sendEmailVerification
+}
