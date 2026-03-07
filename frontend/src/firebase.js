@@ -8,8 +8,13 @@ import {
 
 const config = (typeof window !== 'undefined' && window.__CAMPUSCOIN_CONFIG__) || {}
 
+const DEFAULT_AUTH_DOMAIN = 'auth.campuscoin.tech'
+
 const apiKey = config.VITE_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY
-const authDomain = config.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN
+const authDomain =
+  config.VITE_FIREBASE_AUTH_DOMAIN ||
+  import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
+  DEFAULT_AUTH_DOMAIN
 const projectId = config.VITE_FIREBASE_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID
 
 // Only initialize Firebase if ALL required config values are present.

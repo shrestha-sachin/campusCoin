@@ -235,6 +235,18 @@ export default function Auth() {
   const navigate = useNavigate()
   const { login, completeOnboarding } = useApp()
 
+  const isProdAuthHost =
+    typeof window !== 'undefined' && window.location.hostname === 'auth.campuscoin.tech'
+  const APP_BASE_URL = 'https://campuscoin.tech'
+
+  const goToAppPath = (path) => {
+    if (isProdAuthHost) {
+      window.location.href = `${APP_BASE_URL}${path}`
+    } else {
+      navigate(path)
+    }
+  }
+
   const [mode, setMode] = useState('signup')
   const [name, setName] = useState('')
   const [university, setUniversity] = useState('')
@@ -316,8 +328,8 @@ export default function Auth() {
 
       if (result.profile_data) {
         completeOnboarding({ profile: result.profile_data.profile, incomeStreams: result.profile_data.income_streams ?? [], expenses: result.profile_data.expenses ?? [] })
-        navigate('/dashboard')
-      } else { navigate('/onboarding') }
+        goToAppPath('/dashboard')
+      } else { goToAppPath('/onboarding') }
     } catch (err) {
       const msg = err.message || ''
       if (msg.includes('invalid-credential') || msg.includes('401')) {
@@ -362,7 +374,7 @@ export default function Auth() {
 
       // Notify user about verification
       alert('Account created! Please check your email for a verification link.')
-      navigate('/onboarding')
+      goToAppPath('/onboarding')
     } catch (err) {
       const msg = err.message || ''
       if (msg.includes('409') || msg.includes('email-already-in-use')) {
@@ -402,7 +414,7 @@ export default function Auth() {
             incomeStreams: res.profile_data.income_streams ?? [],
             expenses: res.profile_data.expenses ?? []
           })
-          navigate('/dashboard')
+          goToAppPath('/dashboard')
         } else {
           // Account exists but no university set yet, or new account
           setPendingGoogleUser(fbUser)
@@ -438,8 +450,8 @@ export default function Auth() {
       setPendingGoogleUser(null)
       if (result.profile_data) {
         completeOnboarding({ profile: { ...result.profile_data.profile, university: uni }, incomeStreams: result.profile_data.income_streams ?? [], expenses: result.profile_data.expenses ?? [] })
-        navigate('/dashboard')
-      } else { navigate('/onboarding') }
+        goToAppPath('/dashboard')
+      } else { goToAppPath('/onboarding') }
     } catch {
       // 2. Register them in the backend
       try {
@@ -453,7 +465,7 @@ export default function Auth() {
         clearStorage()
         login({ email: result.email, name: result.name, user_id: result.user_id, student_id: result.student_id ?? sid, university: uni })
         setPendingGoogleUser(null)
-        navigate('/onboarding')
+        goToAppPath('/onboarding')
       } catch (signupErr) {
         const msg = signupErr.message || ''
         if (msg.includes('409')) throw new Error('Something went wrong linking your account. Please try again.')
